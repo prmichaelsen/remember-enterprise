@@ -1,12 +1,11 @@
 /**
  * MemoryDatabaseService — server-side database layer for memories.
  *
- * TODO: This will eventually proxy to @prmichaelsen/remember-core SvcClient.
- * For now the class is structured with proper signatures but stubs the
- * underlying calls. When remember-core is integrated, replace the stubs
- * with SvcClient calls.
+ * Proxies to @prmichaelsen/remember-core SvcClient for all CRUD, feed,
+ * and search operations.
  */
 
+import { getRememberSvcClient } from '@/lib/remember-sdk'
 import { initFirebaseAdmin } from '@/lib/firebase-admin'
 import type {
   MemoryItem,
@@ -27,97 +26,134 @@ export interface DuplicateCheckResult {
 
 export class MemoryDatabaseService {
   /**
-   * Save a new memory.
-   * TODO: Proxy to remember-core SvcClient.save()
+   * Save a new memory via SvcClient.
    */
   static async save(params: SaveMemoryParams & { author_id: string; author_name: string }): Promise<MemoryItem> {
     initFirebaseAdmin()
-    const now = new Date().toISOString()
+    const svc = await getRememberSvcClient()
 
-    // TODO: Replace with remember-core SvcClient call
-    const memory: MemoryItem = {
-      id: crypto.randomUUID(),
-      title: params.title ?? '',
+    const res = await svc.memories.create(params.author_id, {
       content: params.content,
+      title: params.title ?? '',
+      tags: params.tags,
+    })
+    const data = res.throwOnError() as any
+
+    // Map SvcClient response to MemoryItem shape
+    return {
+      id: data.id ?? data.memory?.id ?? crypto.randomUUID(),
+      title: data.title ?? data.memory?.title ?? params.title ?? '',
+      content: data.content ?? data.memory?.content ?? params.content,
       author_id: params.author_id,
       author_name: params.author_name,
       scope: params.scope,
       group_id: params.group_id,
       space_id: null,
-      tags: params.tags,
-      rating: null,
-      significance: null,
-      created_at: now,
-      updated_at: now,
+      tags: data.tags ?? data.memory?.tags ?? params.tags,
+      rating: data.rating ?? data.memory?.rating ?? null,
+      significance: data.significance ?? data.memory?.significance ?? null,
+      created_at: data.created_at ?? data.memory?.created_at ?? new Date().toISOString(),
+      updated_at: data.updated_at ?? data.memory?.updated_at ?? new Date().toISOString(),
     }
-
-    // TODO: Write to remember-core
-    console.warn('[MemoryDatabaseService] save() is stubbed — remember-core not yet integrated')
-    return memory
   }
 
   /**
    * Fetch a paginated memory feed for a user.
-   * TODO: Proxy to remember-core SvcClient.getFeed()
+   * Maps algorithm names to the appropriate SvcClient method.
    */
   static async getFeed(
     userId: string,
     params: MemoryFeedParams,
   ): Promise<MemoryFeedResult> {
     initFirebaseAdmin()
+    const svc = await getRememberSvcClient()
 
-    // TODO: Replace with remember-core SvcClient call
-    console.warn('[MemoryDatabaseService] getFeed() is stubbed — remember-core not yet integrated')
-    void userId
-    void params
-    return { memories: [], total: 0, hasMore: false }
+    const { algorithm, limit, offset } = params
+    const query = params.query ?? '*'
+
+    let res: any
+
+    switch (algorithm) {
+      case 'smart':
+        res = await svc.memories.byRecommendation(userId, { query, limit, offset })
+        break
+      case 'chronological':
+        res = await svc.memories.byTime(userId, { query, limit, offset, direction: 'desc' })
+        break
+      case 'discovery':
+        res = await svc.memories.byDiscovery(userId, { query, limit, offset })
+        break
+      case 'rating':
+        res = await svc.memories.byRating(userId, { query, limit, offset })
+        break
+      case 'significance':
+        res = await svc.memories.byDensity(userId, { query, limit, offset })
+        break
+      default:
+        res = await svc.memories.byRecommendation(userId, { query, limit, offset })
+        break
+    }
+
+    const data = res.throwOnError() as any
+    const memories = (data.memories ?? []) as MemoryItem[]
+    const total = data.total ?? memories.length
+
+    return {
+      memories,
+      total,
+      hasMore: memories.length === limit,
+    }
   }
 
   /**
    * Get a single memory by ID.
-   * TODO: Proxy to remember-core SvcClient.getById()
    */
-  static async getById(memoryId: string): Promise<MemoryItem | null> {
+  static async getById(userId: string, memoryId: string): Promise<MemoryItem | null> {
     initFirebaseAdmin()
+    const svc = await getRememberSvcClient()
 
-    // TODO: Replace with remember-core SvcClient call
-    console.warn('[MemoryDatabaseService] getById() is stubbed — remember-core not yet integrated')
-    void memoryId
-    return null
+    try {
+      const res = await svc.memories.get(userId, memoryId, {})
+      const data = res.throwOnError() as any
+      return (data.memory ?? data) as MemoryItem
+    } catch {
+      return null
+    }
   }
 
   /**
    * Update an existing memory.
-   * TODO: Proxy to remember-core SvcClient.update()
    */
   static async update(
+    userId: string,
     memoryId: string,
     updates: Partial<Pick<MemoryItem, 'title' | 'content' | 'tags' | 'rating'>>,
   ): Promise<MemoryItem | null> {
     initFirebaseAdmin()
+    const svc = await getRememberSvcClient()
 
-    // TODO: Replace with remember-core SvcClient call
-    console.warn('[MemoryDatabaseService] update() is stubbed — remember-core not yet integrated')
-    void memoryId
-    void updates
-    return null
+    try {
+      const res = await svc.memories.update(userId, memoryId, updates)
+      const data = res.throwOnError() as any
+      return (data.memory ?? data) as MemoryItem
+    } catch {
+      return null
+    }
   }
 
   /**
    * Delete a memory.
-   * TODO: Proxy to remember-core SvcClient.delete()
    */
-  static async delete(memoryId: string): Promise<void> {
+  static async delete(userId: string, memoryId: string): Promise<void> {
     initFirebaseAdmin()
+    const svc = await getRememberSvcClient()
 
-    // TODO: Replace with remember-core SvcClient call
-    console.warn('[MemoryDatabaseService] delete() is stubbed — remember-core not yet integrated')
-    void memoryId
+    const res = await svc.memories.delete(userId, memoryId, {})
+    res.throwOnError()
   }
 
   /**
    * Hybrid search — combines vector similarity + keyword search.
-   * TODO: Proxy to remember-core SvcClient.search()
    */
   static async search(
     userId: string,
@@ -125,24 +161,21 @@ export class MemoryDatabaseService {
     limit: number = 20,
   ): Promise<MemoryItem[]> {
     initFirebaseAdmin()
+    const svc = await getRememberSvcClient()
 
-    // TODO: Replace with remember-core SvcClient call
-    console.warn('[MemoryDatabaseService] search() is stubbed — remember-core not yet integrated')
-    void userId
-    void query
-    void limit
-    return []
+    const res = await svc.memories.search(userId, { query, limit, offset: 0 })
+    const data = res.throwOnError() as any
+    return (data.memories ?? []) as MemoryItem[]
   }
 
   /**
    * Check if a message has already been saved as a memory (duplicate prevention).
-   * TODO: Proxy to remember-core SvcClient.checkDuplicate()
    */
   static async checkDuplicate(sourceMessageId: string): Promise<DuplicateCheckResult> {
     initFirebaseAdmin()
 
-    // TODO: Replace with remember-core SvcClient call
-    console.warn('[MemoryDatabaseService] checkDuplicate() is stubbed — remember-core not yet integrated')
+    // Duplicate check is not directly supported by SvcClient —
+    // this would require a custom query. For now, return not duplicate.
     void sourceMessageId
     return { isDuplicate: false, existingMemoryId: null }
   }
