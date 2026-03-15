@@ -49,10 +49,10 @@ milestones:
 
   - id: milestone_6
     name: Wire remember-core
-    status: not_started
+    status: completed
     file: agent/milestones/milestone-6-wire-remember-core.md
     tasks_total: 3
-    tasks_completed: 0
+    tasks_completed: 3
     estimated_weeks: 1
 
 tasks:
@@ -229,28 +229,28 @@ tasks:
   milestone_6:
     - id: task-22
       name: Install + Configure SvcClient
-      status: not_started
-      started: null
+      status: completed
+      started: 2026-03-15T23:00:00Z
       file: agent/tasks/milestone-6-wire-remember-core/task-22-install-configure-svcclient.md
       estimated_hours: 1-2
       actual_hours: null
-      completed_date: null
+      completed_date: 2026-03-15T23:30:00Z
     - id: task-23
       name: Wire MemoryDatabaseService to SvcClient
-      status: not_started
-      started: null
+      status: completed
+      started: 2026-03-15T23:00:00Z
       file: agent/tasks/milestone-6-wire-remember-core/task-23-wire-memory-database-service.md
       estimated_hours: 3-4
       actual_hours: null
-      completed_date: null
+      completed_date: 2026-03-15T23:30:00Z
     - id: task-24
       name: Wire GhostDatabaseService to SvcClient
-      status: not_started
-      started: null
+      status: completed
+      started: 2026-03-15T23:00:00Z
       file: agent/tasks/milestone-6-wire-remember-core/task-24-wire-ghost-database-service.md
       estimated_hours: 2-3
       actual_hours: null
-      completed_date: null
+      completed_date: 2026-03-15T23:30:00Z
 
 documentation:
   design_documents: 2
@@ -260,8 +260,8 @@ documentation:
 
 progress:
   planning: 100
-  implementation: 85
-  overall: 88
+  implementation: 100
+  overall: 100
 
 recent_work:
   - date: 2026-03-15
@@ -280,8 +280,9 @@ recent_work:
     description: "Audit #1: requirements vs implementation — 14/14 P0 features, 100% color system compliance"
 
 next_steps:
-  - Start M6 with Task 22 (Install + Configure SvcClient)
-  - Run @acp.proceed to begin implementation
+  - Deploy and test remember-core integration end-to-end
+  - Upload FIREBASE_ADMIN_SERVICE_ACCOUNT_KEY via cf-secrets
+  - Ensure REST_API_CONFIGURATIONS Firestore doc exists for remember provider
 
 notes: []
 
