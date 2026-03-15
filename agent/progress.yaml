@@ -62,10 +62,13 @@ milestones:
     tasks_total: 3
     tasks_completed: 0
     estimated_weeks: 1
-    status: completed
-    file: agent/milestones/milestone-6-wire-remember-core.md
+
+  - id: milestone_8
+    name: LLM Integration
+    status: not_started
+    file: agent/milestones/milestone-8-llm-integration.md
     tasks_total: 3
-    tasks_completed: 3
+    tasks_completed: 0
     estimated_weeks: 1
 
 tasks:
@@ -291,11 +294,37 @@ tasks:
       actual_hours: null
       completed_date: null
 
+  milestone_8:
+    - id: task-28
+      name: Install Anthropic SDK & Create ChatEngine
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-8-llm-integration/task-28-chat-engine.md
+      estimated_hours: 3
+      actual_hours: null
+      completed_date: null
+    - id: task-29
+      name: Ghost Streaming Endpoint
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-8-llm-integration/task-29-ghost-streaming-endpoint.md
+      estimated_hours: 2
+      actual_hours: null
+      completed_date: null
+    - id: task-30
+      name: Memory-Augmented System Prompts
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-8-llm-integration/task-30-memory-augmented-prompts.md
+      estimated_hours: 2
+      actual_hours: null
+      completed_date: null
+
 documentation:
   design_documents: 2
-  milestone_documents: 7
+  milestone_documents: 8
   pattern_documents: 44
-  task_documents: 27
+  task_documents: 30
 
 progress:
   planning: 100
@@ -322,7 +351,9 @@ next_steps:
   - Start M7 Task 25 (Memory CRUD API Routes)
   - Fix SSR preload bugs (Task 26)
   - Wire missing endpoints (Task 27)
-  - Deploy and verify no 404s/500s in prod.log
+  - Start M8 Task 28 (Install Anthropic SDK & Create ChatEngine)
+  - Wire ghost streaming endpoint (Task 29)
+  - Memory-augmented system prompts (Task 30)
 
 notes: []
 
