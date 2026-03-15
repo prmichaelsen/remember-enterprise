@@ -9,4 +9,4 @@ export type { Conversation, ConversationType, Message, MessageAttachment } from 
 export type { MemoryItem, MemoryScope, MemoryFeedAlgorithm, MemoryFeedParams } from './memories'
 export type { Notification, NotificationType, NotificationPreferences } from './notifications'
 export type { WebSocketMessage, WebSocketMessageType, WebSocketConfig } from './websocket'
-export type { AuthUser } from '../components/auth/AuthContext'
+export type { AuthUser, ServerSession, AuthResult } from '@prmichaelsen/agentbase-core/types'

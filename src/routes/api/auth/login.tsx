@@ -16,7 +16,7 @@ export const APIRoute = createAPIFileRoute('/api/auth/login')({
         })
       }
 
-      const decoded = await verifyIdToken(idToken)
+      await verifyIdToken(idToken)
       const sessionCookie = await createSessionCookie(idToken)
 
       return new Response(JSON.stringify({ success: true }), {

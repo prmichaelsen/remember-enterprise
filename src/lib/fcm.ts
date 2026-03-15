@@ -8,7 +8,7 @@
  * - Token refresh lifecycle
  */
 
-import { initializeFirebase, app } from '@/lib/firebase-client'
+import { initializeFirebase, getFirebaseApp } from '@/lib/firebase-client'
 
 // FCM token storage key in localStorage
 const FCM_TOKEN_KEY = 'remember_fcm_token'
@@ -95,8 +95,7 @@ export async function getFCMToken(): Promise<string | null> {
     // Dynamic import to avoid bundling firebase/messaging when not needed
     const { getMessaging, getToken } = await import('firebase/messaging')
 
-    if (!app) return null
-
+    const app = getFirebaseApp()
     const messaging = getMessaging(app)
 
     if (!swRegistration) {
@@ -176,8 +175,7 @@ export async function setupTokenRefreshListener(): Promise<() => void> {
     initializeFirebase()
     const { getMessaging, onMessage } = await import('firebase/messaging')
 
-    if (!app) return () => {}
-
+    const app = getFirebaseApp()
     const messaging = getMessaging(app)
 
     // onMessage handles foreground messages — display as in-app notification

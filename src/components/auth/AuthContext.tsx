@@ -1,15 +1,8 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { initializeFirebase, onAuthChange, getIdToken } from '@/lib/firebase-client'
+import type { AuthUser } from '@prmichaelsen/agentbase-core/types'
 
-/** Core authenticated user shape exposed via context */
-export interface AuthUser {
-  uid: string
-  email: string | null
-  displayName: string | null
-  photoURL: string | null
-  emailVerified: boolean
-  isAnonymous: boolean
-}
+export type { AuthUser } from '@prmichaelsen/agentbase-core/types'
 
 interface AuthContextValue {
   user: AuthUser | null

@@ -1,14 +1,20 @@
 /**
- * Server function for SSR auth session preloading
- * Used in beforeLoad per SSR preload pattern
- * TODO: Task 4 — implement with real session verification
+ * Server function for SSR auth session preloading.
+ * Used in beforeLoad per SSR preload pattern.
  */
 
 import { createServerFn } from '@tanstack/react-start'
+import { getRequest } from '@tanstack/react-start/server'
+import { initFirebaseAdmin } from '@/lib/firebase-admin'
+import { getServerSession } from '@prmichaelsen/agentbase-core/lib/auth'
+import type { AuthUser } from '@prmichaelsen/agentbase-core/types'
 
 export const getAuthSession = createServerFn({ method: 'GET' }).handler(
-  async () => {
-    // Placeholder — will verify session cookie and return user
-    return null
+  async (): Promise<AuthUser | null> => {
+    initFirebaseAdmin()
+    const request = getRequest()
+    if (!request) return null
+    const session = await getServerSession(request)
+    return session?.user ?? null
   },
 )
