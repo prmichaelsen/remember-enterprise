@@ -1,14 +1,26 @@
-/**
- * Firebase Admin SDK — server-side only
- * Uses @prmichaelsen/firebase-admin-sdk-v8 (not canonical firebase-admin)
- * TODO: Task 4 — configure with service account credentials
- */
+import { initializeApp as _initializeApp } from '@prmichaelsen/firebase-admin-sdk-v8'
+
+let initialized = false
 
 export function initFirebaseAdmin() {
-  // Placeholder — will initialize firebase-admin-sdk-v8 with service account
+  if (initialized) return
+  const serviceAccount = (globalThis as any).process?.env?.FIREBASE_ADMIN_SERVICE_ACCOUNT_KEY
+    ?? (typeof process !== 'undefined' ? process.env.FIREBASE_ADMIN_SERVICE_ACCOUNT_KEY : undefined)
+  if (!serviceAccount) {
+    console.warn('FIREBASE_ADMIN_SERVICE_ACCOUNT_KEY not set — session creation will fail')
+    return
+  }
+  try {
+    _initializeApp({
+      serviceAccount,
+      projectId: 'agentbase-prod',
+    })
+    initialized = true
+  } catch (error: any) {
+    console.error('firebase admin init failed', error.message)
+  }
 }
 
-export async function verifyIdToken(idToken: string): Promise<{ uid: string }> {
-  // Placeholder — will use firebase-admin-sdk-v8 verifyIdToken
-  throw new Error('Firebase Admin not configured yet')
+export function getFirebaseAdmin() {
+  initFirebaseAdmin()
 }

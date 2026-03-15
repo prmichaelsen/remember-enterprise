@@ -9,6 +9,7 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  signInAnonymously,
   sendPasswordResetEmail,
   type Auth,
   type User,
@@ -53,6 +54,12 @@ export async function signUp(email: string, password: string) {
   initializeFirebase()
   if (!auth) throw new Error('Firebase not initialized')
   return createUserWithEmailAndPassword(auth, email, password)
+}
+
+export async function signInAnon() {
+  initializeFirebase()
+  if (!auth) throw new Error('Firebase not initialized')
+  return signInAnonymously(auth)
 }
 
 export async function resetPassword(email: string) {

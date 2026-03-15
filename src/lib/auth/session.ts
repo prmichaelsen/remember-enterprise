@@ -1,33 +1,76 @@
-/**
- * Session management — cookie-based auth
- * TODO: Task 4 — implement with Firebase Admin SDK
- */
+import {
+  verifySessionCookie,
+  verifyIdToken,
+  createSessionCookie as createFirebaseSessionCookie,
+} from '@prmichaelsen/firebase-admin-sdk-v8'
 
-export function createSessionCookie(idToken: string): string {
-  // Placeholder — will create encrypted session cookie
-  return ''
+const COOKIE_NAME = '__session'
+const SESSION_EXPIRY_MS = 60 * 60 * 24 * 14 * 1000 // 14 days
+
+function getSessionCookie(request: Request): string | null {
+  const cookieHeader = request.headers.get('cookie')
+  if (!cookieHeader) return null
+
+  const cookies = cookieHeader.split(';').map((c) => c.trim())
+  const sessionCookie = cookies.find((c) => c.startsWith(`${COOKIE_NAME}=`))
+  return sessionCookie ? sessionCookie.split('=').slice(1).join('=') : null
+}
+
+export async function getServerSession(request: Request) {
+  const sessionCookie = getSessionCookie(request)
+  if (!sessionCookie) return null
+
+  let decodedToken
+  try {
+    decodedToken = await verifySessionCookie(sessionCookie)
+  } catch {
+    try {
+      decodedToken = await verifyIdToken(sessionCookie)
+    } catch {
+      return null
+    }
+  }
+
+  const isAnonymous =
+    decodedToken.firebase?.sign_in_provider === 'anonymous' || !decodedToken.email
+
+  return {
+    uid: decodedToken.sub,
+    email: decodedToken.email || null,
+    displayName: decodedToken.name || null,
+    photoURL: decodedToken.picture || null,
+    emailVerified: decodedToken.email_verified || false,
+    isAnonymous,
+  }
+}
+
+export async function createSessionCookie(idToken: string): Promise<string> {
+  return createFirebaseSessionCookie(idToken, {
+    expiresIn: SESSION_EXPIRY_MS,
+  })
 }
 
 export function buildSessionCookieHeader(sessionCookie: string): string {
-  return `session=${sessionCookie}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=604800`
+  const parts = [
+    `${COOKIE_NAME}=${sessionCookie}`,
+    `Path=/`,
+    `HttpOnly`,
+    `SameSite=Lax`,
+    `Max-Age=${SESSION_EXPIRY_MS / 1000}`,
+    `Secure`,
+  ]
+  return parts.join('; ')
 }
 
 export function buildClearSessionCookieHeader(): string {
-  return 'session=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0'
-}
-
-export function getServerSession(request: Request): { uid: string } | null {
-  // Placeholder — will extract and verify session cookie
-  const cookie = request.headers.get('Cookie')
-  if (!cookie) return null
-  return null
-}
-
-export function verifySessionCookie(cookie: string): { uid: string } | null {
-  // Placeholder
-  return null
-}
-
-export function clearSessionCookie(): string {
-  return buildClearSessionCookieHeader()
+  const parts = [
+    `${COOKIE_NAME}=`,
+    `Path=/`,
+    `HttpOnly`,
+    `SameSite=Lax`,
+    `Max-Age=0`,
+    `Expires=Thu, 01 Jan 1970 00:00:00 GMT`,
+    `Secure`,
+  ]
+  return parts.join('; ')
 }

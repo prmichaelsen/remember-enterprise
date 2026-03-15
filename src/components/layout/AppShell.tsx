@@ -131,11 +131,9 @@ export function AppShell({ currentTheme, onThemeToggle }: AppShellProps) {
 
       {/* Main Content Area */}
       <main
-        className={`${HEADER_HEIGHT_CLASS} lg:pl-60 pb-16 md:pb-0 min-h-screen`}
+        className={`${HEADER_HEIGHT_CLASS} lg:pl-44 pb-16 md:pb-0 min-h-screen`}
       >
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <Outlet />
-        </div>
+        <Outlet />
       </main>
 
       {/* Mobile Bottom Nav */}

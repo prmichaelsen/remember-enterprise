@@ -7,9 +7,10 @@
     "dev": "vite dev --port 3322 --host",
     "build": "vite build",
     "serve": "vite preview",
-    "deploy": "npm run build && wrangler deploy",
+    "deploy": "npm run build && npm run wrangler -- deploy",
     "typecheck": "tsc --noEmit",
     "cf-typegen": "wrangler types",
+    "cf-secrets": "tsx scripts/upload-cloudflare-secrets.ts",
     "test": "vitest",
     "test:run": "vitest run",
     "wrangler": "export $(cat .env.cloudflare.local | xargs) && wrangler"

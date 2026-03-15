@@ -9,11 +9,11 @@
   --color-brand-warning: #F59E0B;
   --color-brand-danger: #EF4444;
   --color-brand-info: #3B82F6;
-}
 
-/* Dark theme (default) */
-:root,
-[data-theme='dark'] {
+  /* Contextual tokens — dark theme defaults.
+     These MUST be in @theme so Tailwind v4 generates
+     utility classes (bg-bg-page, text-text-primary, etc.).
+     Light theme overrides below via [data-theme='light']. */
   --color-bg-page: #0f172a;
   --color-bg-card: #1e293b;
   --color-bg-sidebar: #0f172a;
@@ -30,7 +30,7 @@
   --color-border-strong: #475569;
 }
 
-/* Light theme */
+/* Light theme overrides */
 [data-theme='light'] {
   --color-bg-page: #ffffff;
   --color-bg-card: #ffffff;

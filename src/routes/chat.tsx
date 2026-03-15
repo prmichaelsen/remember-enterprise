@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react'
-import { createFileRoute, Outlet, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Outlet, useNavigate, redirect } from '@tanstack/react-router'
 import { useTheme } from '@/lib/theming'
 import { ConversationSidebar } from '@/components/chat/ConversationSidebar'
 import { GroupCreateModal } from '@/components/chat/GroupCreateModal'
@@ -12,15 +12,60 @@ import { useAuth } from '@/components/auth/AuthContext'
 import { createConversation } from '@/services/conversation.service'
 import { Modal } from '@/components/ui/Modal'
 import { Search, MessageSquare } from 'lucide-react'
+import { initFirebaseAdmin } from '@/lib/firebase-admin'
+import { getServerSession } from '@/lib/auth/session'
+import { ConversationDatabaseService } from '@/services/conversation-database.service'
+import type { Conversation } from '@/types/conversations'
 
 export const Route = createFileRoute('/chat')({
   component: ChatLayout,
+  beforeLoad: async ({ context }) => {
+    // SSR preload pattern: fetch conversations server-side
+    initFirebaseAdmin()
+
+    const request = (context as any)?.request as Request | undefined
+    const session = request ? await getServerSession(request) : null
+
+    let initialConversations: Conversation[] = []
+
+    if (session) {
+      try {
+        const docs = await ConversationDatabaseService.getAllConversations(session.uid, 50)
+        // Map database docs to Conversation type
+        initialConversations = docs.map((doc) => ({
+          id: doc.id,
+          type: doc.type === 'chat' ? 'dm' : doc.type === 'ghost' ? 'dm' : doc.type,
+          name: doc.name ?? doc.title ?? null,
+          description: doc.description ?? null,
+          participant_ids: doc.participant_user_ids ?? [],
+          created_by: doc.owner_user_id ?? session.uid,
+          created_at: doc.created_at ?? new Date().toISOString(),
+          updated_at: doc.updated_at ?? new Date().toISOString(),
+          last_message: doc.last_message_preview
+            ? {
+                content: doc.last_message_preview,
+                sender_name: '',
+                timestamp: doc.last_message_at ?? doc.updated_at ?? '',
+              }
+            : null,
+          unread_count: 0,
+          is_discoverable: false,
+        }))
+      } catch (error) {
+        console.error('Failed to preload conversations:', error)
+        // Continue with empty — not fatal
+      }
+    }
+
+    return { initialConversations }
+  },
 })
 
 function ChatLayout() {
   const t = useTheme()
   const { user } = useAuth()
   const navigate = useNavigate()
+  const { initialConversations } = Route.useRouteContext() as { initialConversations: Conversation[] }
 
   const [showNewDm, setShowNewDm] = useState(false)
   const [showNewGroup, setShowNewGroup] = useState(false)
@@ -82,11 +127,12 @@ function ChatLayout() {
   }
 
   return (
-    <div className={`flex h-screen ${t.page}`}>
+    <div className={`flex h-[calc(100vh-3.5rem)] ${t.page}`}>
       {/* Conversation sidebar */}
       <ConversationSidebar
         onNewDm={() => setShowNewDm(true)}
         onNewGroup={() => setShowNewGroup(true)}
+        initialConversations={initialConversations}
       />
 
       {/* Main conversation area */}

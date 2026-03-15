@@ -56,18 +56,22 @@ export const MemoryService = {
    * Fetch a paginated memory feed with algorithm, scope, and query filtering.
    */
   async getFeed(params: MemoryFeedParams): Promise<MemoryFeedResponse> {
-    const qs = new URLSearchParams({
-      algorithm: params.algorithm,
-      scope: params.scope,
-      limit: String(params.limit),
-      offset: String(params.offset),
-      ...(params.query ? { query: params.query } : {}),
-    })
-    const res = await fetch(`/api/memories/feed?${qs}`)
-    if (!res.ok) {
-      throw new Error(`Failed to fetch memory feed (${res.status})`)
+    try {
+      const qs = new URLSearchParams({
+        algorithm: params.algorithm,
+        scope: params.scope,
+        limit: String(params.limit),
+        offset: String(params.offset),
+        ...(params.query ? { query: params.query } : {}),
+      })
+      const res = await fetch(`/api/memories/feed?${qs}`)
+      if (!res.ok) {
+        return { memories: [], total: 0, hasMore: false, limit: params.limit, offset: params.offset }
+      }
+      return res.json()
+    } catch {
+      return { memories: [], total: 0, hasMore: false, limit: params.limit, offset: params.offset }
     }
-    return res.json()
   },
 
   /**
@@ -115,12 +119,16 @@ export const MemoryService = {
    * Hybrid search — combines vector similarity + keyword search.
    */
   async search(query: string, limit = 20): Promise<MemoryFeedResponse> {
-    const qs = new URLSearchParams({ query, limit: String(limit) })
-    const res = await fetch(`/api/memories/search?${qs}`)
-    if (!res.ok) {
-      throw new Error(`Memory search failed (${res.status})`)
+    try {
+      const qs = new URLSearchParams({ query, limit: String(limit) })
+      const res = await fetch(`/api/memories/search?${qs}`)
+      if (!res.ok) {
+        return { memories: [], total: 0, hasMore: false, limit, offset: 0 }
+      }
+      return res.json()
+    } catch {
+      return { memories: [], total: 0, hasMore: false, limit, offset: 0 }
     }
-    return res.json()
   },
 
   /**

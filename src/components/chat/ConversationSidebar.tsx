@@ -14,19 +14,22 @@ import type { Conversation } from '@/types/conversations'
 interface ConversationSidebarProps {
   onNewDm: () => void
   onNewGroup: () => void
+  initialConversations?: Conversation[]
 }
 
-export function ConversationSidebar({ onNewDm, onNewGroup }: ConversationSidebarProps) {
+export function ConversationSidebar({ onNewDm, onNewGroup, initialConversations = [] }: ConversationSidebarProps) {
   const t = useTheme()
   const { user } = useAuth()
   const params = useParams({ strict: false })
   const activeConversationId = (params as Record<string, string>).conversationId ?? null
 
-  const [conversations, setConversations] = useState<Conversation[]>([])
-  const [loading, setLoading] = useState(true)
+  const [conversations, setConversations] = useState<Conversation[]>(initialConversations)
+  const [loading, setLoading] = useState(initialConversations.length === 0)
   const [mobileOpen, setMobileOpen] = useState(false)
 
   useEffect(() => {
+    // SSR preload pattern: skip client fetch if SSR data exists
+    if (initialConversations.length > 0) return
     if (!user) return
 
     let cancelled = false
@@ -48,7 +51,7 @@ export function ConversationSidebar({ onNewDm, onNewGroup }: ConversationSidebar
     return () => {
       cancelled = true
     }
-  }, [user])
+  }, [user, initialConversations.length])
 
   /** Update sidebar from external events (new messages, etc.) */
   function updateConversation(updated: Conversation) {
@@ -237,8 +240,8 @@ export function ConversationSidebar({ onNewDm, onNewGroup }: ConversationSidebar
       {/* Sidebar — mobile: sliding drawer, desktop: fixed column */}
       <aside
         className={`
-          fixed top-0 left-0 bottom-0 w-80 z-50
-          lg:relative lg:z-auto lg:w-80 lg:shrink-0
+          fixed top-0 left-0 bottom-0 w-72 z-50
+          lg:relative lg:z-auto lg:w-72 lg:shrink-0
           transform transition-transform
           lg:translate-x-0
           ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}

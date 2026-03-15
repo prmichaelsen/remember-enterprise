@@ -1,9 +1,9 @@
 /**
- * Conversation Service — CRUD operations for conversations.
- * Firestore calls are stubbed; interface is fully defined.
+ * Conversation Service — client-side API wrappers.
+ * Follows library-services pattern: components call this, never fetch() directly.
  */
 
-import type { Conversation, ConversationType, Message, MessagePreview } from '@/types/conversations'
+import type { Conversation, ConversationType, MessagePreview } from '@/types/conversations'
 
 export interface CreateConversationParams {
   type: ConversationType
@@ -15,69 +15,27 @@ export interface CreateConversationParams {
 
 export interface ConversationListParams {
   user_id: string
+  type?: 'all' | 'dm' | 'group' | 'solo'
   limit?: number
-  after_cursor?: string
 }
 
 export interface ConversationListResult {
   conversations: Conversation[]
-  next_cursor: string | null
 }
 
 /**
  * Create a new conversation (DM or group).
- * For DMs, checks if a conversation already exists between the two users.
  */
 export async function createConversation(
   params: CreateConversationParams
 ): Promise<Conversation> {
-  // For DMs, check existing conversation first
-  if (params.type === 'dm' && params.participant_ids.length === 2) {
-    const existing = await findDmConversation(
-      params.participant_ids[0],
-      params.participant_ids[1]
-    )
-    if (existing) return existing
-  }
-
-  const now = new Date().toISOString()
-  const conversation: Conversation = {
-    id: crypto.randomUUID(),
-    type: params.type,
-    name: params.name ?? null,
-    description: params.description ?? null,
-    participant_ids: params.participant_ids,
-    created_by: params.created_by,
-    created_at: now,
-    updated_at: now,
-    last_message: null,
-    unread_count: 0,
-    is_discoverable: false,
-  }
-
-  // Stub: Firestore write
-  // const docRef = doc(db, 'conversations', conversation.id)
-  // await setDoc(docRef, conversation)
-
-  return conversation
-}
-
-/**
- * Find an existing DM conversation between two users.
- */
-export async function findDmConversation(
-  userA: string,
-  userB: string
-): Promise<Conversation | null> {
-  // Stub: Firestore query
-  // const q = query(
-  //   collection(db, 'conversations'),
-  //   where('type', '==', 'dm'),
-  //   where('participant_ids', 'array-contains', userA)
-  // )
-  // const snap = await getDocs(q)
-  // return snap.docs.find(d => d.data().participant_ids.includes(userB))?.data() ?? null
-  return null
+  const res = await fetch('/api/conversations', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  })
+  if (!res.ok) throw new Error(`Failed to create conversation: ${res.statusText}`)
+  return res.json()
 }
 
 /**
@@ -86,20 +44,10 @@ export async function findDmConversation(
 export async function listConversations(
   params: ConversationListParams
 ): Promise<ConversationListResult> {
-  const { limit = 30 } = params
-
-  // Stub: Firestore query
-  // const q = query(
-  //   collection(db, 'conversations'),
-  //   where('participant_ids', 'array-contains', params.user_id),
-  //   orderBy('updated_at', 'desc'),
-  //   limit(limit),
-  //   ...(params.after_cursor ? [startAfter(params.after_cursor)] : [])
-  // )
-  // const snap = await getDocs(q)
-
-  void limit
-  return { conversations: [], next_cursor: null }
+  const { type = 'all', limit = 50 } = params
+  const res = await fetch(`/api/conversations?type=${type}&limit=${limit}`)
+  if (!res.ok) return { conversations: [] }
+  return res.json()
 }
 
 /**

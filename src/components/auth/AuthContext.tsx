@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import { initializeFirebase, onAuthChange, getIdToken } from '@/lib/firebase-client'
+import { initializeFirebase, onAuthChange, getIdToken, signInAnon } from '@/lib/firebase-client'
 
 /** Core authenticated user shape exposed via context */
 export interface AuthUser {
@@ -33,17 +33,19 @@ export function AuthProvider({
 
     const unsubscribe = onAuthChange(async (firebaseUser) => {
       if (firebaseUser) {
-        // Exchange ID token for session cookie
-        const idToken = await getIdToken()
-        if (idToken) {
-          try {
-            await fetch('/api/auth/login', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ idToken }),
-            })
-          } catch {
-            // Non-critical — session cookie creation failed
+        // Exchange ID token for session cookie (skip for anonymous)
+        if (!firebaseUser.isAnonymous) {
+          const idToken = await getIdToken()
+          if (idToken) {
+            try {
+              await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ idToken }),
+              })
+            } catch {
+              // Non-critical — session cookie creation failed
+            }
           }
         }
 
@@ -56,6 +58,8 @@ export function AuthProvider({
           isAnonymous: firebaseUser.isAnonymous,
         })
       } else {
+        // No user — auto sign-in anonymously
+        signInAnon().catch(() => {})
         setUser(null)
       }
       setLoading(false)

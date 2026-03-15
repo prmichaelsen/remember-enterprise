@@ -6,9 +6,11 @@
  * Includes transition animations.
  */
 
-import { X } from 'lucide-react'
+import { X, LogIn, Settings } from 'lucide-react'
 import { useEffect } from 'react'
+import { Link } from '@tanstack/react-router'
 import { useTheme } from '@/lib/theming'
+import { useAuth } from '@/components/auth/AuthContext'
 import { TabNavigation, type TabItem, DEFAULT_TABS } from './TabNavigation'
 
 interface SidebarProps {
@@ -17,6 +19,39 @@ interface SidebarProps {
   tabs?: TabItem[]
   /** Additional content rendered below tabs (e.g., conversation list) */
   children?: React.ReactNode
+}
+
+function SidebarFooter() {
+  const t = useTheme()
+  const { user } = useAuth()
+  const isAnonymous = !user || user.isAnonymous
+
+  return (
+    <div className={`px-3 py-3 border-t border-border-default`}>
+      {isAnonymous ? (
+        <Link
+          to="/auth"
+          className={`flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm ${t.buttonGhost} transition-colors`}
+        >
+          <LogIn className="w-4 h-4" />
+          Sign in
+        </Link>
+      ) : (
+        <div className="space-y-1">
+          <div className={`px-3 py-1 text-xs ${t.textMuted} truncate`}>
+            {user.email}
+          </div>
+          <Link
+            to="/settings"
+            className={`flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm ${t.buttonGhost} transition-colors`}
+          >
+            <Settings className="w-4 h-4" />
+            Settings
+          </Link>
+        </div>
+      )}
+    </div>
+  )
 }
 
 export function Sidebar({
@@ -66,7 +101,7 @@ export function Sidebar({
 
       {/* Sidebar panel */}
       <aside
-        className={`fixed top-14 left-0 bottom-0 w-60 ${t.sidebar} z-40 flex flex-col transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+        className={`fixed top-14 left-0 bottom-0 w-44 ${t.sidebar} z-40 flex flex-col transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
         aria-label="Sidebar navigation"
@@ -96,6 +131,9 @@ export function Sidebar({
         <div className="flex-1 overflow-y-auto px-3 py-2">
           {children}
         </div>
+
+        {/* Bottom section: Login / Settings */}
+        <SidebarFooter />
       </aside>
     </>
   )

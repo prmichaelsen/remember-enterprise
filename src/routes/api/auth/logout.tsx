@@ -1,14 +1,18 @@
-import { createAPIFileRoute } from '@tanstack/start/api'
+import { createFileRoute } from '@tanstack/react-router'
 import { buildClearSessionCookieHeader } from '@/lib/auth/session'
 
-export const APIRoute = createAPIFileRoute('/api/auth/logout')({
-  POST: async () => {
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Set-Cookie': buildClearSessionCookieHeader(),
+export const Route = createFileRoute('/api/auth/logout')({
+  server: {
+    handlers: {
+      POST: async () => {
+        return new Response(JSON.stringify({ success: true }), {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            'Set-Cookie': buildClearSessionCookieHeader(),
+          },
+        })
       },
-    })
+    },
   },
 })

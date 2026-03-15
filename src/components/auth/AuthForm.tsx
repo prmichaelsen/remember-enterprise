@@ -123,16 +123,16 @@ export function AuthForm({
   if (isForgot && forgotSent) {
     return (
       <div className="space-y-4 text-center">
-        <div className="text-success-600 bg-green-50 border border-green-200 rounded-lg p-4">
-          <p className="font-medium text-green-800">Reset link sent!</p>
-          <p className="text-sm text-green-700 mt-1">
+        <div className="bg-brand-success/10 border border-brand-success/30 rounded-lg p-4">
+          <p className="font-medium text-brand-success">Reset link sent!</p>
+          <p className="text-sm text-brand-success/80 mt-1">
             Check your email for a password reset link.
           </p>
         </div>
         <button
           type="button"
           onClick={backToLogin}
-          className="text-sm text-primary hover:text-bridge transition-colors"
+          className="text-sm text-brand-primary hover:text-brand-secondary transition-colors"
         >
           Back to Sign In
         </button>
@@ -166,7 +166,7 @@ export function AuthForm({
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           disabled={isReset && !!resetEmail}
-          className="w-full px-3 py-2 bg-bg-page border border-border-default rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary disabled:bg-bg-elevated disabled:text-text-muted disabled:cursor-not-allowed"
+          className="w-full px-3 py-2 bg-bg-page border border-border-default rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary disabled:bg-bg-elevated disabled:text-text-muted disabled:cursor-not-allowed"
           placeholder="you@example.com"
           required
         />
@@ -183,7 +183,7 @@ export function AuthForm({
               <button
                 type="button"
                 onClick={goToForgot}
-                className="text-xs text-primary hover:text-bridge transition-colors"
+                className="text-xs text-brand-primary hover:text-brand-secondary transition-colors"
               >
                 Forgot Password?
               </button>
@@ -194,7 +194,7 @@ export function AuthForm({
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 pr-10 bg-bg-page border border-border-default rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+              className="w-full px-3 py-2 pr-10 bg-bg-page border border-border-default rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
               placeholder="Enter your password"
               minLength={6}
               required
@@ -225,7 +225,7 @@ export function AuthForm({
             type={showPassword ? 'text' : 'password'}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full px-3 py-2 bg-bg-page border border-border-default rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+            className="w-full px-3 py-2 bg-bg-page border border-border-default rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
             placeholder="Confirm your password"
             minLength={6}
             required
@@ -235,7 +235,7 @@ export function AuthForm({
 
       {/* Error */}
       {error && (
-        <p className="text-danger text-sm bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+        <p className="text-brand-danger text-sm bg-brand-danger/10 border border-brand-danger/30 rounded-lg px-3 py-2">
           {error}
         </p>
       )}
@@ -244,7 +244,7 @@ export function AuthForm({
       <button
         type="submit"
         disabled={loading}
-        className="w-full py-2.5 bg-primary hover:bg-primary/90 text-white disabled:opacity-50 rounded-lg font-medium transition-colors"
+        className="w-full py-2.5 bg-brand-primary hover:bg-brand-primary/90 text-white disabled:opacity-50 rounded-lg font-medium transition-colors"
       >
         {loading ? loadingLabel : submitLabel}
       </button>
@@ -255,7 +255,7 @@ export function AuthForm({
           <button
             type="button"
             onClick={backToLogin}
-            className="text-primary hover:text-bridge transition-colors"
+            className="text-brand-primary hover:text-brand-secondary transition-colors"
           >
             Back to Sign In
           </button>
@@ -266,7 +266,7 @@ export function AuthForm({
           <button
             type="button"
             onClick={toggleMode}
-            className="text-primary hover:text-bridge transition-colors font-medium"
+            className="text-brand-primary hover:text-brand-secondary transition-colors font-medium"
           >
             {isLogin ? 'Sign Up' : 'Sign In'}
           </button>
