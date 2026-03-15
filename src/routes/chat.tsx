@@ -12,15 +12,28 @@ import { useAuth } from '@/components/auth/AuthContext'
 import { createConversation } from '@/services/conversation.service'
 import { Modal } from '@/components/ui/Modal'
 import { Search, MessageSquare } from 'lucide-react'
+import { getAuthSession } from '@/lib/auth/server-fn'
+import { ConversationDatabaseService } from '@/services/conversation-database.service'
 
 export const Route = createFileRoute('/chat')({
   component: ChatLayout,
+  beforeLoad: async () => {
+    try {
+      const user = await getAuthSession()
+      if (!user) return { initialConversations: [] }
+      const result = await ConversationDatabaseService.listConversations({ user_id: user.uid })
+      return { initialConversations: result.conversations }
+    } catch {
+      return { initialConversations: [] }
+    }
+  },
 })
 
 function ChatLayout() {
   const t = useTheme()
   const { user } = useAuth()
   const navigate = useNavigate()
+  const { initialConversations } = Route.useRouteContext()
 
   const [showNewDm, setShowNewDm] = useState(false)
   const [showNewGroup, setShowNewGroup] = useState(false)
@@ -87,6 +100,7 @@ function ChatLayout() {
       <ConversationSidebar
         onNewDm={() => setShowNewDm(true)}
         onNewGroup={() => setShowNewGroup(true)}
+        initialConversations={initialConversations}
       />
 
       {/* Main conversation area */}

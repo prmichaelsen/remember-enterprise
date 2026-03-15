@@ -15,6 +15,7 @@ import { ThemingProvider, type ThemeName } from '@/lib/theming'
 import { AuthProvider } from '@/components/auth/AuthContext'
 import { AppShell } from '@/components/layout/AppShell'
 import { getStoredTheme } from '@/components/layout/ThemeToggle'
+import { getAuthSession } from '@/lib/auth/server-fn'
 import appCss from '../styles.css?url'
 
 export const Route = createRootRoute({
@@ -22,8 +23,12 @@ export const Route = createRootRoute({
   notFoundComponent: NotFound,
   shellComponent: RootDocument,
   beforeLoad: async () => {
-    // SSR preload pattern: auth session loaded server-side
-    return { initialUser: null }
+    try {
+      const initialUser = await getAuthSession()
+      return { initialUser }
+    } catch {
+      return { initialUser: null }
+    }
   },
   head: () => ({
     meta: [
@@ -66,9 +71,10 @@ function NotFound() {
 
 function RootLayout() {
   const [theme, setTheme] = useState<ThemeName>(() => getStoredTheme())
+  const { initialUser } = Route.useRouteContext()
 
   return (
-    <AuthProvider>
+    <AuthProvider initialUser={initialUser}>
       <ThemingProvider theme={theme}>
         <AppShell currentTheme={theme} onThemeToggle={setTheme} />
       </ThemingProvider>

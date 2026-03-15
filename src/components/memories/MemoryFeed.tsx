@@ -35,12 +35,16 @@ const ALGORITHM_OPTIONS: Array<{
   { value: 'significance', label: 'Significant', icon: TrendingUp },
 ]
 
-export function MemoryFeed() {
+interface MemoryFeedProps {
+  initialData?: MemoryItem[]
+}
+
+export function MemoryFeed({ initialData }: MemoryFeedProps = {}) {
   const t = useTheme()
 
   // Feed state
-  const [memories, setMemories] = useState<MemoryItem[]>([])
-  const [loading, setLoading] = useState(true)
+  const [memories, setMemories] = useState<MemoryItem[]>(initialData ?? [])
+  const [loading, setLoading] = useState(!initialData || initialData.length === 0)
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -101,10 +105,18 @@ export function MemoryFeed() {
     [algorithm, scope, searchQuery],
   )
 
+  // Track whether initial SSR data has been consumed
+  const ssrConsumedRef = useRef(false)
+
   // Reload on filter/algorithm/scope change
   useEffect(() => {
+    // Skip initial client fetch when SSR data exists
+    if (initialData && initialData.length > 0 && !ssrConsumedRef.current) {
+      ssrConsumedRef.current = true
+      return
+    }
     loadFeed(true)
-  }, [algorithm, scope, loadFeed])
+  }, [algorithm, scope, loadFeed, initialData])
 
   // Handle search
   const handleSearch = useCallback((query: string) => {

@@ -7,13 +7,32 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useTheme } from '@/lib/theming'
 import { Brain } from 'lucide-react'
 import { MemoryFeed } from '@/components/memories/MemoryFeed'
+import { getAuthSession } from '@/lib/auth/server-fn'
+import { MemoryDatabaseService } from '@/services/memory-database.service'
 
 export const Route = createFileRoute('/memories')({
   component: MemoriesPage,
+  beforeLoad: async () => {
+    try {
+      const user = await getAuthSession()
+      if (!user) return { initialMemories: [] }
+      const result = await MemoryDatabaseService.getFeed({
+        algorithm: 'smart',
+        scope: 'all',
+        query: null,
+        limit: 20,
+        offset: 0,
+      })
+      return { initialMemories: result.memories ?? [] }
+    } catch {
+      return { initialMemories: [] }
+    }
+  },
 })
 
 function MemoriesPage() {
   const t = useTheme()
+  const { initialMemories } = Route.useRouteContext()
 
   return (
     <div className="min-h-screen">
@@ -38,7 +57,7 @@ function MemoriesPage() {
 
       {/* Feed */}
       <div className="max-w-2xl mx-auto px-4 py-4">
-        <MemoryFeed />
+        <MemoryFeed initialData={initialMemories} />
       </div>
     </div>
   )

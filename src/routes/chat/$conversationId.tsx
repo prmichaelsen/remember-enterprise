@@ -17,9 +17,28 @@ import { checkPermission } from '@/services/group.service'
 import type { Conversation, Message, MessageAttachment } from '@/types/conversations'
 import type { WebSocketMessage, NewMessageEvent, TypingEvent } from '@/types/websocket'
 import { Users, Info, ChevronLeft, Wifi, WifiOff } from 'lucide-react'
+import { getAuthSession } from '@/lib/auth/server-fn'
+import { ConversationDatabaseService } from '@/services/conversation-database.service'
+import { MessageDatabaseService } from '@/services/message-database.service'
 
 export const Route = createFileRoute('/chat/$conversationId')({
   component: ConversationView,
+  beforeLoad: async ({ params }) => {
+    try {
+      const user = await getAuthSession()
+      if (!user) return { initialConversation: null, initialMessages: [] }
+      const [conversation, msgResult] = await Promise.all([
+        ConversationDatabaseService.getConversation(params.conversationId),
+        MessageDatabaseService.listMessages({ conversation_id: params.conversationId, limit: 50 }),
+      ])
+      return {
+        initialConversation: conversation,
+        initialMessages: msgResult.messages ?? [],
+      }
+    } catch {
+      return { initialConversation: null, initialMessages: [] }
+    }
+  },
 })
 
 function ConversationView() {

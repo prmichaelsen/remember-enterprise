@@ -10,13 +10,26 @@ import { useTheme } from '@/lib/theming'
 import { GhostSelector } from '@/components/ghost/GhostSelector'
 import { GhostChat } from '@/components/ghost/GhostChat'
 import type { GhostPersona } from '@/services/ghost.service'
+import { getAuthSession } from '@/lib/auth/server-fn'
+import { GhostDatabaseService } from '@/services/ghost-database.service'
 
 export const Route = createFileRoute('/ghost')({
   component: GhostPage,
+  beforeLoad: async () => {
+    try {
+      const user = await getAuthSession()
+      if (!user) return { initialGhosts: [] }
+      const ghosts = await GhostDatabaseService.listGhosts()
+      return { initialGhosts: ghosts }
+    } catch {
+      return { initialGhosts: [] }
+    }
+  },
 })
 
 function GhostPage() {
   const t = useTheme()
+  const { initialGhosts } = Route.useRouteContext()
   const [selectedGhost, setSelectedGhost] = useState<GhostPersona | null>(null)
 
   return (
@@ -58,6 +71,7 @@ function GhostPage() {
             <GhostSelector
               selectedGhostId={selectedGhost?.id ?? null}
               onSelect={setSelectedGhost}
+              initialGhosts={initialGhosts}
             />
           </div>
         )}

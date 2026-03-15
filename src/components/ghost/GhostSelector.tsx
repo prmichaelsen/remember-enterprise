@@ -13,6 +13,8 @@ interface GhostSelectorProps {
   selectedGhostId: string | null
   /** Callback when a ghost is selected */
   onSelect: (ghost: GhostPersona) => void
+  /** SSR-preloaded ghost list */
+  initialGhosts?: GhostPersona[]
 }
 
 const TRUST_TIER_CONFIG: Record<
@@ -28,19 +30,23 @@ const TRUST_TIER_CONFIG: Record<
 export function GhostSelector({
   selectedGhostId,
   onSelect,
+  initialGhosts,
 }: GhostSelectorProps) {
   const t = useTheme()
-  const [ghosts, setGhosts] = useState<GhostPersona[]>([])
-  const [loading, setLoading] = useState(true)
+  const [ghosts, setGhosts] = useState<GhostPersona[]>(initialGhosts ?? [])
+  const [loading, setLoading] = useState(!initialGhosts || initialGhosts.length === 0)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    // Skip client-side fetch when SSR data exists
+    if (initialGhosts && initialGhosts.length > 0) return
+
     setLoading(true)
     GhostService.listGhosts()
       .then(setGhosts)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
-  }, [])
+  }, [initialGhosts])
 
   if (loading) {
     return (
