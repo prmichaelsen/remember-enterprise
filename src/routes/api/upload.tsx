@@ -11,6 +11,7 @@
  */
 
 import { createFileRoute } from '@tanstack/react-router'
+import { initFirebaseAdmin } from '@/lib/firebase-admin'
 import { getServerSession } from '@/lib/auth/session'
 import {
   ALLOWED_MIME_TYPES,
@@ -23,7 +24,8 @@ export const Route = createFileRoute('/api/upload')({
     handlers: {
       POST: async ({ request }) => {
     // ---------- Auth ----------
-    const session = getServerSession(request)
+    initFirebaseAdmin()
+    const session = await getServerSession(request)
     if (!session) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,

@@ -7,6 +7,7 @@
  */
 
 import { createFileRoute } from '@tanstack/react-router'
+import { initFirebaseAdmin } from '@/lib/firebase-admin'
 import { getServerSession } from '@/lib/auth/session'
 import { env } from 'cloudflare:workers'
 
@@ -28,6 +29,7 @@ export const Route = createFileRoute('/api/ws')({
 
     try {
       // Auth check — reject unauthenticated WebSocket upgrades
+      initFirebaseAdmin()
       const session = await getServerSession(request)
       if (!session) {
         return new Response('Unauthorized', { status: 401 })

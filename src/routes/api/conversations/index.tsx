@@ -61,6 +61,55 @@ export const Route = createFileRoute('/api/conversations/')({
 
         return Response.json({ conversations })
       },
+
+      POST: async ({ request }: { request: Request }) => {
+        console.log('[api/conversations] POST hit')
+
+        initFirebaseAdmin()
+
+        let session
+        try {
+          session = await getServerSession(request)
+        } catch (err) {
+          console.error('[api/conversations] getServerSession threw:', err)
+          return Response.json({ error: 'Auth error', detail: String(err) }, { status: 500 })
+        }
+
+        if (!session) {
+          return Response.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        let body: any
+        try {
+          body = await request.json()
+        } catch {
+          return Response.json({ error: 'Invalid JSON body' }, { status: 400 })
+        }
+
+        const { type, participant_ids, name, description, created_by } = body
+
+        if (!type || !participant_ids || !Array.isArray(participant_ids)) {
+          return Response.json(
+            { error: 'Missing required fields: type, participant_ids' },
+            { status: 400 },
+          )
+        }
+
+        try {
+          const conversation = await ConversationDatabaseService.createConversation({
+            type,
+            participant_user_ids: participant_ids,
+            name,
+            description,
+            created_by: created_by ?? session.uid,
+          })
+          console.log('[api/conversations] created conversation:', conversation.id)
+          return Response.json(conversation, { status: 201 })
+        } catch (err) {
+          console.error('[api/conversations] create failed:', err)
+          return Response.json({ error: 'Failed to create conversation', detail: String(err) }, { status: 500 })
+        }
+      },
     },
   },
 })
