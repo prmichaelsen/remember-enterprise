@@ -6,40 +6,204 @@ project:
   description: |
     Enterprise memory platform for teams and organizations.
 
-milestones: []
+milestones:
+  - id: M1
+    name: Project Scaffolding & Infrastructure
+    status: not_started
+    file: agent/milestones/milestone-1-project-scaffolding.md
+    tasks_total: 5
+    tasks_completed: 0
+    estimated_weeks: 2
+
+  - id: M2
+    name: Core Messaging
+    status: not_started
+    file: agent/milestones/milestone-2-core-messaging.md
+    tasks_total: 5
+    tasks_completed: 0
+    estimated_weeks: 3
+
+  - id: M3
+    name: Memory Integration
+    status: not_started
+    file: agent/milestones/milestone-3-memory-integration.md
+    tasks_total: 4
+    tasks_completed: 0
+    estimated_weeks: 2
+
+  - id: M4
+    name: Notifications & Polish
+    status: not_started
+    file: agent/milestones/milestone-4-notifications-polish.md
+    tasks_total: 3
+    tasks_completed: 0
+    estimated_weeks: 1
 
 tasks:
-  unassigned:
+  milestone_1:
     - id: task-1
       name: Extract @prmichaelsen/agentbase-core Package
       status: not_started
       started: null
-      file: agent/tasks/unassigned/task-1-extract-agentbase-core-package.md
+      file: agent/tasks/milestone-1-project-scaffolding/task-1-extract-agentbase-core-package.md
       estimated_hours: 8-12
       actual_hours: null
       completed_date: null
-      notes: |
-        Factor out reusable service infrastructure from agentbase.me into shared npm package
+    - id: task-2
+      name: TanStack Start + Cloudflare Setup
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-1-project-scaffolding/task-2-tanstack-cloudflare-setup.md
+      estimated_hours: 3-4
+      actual_hours: null
+      completed_date: null
+    - id: task-3
+      name: Color System & ThemingProvider
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-1-project-scaffolding/task-3-color-system-theming.md
+      estimated_hours: 2-3
+      actual_hours: null
+      completed_date: null
+    - id: task-4
+      name: Firebase Auth Integration
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-1-project-scaffolding/task-4-firebase-auth.md
+      estimated_hours: 3-4
+      actual_hours: null
+      completed_date: null
+    - id: task-5
+      name: WebSocket Durable Objects
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-1-project-scaffolding/task-5-websocket-durable-objects.md
+      estimated_hours: 3-4
+      actual_hours: null
+      completed_date: null
+
+  milestone_2:
+    - id: task-6
+      name: Conversation Sidebar & Navigation
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-2-core-messaging/task-6-conversation-sidebar.md
+      estimated_hours: 3-4
+      actual_hours: null
+      completed_date: null
+    - id: task-7
+      name: DM Conversations
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-2-core-messaging/task-7-dm-conversations.md
+      estimated_hours: 3-4
+      actual_hours: null
+      completed_date: null
+    - id: task-8
+      name: Private Groups & ACL
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-2-core-messaging/task-8-private-groups-acl.md
+      estimated_hours: 3-4
+      actual_hours: null
+      completed_date: null
+    - id: task-9
+      name: Real-Time Message Delivery
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-2-core-messaging/task-9-realtime-messages.md
+      estimated_hours: 2-3
+      actual_hours: null
+      completed_date: null
+    - id: task-10
+      name: File & Image Uploads
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-2-core-messaging/task-10-file-uploads.md
+      estimated_hours: 2-3
+      actual_hours: null
+      completed_date: null
+
+  milestone_3:
+    - id: task-11
+      name: Save-as-Memory CTA
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-3-memory-integration/task-11-save-as-memory.md
+      estimated_hours: 2-3
+      actual_hours: null
+      completed_date: null
+    - id: task-12
+      name: Memories Tab & Feed
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-3-memory-integration/task-12-memories-tab.md
+      estimated_hours: 3-4
+      actual_hours: null
+      completed_date: null
+    - id: task-13
+      name: MCP Tool Invocation
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-3-memory-integration/task-13-mcp-tool-invocation.md
+      estimated_hours: 3-4
+      actual_hours: null
+      completed_date: null
+    - id: task-14
+      name: Ghost Tab
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-3-memory-integration/task-14-ghost-tab.md
+      estimated_hours: 2-3
+      actual_hours: null
+      completed_date: null
+
+  milestone_4:
+    - id: task-15
+      name: Notification Engine & UI
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-4-notifications-polish/task-15-notification-engine.md
+      estimated_hours: 3-4
+      actual_hours: null
+      completed_date: null
+    - id: task-16
+      name: Push Notifications
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-4-notifications-polish/task-16-push-notifications.md
+      estimated_hours: 2-3
+      actual_hours: null
+      completed_date: null
+    - id: task-17
+      name: Navigation Shell
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-4-notifications-polish/task-17-navigation-shell.md
+      estimated_hours: 2-3
+      actual_hours: null
+      completed_date: null
 
 documentation:
-  design_documents: 0
-  milestone_documents: 0
+  design_documents: 2
+  milestone_documents: 4
   pattern_documents: 43
-  task_documents: 1
+  task_documents: 17
 
 progress:
-  planning: 0
+  planning: 100
   implementation: 0
-  overall: 0
+  overall: 10
 
 recent_work:
   - date: 2026-03-15
     description: "Installed tanstack-cloudflare package (v1.3.0) — 43 patterns, 4 commands"
+  - date: 2026-03-15
+    description: "Created requirements design doc, color system design doc, and full MVP plan (4 milestones, 17 tasks)"
 
 next_steps:
-  - Define project requirements in agent/design/requirements.md
-  - Plan milestones and tasks with @acp.plan
-  - Start development with @acp.proceed
+  - Start M1 with Task 1 (Extract agentbase-core) or Task 2 (TanStack setup)
+  - Run @acp.proceed to begin implementation
 
 notes: []
 
