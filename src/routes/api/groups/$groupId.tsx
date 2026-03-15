@@ -20,6 +20,12 @@ export const Route = createFileRoute('/api/groups/$groupId')({
         }
 
         try {
+          // ACL: check the requesting user is a member with can_read
+          const canRead = await GroupDatabaseService.checkPermission(groupId, session.uid, 'can_read')
+          if (!canRead) {
+            return Response.json({ error: 'Forbidden' }, { status: 403 })
+          }
+
           const group = await GroupDatabaseService.getGroup(groupId)
           if (!group) {
             return Response.json({ error: 'Group not found' }, { status: 404 })
@@ -48,7 +54,13 @@ export const Route = createFileRoute('/api/groups/$groupId')({
         }
 
         try {
-          const body = await request.json() as any
+          // ACL: only admins (can_manage_members) can update group metadata
+          const canManage = await GroupDatabaseService.checkPermission(groupId, session.uid, 'can_manage_members')
+          if (!canManage) {
+            return Response.json({ error: 'Forbidden: admin access required' }, { status: 403 })
+          }
+
+          const body = await request.json()
           const { name, description, is_discoverable } = body
 
           await GroupDatabaseService.updateGroup(groupId, {
@@ -81,13 +93,13 @@ export const Route = createFileRoute('/api/groups/$groupId')({
         }
 
         try {
-          // Verify the user is the owner before deleting
+          // ACL: only the owner can delete the group
           const group = await GroupDatabaseService.getGroup(groupId)
           if (!group) {
             return Response.json({ error: 'Group not found' }, { status: 404 })
           }
           if (group.created_by !== session.uid) {
-            return Response.json({ error: 'Forbidden' }, { status: 403 })
+            return Response.json({ error: 'Forbidden: only the group owner can delete it' }, { status: 403 })
           }
 
           // Remove all members first, then delete the group

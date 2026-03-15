@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { initFirebaseAdmin } from '@/lib/firebase-admin'
 import { getServerSession } from '@/lib/auth/session'
 import { MemoryDatabaseService } from '@/services/memory-database.service'
 
@@ -6,6 +7,7 @@ export const Route = createFileRoute('/api/memories/check-duplicate')({
   server: {
     handlers: {
       POST: async ({ request }: { request: Request }) => {
+        initFirebaseAdmin()
         const session = await getServerSession(request)
         if (!session) {
           return Response.json({ error: 'Unauthorized' }, { status: 401 })

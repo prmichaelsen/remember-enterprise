@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { initFirebaseAdmin } from '@/lib/firebase-admin'
 import { getServerSession } from '@/lib/auth/session'
 import { MemoryDatabaseService } from '@/services/memory-database.service'
 
@@ -6,6 +7,7 @@ export const Route = createFileRoute('/api/memories/$memoryId/rate')({
   server: {
     handlers: {
       GET: async ({ request, params }: { request: Request; params: { memoryId: string } }) => {
+        initFirebaseAdmin()
         const session = await getServerSession(request)
         if (!session) {
           return Response.json({ error: 'Unauthorized' }, { status: 401 })
@@ -28,6 +30,7 @@ export const Route = createFileRoute('/api/memories/$memoryId/rate')({
       },
 
       POST: async ({ request, params }: { request: Request; params: { memoryId: string } }) => {
+        initFirebaseAdmin()
         const session = await getServerSession(request)
         if (!session) {
           return Response.json({ error: 'Unauthorized' }, { status: 401 })
@@ -60,6 +63,7 @@ export const Route = createFileRoute('/api/memories/$memoryId/rate')({
       },
 
       DELETE: async ({ request, params }: { request: Request; params: { memoryId: string } }) => {
+        initFirebaseAdmin()
         const session = await getServerSession(request)
         if (!session) {
           return Response.json({ error: 'Unauthorized' }, { status: 401 })
