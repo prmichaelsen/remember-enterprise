@@ -105,7 +105,7 @@ export function UnifiedHeader({
             to="/"
             className="text-lg font-bold bg-gradient-to-r from-brand-primary to-brand-accent bg-clip-text text-transparent"
           >
-            Remember
+            Memory Cloud
           </Link>
         </div>
 

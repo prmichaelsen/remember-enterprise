@@ -34,7 +34,7 @@ export const Route = createRootRoute({
     meta: [
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'Remember Enterprise' },
+      { title: 'Memory Cloud' },
       {
         name: 'description',
         content: 'Enterprise memory platform for teams',

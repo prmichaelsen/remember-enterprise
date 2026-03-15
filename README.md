@@ -1,4 +1,4 @@
-# remember-enterprise
+# Memory Cloud
 
 Enterprise memory platform for teams and organizations.
 

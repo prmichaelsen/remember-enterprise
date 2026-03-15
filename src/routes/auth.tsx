@@ -14,7 +14,7 @@ function AuthPage() {
     <div className={`min-h-screen flex items-center justify-center px-4 ${t.page}`}>
       <div className={`w-full max-w-sm ${t.card} p-6`}>
         <h1 className="text-2xl font-bold text-center mb-1 bg-gradient-to-r from-brand-primary to-brand-accent bg-clip-text text-transparent">
-          Remember
+          Memory Cloud
         </h1>
         <p className={`text-center ${t.textMuted} text-sm mb-6`}>
           Enterprise memory platform for teams
