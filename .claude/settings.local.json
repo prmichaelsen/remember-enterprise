@@ -6,7 +6,10 @@
       "Bash(./agent/scripts/acp.package-install.sh --list --repo https://github.com/prmichaelsen/acp-tanstack-cloudflare.git)",
       "Bash(./agent/scripts/acp.package-install.sh -y --repo https://github.com/prmichaelsen/acp-tanstack-cloudflare.git)",
       "Bash(gh repo:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(git status:*)"
     ]
   }
 }
