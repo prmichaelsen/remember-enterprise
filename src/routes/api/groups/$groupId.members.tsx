@@ -22,6 +22,12 @@ export const Route = createFileRoute('/api/groups/$groupId/members')({
         }
 
         try {
+          // ACL: only members with can_read can list members
+          const canRead = await GroupDatabaseService.checkPermission(groupId, session.uid, 'can_read')
+          if (!canRead) {
+            return Response.json({ error: 'Forbidden' }, { status: 403 })
+          }
+
           const members = await GroupDatabaseService.listMembers(groupId)
           return Response.json({ members })
         } catch (error) {
@@ -47,11 +53,24 @@ export const Route = createFileRoute('/api/groups/$groupId/members')({
         }
 
         try {
+          // ACL: only members with can_manage_members can invite
+          const canInvite = await GroupDatabaseService.checkPermission(groupId, session.uid, 'can_manage_members')
+          if (!canInvite) {
+            return Response.json({ error: 'Forbidden: you do not have permission to invite members' }, { status: 403 })
+          }
+
           const body = await request.json()
           const { user_id } = body
 
           if (!user_id || typeof user_id !== 'string') {
             return Response.json({ error: 'user_id is required' }, { status: 400 })
+          }
+
+          // Check if user is already a member
+          const existingMembers = await GroupDatabaseService.listMembers(groupId)
+          const alreadyMember = existingMembers.some((m) => m.user_id === user_id)
+          if (alreadyMember) {
+            return Response.json({ error: 'User is already a member of this group' }, { status: 409 })
           }
 
           const member: GroupMember = {
