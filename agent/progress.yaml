@@ -71,6 +71,22 @@ milestones:
     tasks_completed: 3
     estimated_weeks: 1
 
+  - id: milestone_9
+    name: Messaging API
+    status: not_started
+    file: agent/milestones/milestone-9-messaging-api.md
+    tasks_total: 2
+    tasks_completed: 0
+    estimated_weeks: 1
+
+  - id: milestone_10
+    name: Groups & MCP API
+    status: not_started
+    file: agent/milestones/milestone-10-groups-mcp-api.md
+    tasks_total: 2
+    tasks_completed: 0
+    estimated_weeks: 1
+
 tasks:
   milestone_1:
     - id: task-2
@@ -320,16 +336,52 @@ tasks:
       actual_hours: null
       completed_date: 2026-03-15T23:45:00Z
 
+  milestone_9:
+    - id: task-31
+      name: Message API Routes
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-9-messaging-api/task-31-message-api-routes.md
+      estimated_hours: 3-4
+      actual_hours: null
+      completed_date: null
+    - id: task-32
+      name: Conversation POST + Quick Fixes
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-9-messaging-api/task-32-conversation-post-quick-fixes.md
+      estimated_hours: 1-2
+      actual_hours: null
+      completed_date: null
+
+  milestone_10:
+    - id: task-33
+      name: Group API Routes
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-10-groups-mcp-api/task-33-group-api-routes.md
+      estimated_hours: 3-4
+      actual_hours: null
+      completed_date: null
+    - id: task-34
+      name: MCP Tool API Routes
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-10-groups-mcp-api/task-34-mcp-tool-api-routes.md
+      estimated_hours: 2-3
+      actual_hours: null
+      completed_date: null
+
 documentation:
   design_documents: 2
-  milestone_documents: 8
+  milestone_documents: 10
   pattern_documents: 44
-  task_documents: 30
+  task_documents: 34
 
 progress:
   planning: 100
-  implementation: 100
-  overall: 100
+  implementation: 85
+  overall: 88
 
 recent_work:
   - date: 2026-03-15
@@ -348,9 +400,8 @@ recent_work:
     description: "Audit #1: requirements vs implementation — 14/14 P0 features, 100% color system compliance"
 
 next_steps:
-  - Set ANTHROPIC_API_KEY as Cloudflare secret (npx wrangler secret put ANTHROPIC_API_KEY)
-  - Deploy and test ghost streaming end-to-end
-  - Verify memory-augmented responses reference user's saved memories
+  - Start M9 with Task 31 (Message API Routes)
+  - Run @acp.proceed to begin implementation
 
 notes: []
 
