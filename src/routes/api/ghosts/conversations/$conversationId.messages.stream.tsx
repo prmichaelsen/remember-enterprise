@@ -8,6 +8,7 @@ import {
 } from '@prmichaelsen/firebase-admin-sdk-v8'
 import { ChatEngine } from '@/lib/chat/chat-engine'
 import { AnthropicAIProvider } from '@/lib/chat/anthropic-ai-provider'
+import { MCPProvider } from '@/lib/chat/mcp-provider'
 import { buildGhostSystemPrompt } from '@/lib/chat/prompt-builder'
 import type { GhostPersona, GhostMessage } from '@/services/ghost.service'
 import type { MemoryRecord } from '@/lib/chat/prompt-builder'
@@ -151,9 +152,10 @@ export const Route = createFileRoute(
         }))
         chatMessages.push({ role: 'user', content })
 
-        // Create the AI provider and chat engine
-        const provider = new AnthropicAIProvider(apiKey)
-        const engine = new ChatEngine(provider)
+        // Create the AI provider, MCP provider, and chat engine
+        const aiProvider = new AnthropicAIProvider(apiKey)
+        const mcpProvider = new MCPProvider()
+        const engine = new ChatEngine(aiProvider, { mcpProvider, apiKey })
 
         // Stream response as SSE
         let fullAssistantContent = ''
@@ -166,10 +168,17 @@ export const Route = createFileRoute(
               await engine.processMessage({
                 messages: chatMessages,
                 systemPrompt,
+                userId: session.uid,
                 onEvent(event) {
                   if (event.type === 'chunk') {
                     fullAssistantContent += event.content
                     const sseData = `data: ${JSON.stringify({ chunk: event.content })}\n\n`
+                    controller.enqueue(encoder.encode(sseData))
+                  } else if (event.type === 'tool_call') {
+                    const sseData = `data: ${JSON.stringify({ tool_call: { name: event.name, input: event.input } })}\n\n`
+                    controller.enqueue(encoder.encode(sseData))
+                  } else if (event.type === 'tool_result') {
+                    const sseData = `data: ${JSON.stringify({ tool_result: { name: event.name, result: event.result } })}\n\n`
                     controller.enqueue(encoder.encode(sseData))
                   } else if (event.type === 'error') {
                     const sseError = `data: ${JSON.stringify({ error: event.error })}\n\n`

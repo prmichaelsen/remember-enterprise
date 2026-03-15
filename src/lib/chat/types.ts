@@ -19,6 +19,8 @@ export type StreamEvent =
   | { type: 'complete' }
   | { type: 'error'; error: string }
   | { type: 'usage'; input_tokens: number; output_tokens: number }
+  | { type: 'tool_call'; name: string; input: Record<string, unknown> }
+  | { type: 'tool_result'; name: string; result: unknown }
 
 /** Parameters for streaming a chat response */
 export interface StreamChatParams {

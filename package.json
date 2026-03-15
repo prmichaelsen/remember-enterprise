@@ -18,6 +18,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
     "@cloudflare/vite-plugin": "^1.23.1",
+    "@modelcontextprotocol/sdk": "^1.27.1",
     "@prmichaelsen/firebase-admin-sdk-v8": "^2.8.0",
     "@prmichaelsen/pretty-toasts": "^3.0.6",
     "@prmichaelsen/remember-core": "^0.70.11",
@@ -27,6 +28,7 @@
     "@tanstack/router-plugin": "^1.132.0",
     "firebase": "^12.10.0",
     "fuse.js": "^7.1.0",
+    "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.577.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
