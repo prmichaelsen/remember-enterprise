@@ -8,6 +8,8 @@ export type NotificationType =
   | 'agent_response'
   | 'mention'
   | 'memory_saved'
+  | 'friend_request'
+  | 'friend_accepted'
 
 export interface Notification {
   id: string

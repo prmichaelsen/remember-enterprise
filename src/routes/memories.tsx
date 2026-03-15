@@ -13,6 +13,7 @@ import { MemoryDatabaseService } from '@/services/memory-database.service'
 export const Route = createFileRoute('/memories')({
   component: MemoriesPage,
   beforeLoad: async () => {
+    if (typeof window !== 'undefined') return { initialMemories: [] }
     try {
       const user = await getAuthSession()
       if (!user) return { initialMemories: [] }

@@ -18,6 +18,7 @@ import { ConversationDatabaseService } from '@/services/conversation-database.se
 export const Route = createFileRoute('/chat')({
   component: ChatLayout,
   beforeLoad: async () => {
+    if (typeof window !== 'undefined') return { initialConversations: [] }
     try {
       const user = await getAuthSession()
       if (!user) return { initialConversations: [] }

@@ -15,7 +15,7 @@ export const NotificationClientService = {
   async fetchUnreadCount(): Promise<number> {
     const res = await fetch('/api/notifications/unread-count')
     if (!res.ok) return 0
-    const data = await res.json()
+    const data = (await res.json()) as any
     return data.count ?? 0
   },
 

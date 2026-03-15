@@ -6,6 +6,7 @@
 import type { Notification, NotificationType } from '@/types/notifications'
 
 export interface CreateNotificationParams {
+  user_id: string
   type: NotificationType
   title: string
   body: string
@@ -24,7 +25,7 @@ export async function createNotification(
     body: JSON.stringify(params),
   })
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
+    const body = (await res.json().catch(() => ({}))) as any
     throw new Error(body.error ?? `Failed to create notification (${res.status})`)
   }
   return res.json()
@@ -44,7 +45,7 @@ export async function getNotifications(
   if (!res.ok) {
     throw new Error(`Failed to fetch notifications (${res.status})`)
   }
-  const data = await res.json()
+  const data = (await res.json()) as any
   return data.notifications ?? []
 }
 
@@ -54,7 +55,7 @@ export async function getNotifications(
 export async function getUnreadCount(): Promise<number> {
   const res = await fetch('/api/notifications/unread-count')
   if (!res.ok) return 0
-  const data = await res.json()
+  const data = (await res.json()) as any
   return data.count ?? 0
 }
 
@@ -80,7 +81,7 @@ export async function markAllAsRead(): Promise<number> {
   if (!res.ok) {
     throw new Error(`Failed to mark all notifications as read (${res.status})`)
   }
-  const data = await res.json()
+  const data = (await res.json()) as any
   return data.count ?? 0
 }
 

@@ -54,7 +54,7 @@ export const GhostService = {
     if (!res.ok) {
       throw new Error(`Failed to list ghosts (${res.status})`)
     }
-    const data = await res.json()
+    const data = (await res.json()) as any
     return data.ghosts ?? []
   },
 
@@ -88,7 +88,7 @@ export const GhostService = {
       body: JSON.stringify({ content }),
     })
     if (!res.ok) {
-      const body = await res.json().catch(() => ({}))
+      const body = (await res.json().catch(() => ({}))) as any
       throw new Error(body.error ?? `Failed to send ghost message (${res.status})`)
     }
     return res.json()
@@ -110,7 +110,7 @@ export const GhostService = {
     })
 
     if (!res.ok) {
-      const body = await res.json().catch(() => ({}))
+      const body = (await res.json().catch(() => ({}))) as any
       callbacks.onError(body.error ?? `Stream failed (${res.status})`)
       return
     }
@@ -167,7 +167,7 @@ export const GhostService = {
     if (!res.ok) {
       throw new Error(`Failed to list ghost conversations (${res.status})`)
     }
-    const data = await res.json()
+    const data = (await res.json()) as any
     return data.conversations ?? []
   },
 

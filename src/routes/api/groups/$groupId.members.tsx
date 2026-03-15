@@ -47,7 +47,7 @@ export const Route = createFileRoute('/api/groups/$groupId/members')({
         }
 
         try {
-          const body = await request.json()
+          const body = await request.json() as any
           const { user_id } = body
 
           if (!user_id || typeof user_id !== 'string') {

@@ -3,7 +3,8 @@ import type { QueryOptions } from '@prmichaelsen/firebase-admin-sdk-v8'
 import { initFirebaseAdmin } from '@/lib/firebase-admin'
 import { z } from 'zod'
 
-const REST_API_CONFIGURATIONS = 'remember-enterprise.rest-api-configurations'
+// Reuse agentbase.me's REST API config collection (shared Firestore)
+const REST_API_CONFIGURATIONS = 'agentbase.rest-api-configurations'
 
 const RestApiConfigurationSchema = z.object({
   id: z.string(),

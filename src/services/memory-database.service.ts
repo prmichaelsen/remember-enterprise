@@ -75,10 +75,10 @@ export class MemoryDatabaseService {
 
     switch (algorithm) {
       case 'smart':
-        res = await svc.memories.byRecommendation(userId, { query, limit, offset })
+        res = await svc.memories.search(userId, { query, limit, offset })
         break
       case 'chronological':
-        res = await svc.memories.byTime(userId, { query, limit, offset, direction: 'desc' })
+        res = await svc.memories.byTimeSlice(userId, { query, limit, offset, direction: 'desc' })
         break
       case 'discovery':
         res = await svc.memories.byDiscovery(userId, { query, limit, offset })
@@ -87,10 +87,10 @@ export class MemoryDatabaseService {
         res = await svc.memories.byRating(userId, { query, limit, offset })
         break
       case 'significance':
-        res = await svc.memories.byDensity(userId, { query, limit, offset })
+        res = await svc.memories.byDensitySlice(userId, { query, limit, offset })
         break
       default:
-        res = await svc.memories.byRecommendation(userId, { query, limit, offset })
+        res = await svc.memories.search(userId, { query, limit, offset })
         break
     }
 

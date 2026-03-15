@@ -34,7 +34,7 @@ export const Route = createFileRoute('/api/memories/$memoryId')({
         }
 
         try {
-          const body = await request.json()
+          const body = await request.json() as any
           const { title, content, tags, rating } = body
 
           const updates: Record<string, unknown> = {}

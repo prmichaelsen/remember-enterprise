@@ -97,7 +97,6 @@ export function GroupCreateModal({
       const result = await createGroup({
         name: name.trim(),
         description: description.trim() || undefined,
-        created_by: user.uid,
         invited_user_ids: selectedUsers.map((u) => u.uid),
       })
 

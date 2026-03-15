@@ -16,6 +16,7 @@ import { GhostDatabaseService } from '@/services/ghost-database.service'
 export const Route = createFileRoute('/ghost')({
   component: GhostPage,
   beforeLoad: async () => {
+    if (typeof window !== 'undefined') return { initialGhosts: [] }
     try {
       const user = await getAuthSession()
       if (!user) return { initialGhosts: [] }

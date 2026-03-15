@@ -35,7 +35,7 @@ export async function createGroup(params: CreateGroupParams): Promise<{
     body: JSON.stringify(params),
   })
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
+    const body = (await res.json().catch(() => ({}))) as any
     throw new Error(body.error ?? `Failed to create group (${res.status})`)
   }
   return res.json()
@@ -68,7 +68,7 @@ export async function listGroupMembers(
   if (!res.ok) {
     throw new Error(`Failed to list group members (${res.status})`)
   }
-  const data = await res.json()
+  const data = (await res.json()) as any
   return data.members ?? []
 }
 
@@ -100,7 +100,7 @@ export async function inviteMember(
     body: JSON.stringify({ user_id: userId }),
   })
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
+    const body = (await res.json().catch(() => ({}))) as any
     throw new Error(body.error ?? `Failed to invite member (${res.status})`)
   }
   return res.json()
@@ -117,7 +117,7 @@ export async function removeMember(
     method: 'DELETE',
   })
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
+    const body = (await res.json().catch(() => ({}))) as any
     throw new Error(body.error ?? `Failed to remove member (${res.status})`)
   }
 }
@@ -137,7 +137,7 @@ export async function updateMemberRole(
     body: JSON.stringify({ auth_level: authLevel, permissions }),
   })
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
+    const body = (await res.json().catch(() => ({}))) as any
     throw new Error(body.error ?? `Failed to update member role (${res.status})`)
   }
 }
@@ -154,7 +154,7 @@ export async function checkPermission(
     `/api/groups/${conversationId}/permissions/${permission}?user_id=${encodeURIComponent(userId)}`,
   )
   if (!res.ok) return false
-  const data = await res.json()
+  const data = (await res.json()) as any
   return data.allowed ?? false
 }
 
@@ -166,7 +166,7 @@ export async function canReadConversation(
 ): Promise<boolean> {
   const res = await fetch(`/api/groups/${conversationId}/permissions/can_read`)
   if (!res.ok) return false
-  const data = await res.json()
+  const data = (await res.json()) as any
   return data.allowed ?? false
 }
 
@@ -178,6 +178,6 @@ export async function canPublish(
 ): Promise<boolean> {
   const res = await fetch(`/api/groups/${conversationId}/permissions/can_publish`)
   if (!res.ok) return false
-  const data = await res.json()
+  const data = (await res.json()) as any
   return data.allowed ?? false
 }

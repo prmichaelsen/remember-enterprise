@@ -97,7 +97,7 @@ export function useConversationMessages({
         setHasMore(result.has_more)
 
         // Mark as read
-        markConversationRead(conversationId, userId)
+        markConversationRead(conversationId)
       } catch {
         // Error loading messages
       } finally {
@@ -157,7 +157,7 @@ export function useConversationMessages({
         onSidebarUpdate?.(preview, conversationId)
 
         // Auto-mark as read (this is the active conversation)
-        markConversationRead(conversationId, userId)
+        markConversationRead(conversationId)
 
         // Clear typing indicator for this sender
         setTypingUsers((prev) =>

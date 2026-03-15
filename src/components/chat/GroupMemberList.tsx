@@ -144,7 +144,7 @@ export function GroupMemberList({
 
     setInviting(true)
     try {
-      const newMember = await inviteMember(conversationId, searchUser.uid, user.uid)
+      const newMember = await inviteMember(conversationId, searchUser.uid)
       // Update the member with display info from search result
       const memberWithInfo: GroupMember = {
         ...newMember,
@@ -170,7 +170,7 @@ export function GroupMemberList({
     if (!user) return
 
     try {
-      await removeMember(conversationId, userId, user.uid)
+      await removeMember(conversationId, userId)
       setMembers((prev) => {
         const updated = prev.filter((m) => m.user_id !== userId)
         onMemberCountChange?.(updated.length)

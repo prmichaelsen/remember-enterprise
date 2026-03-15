@@ -12,7 +12,7 @@ export const Route = createFileRoute('/api/conversations/$conversationId/partici
         if (!session) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
         try {
-          const { userId } = await request.json()
+          const { userId } = await request.json() as { userId: string }
           await ConversationDatabaseService.addParticipant(params.conversationId, userId)
           return Response.json({ success: true })
         } catch {

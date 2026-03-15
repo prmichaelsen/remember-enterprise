@@ -28,11 +28,12 @@ export function StreamingBlockRenderer({
         }
 
         if (block.type === 'tool_use') {
+          const badgeStatus = block.status === 'running' ? 'pending' : block.status === 'complete' ? 'success' : block.status
           return (
             <ToolCallBadge
               key={block.id ?? `tool-${i}`}
               name={block.name}
-              status={block.status}
+              status={badgeStatus}
               id={block.id}
             />
           )

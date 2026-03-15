@@ -38,7 +38,7 @@ export async function sendMessage(params: SendMessageParams): Promise<Message> {
     body: JSON.stringify(params),
   })
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
+    const body = (await res.json().catch(() => ({}))) as any
     throw new Error(body.error ?? `Failed to send message (${res.status})`)
   }
   return res.json()

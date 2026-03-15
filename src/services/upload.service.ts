@@ -122,7 +122,7 @@ export async function getSignedUploadUrl(
   })
 
   if (!response.ok) {
-    const body = await response.json().catch(() => ({ error: 'Upload request failed' }))
+    const body = (await response.json().catch(() => ({ error: 'Upload request failed' }))) as any
     throw new Error(body.error ?? `Upload request failed: ${response.status}`)
   }
 

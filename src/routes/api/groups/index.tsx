@@ -15,7 +15,7 @@ export const Route = createFileRoute('/api/groups/')({
         }
 
         try {
-          const body = await request.json()
+          const body = await request.json() as any
           const { name, description, invited_user_ids } = body
 
           if (!name || typeof name !== 'string') {

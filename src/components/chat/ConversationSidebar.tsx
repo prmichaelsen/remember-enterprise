@@ -83,11 +83,26 @@ export function ConversationSidebar({ onNewDm, onNewGroup, initialConversations 
   }
 
   function getConversationName(conv: Conversation): string {
-    if (conv.name) return conv.name
-    // For DMs, show the other participant's name
-    // In real app, resolve from user profiles
+    // Try name, title, then fall back to participant IDs
+    const name = conv.name ?? (conv as any).title
+    if (name) return name
     const ids = conv.participant_ids ?? (conv as any).participant_user_ids ?? []
-    return ids.filter((id: string) => id !== user?.uid).join(', ') || 'Unknown'
+    const otherIds = ids.filter((id: string) => id !== user?.uid)
+    return otherIds.length > 0 ? otherIds.join(', ') : 'Chat'
+  }
+
+  function getLastMessagePreview(conv: Conversation): string | null {
+    // Handle both nested last_message object and flat last_message_preview string
+    if (conv.last_message?.content) return conv.last_message.content
+    if ((conv as any).last_message_preview) return (conv as any).last_message_preview
+    return null
+  }
+
+  function getLastMessageTimestamp(conv: Conversation): string | null {
+    if (conv.last_message?.timestamp) return conv.last_message.timestamp
+    if ((conv as any).last_message_at) return (conv as any).last_message_at
+    if ((conv as any).updated_at) return (conv as any).updated_at
+    return null
   }
 
   function getAvatar(conv: Conversation) {
@@ -187,18 +202,16 @@ export function ConversationSidebar({ onNewDm, onNewGroup, initialConversations 
                       >
                         {name}
                       </span>
-                      {conv.last_message && (
+                      {getLastMessageTimestamp(conv) && (
                         <span className={`text-xs shrink-0 ml-2 ${t.textMuted}`}>
-                          {formatTimestamp(conv.last_message.timestamp)}
+                          {formatTimestamp(getLastMessageTimestamp(conv)!)}
                         </span>
                       )}
                     </div>
 
                     <div className="flex items-center justify-between mt-0.5">
                       <span className={`text-xs truncate ${t.textMuted}`}>
-                        {conv.last_message
-                          ? `${conv.last_message.sender_name}: ${conv.last_message.content}`
-                          : 'No messages yet'}
+                        {getLastMessagePreview(conv) ?? 'No messages yet'}
                       </span>
                       {conv.unread_count > 0 && (
                         <span
@@ -220,11 +233,11 @@ export function ConversationSidebar({ onNewDm, onNewGroup, initialConversations 
 
   return (
     <>
-      {/* Mobile hamburger toggle */}
+      {/* Mobile hamburger toggle — positioned below the unified header (h-14 = 3.5rem) */}
       <button
         type="button"
         onClick={() => setMobileOpen(true)}
-        className={`fixed top-3 left-3 z-50 p-2 rounded-lg lg:hidden ${t.buttonGhost} ${t.elevated}`}
+        className={`fixed top-16 left-3 z-40 p-2 rounded-lg lg:hidden ${t.buttonGhost} ${t.elevated}`}
         aria-label="Open conversations"
       >
         <Menu className="w-5 h-5" />

@@ -50,7 +50,7 @@ export async function createSessionCookie(idToken: string): Promise<string> {
   })
 }
 
-export function buildSessionCookieHeader(sessionCookie: string): string {
+export function buildSessionCookieHeader(sessionCookie: string, request?: Request): string {
   const parts = [
     `${COOKIE_NAME}=${sessionCookie}`,
     `Path=/`,
@@ -59,10 +59,19 @@ export function buildSessionCookieHeader(sessionCookie: string): string {
     `Max-Age=${SESSION_EXPIRY_MS / 1000}`,
     `Secure`,
   ]
+
+  // Set Domain for custom domains so the cookie is sent correctly
+  const host = request?.headers.get('host')
+  if (host && !host.includes('workers.dev') && !host.includes('localhost')) {
+    // For custom domains like memorycloud.chat, set Domain so cookie works
+    const domain = host.split(':')[0] // strip port if present
+    parts.push(`Domain=${domain}`)
+  }
+
   return parts.join('; ')
 }
 
-export function buildClearSessionCookieHeader(): string {
+export function buildClearSessionCookieHeader(request?: Request): string {
   const parts = [
     `${COOKIE_NAME}=`,
     `Path=/`,
@@ -72,5 +81,12 @@ export function buildClearSessionCookieHeader(): string {
     `Expires=Thu, 01 Jan 1970 00:00:00 GMT`,
     `Secure`,
   ]
+
+  const host = request?.headers.get('host')
+  if (host && !host.includes('workers.dev') && !host.includes('localhost')) {
+    const domain = host.split(':')[0]
+    parts.push(`Domain=${domain}`)
+  }
+
   return parts.join('; ')
 }

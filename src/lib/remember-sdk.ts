@@ -23,7 +23,7 @@ async function getAuthConfig() {
     auth: {
       serviceToken,
       jwtOptions: {
-        issuer: 'remember-enterprise',
+        issuer: 'agentbase.me',
         audience: 'svc',
         expiresIn: '1h',
       },

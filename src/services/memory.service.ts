@@ -46,7 +46,7 @@ export const MemoryService = {
       body: JSON.stringify(params),
     })
     if (!res.ok) {
-      const body = await res.json().catch(() => ({}))
+      const body = (await res.json().catch(() => ({}))) as any
       throw new Error(body.error ?? `Failed to save memory (${res.status})`)
     }
     return res.json()
@@ -66,10 +66,13 @@ export const MemoryService = {
       })
       const res = await fetch(`/api/memories/feed?${qs}`)
       if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        console.error('[MemoryService] getFeed failed:', res.status, body)
         return { memories: [], total: 0, hasMore: false, limit: params.limit, offset: params.offset }
       }
       return res.json()
-    } catch {
+    } catch (err) {
+      console.error('[MemoryService] getFeed error:', err)
       return { memories: [], total: 0, hasMore: false, limit: params.limit, offset: params.offset }
     }
   },

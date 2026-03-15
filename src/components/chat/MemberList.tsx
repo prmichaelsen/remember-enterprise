@@ -89,7 +89,7 @@ export function MemberList({
     if (!user) return
 
     try {
-      await removeMember(conversationId, userId, user.uid)
+      await removeMember(conversationId, userId)
       setMembers((prev) => prev.filter((m) => m.user_id !== userId))
     } catch (err) {
       // Error removing member — in production, show toast

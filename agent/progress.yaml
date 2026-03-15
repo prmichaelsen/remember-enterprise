@@ -73,18 +73,18 @@ milestones:
 
   - id: milestone_9
     name: Messaging API
-    status: not_started
+    status: completed
     file: agent/milestones/milestone-9-messaging-api.md
     tasks_total: 2
-    tasks_completed: 0
+    tasks_completed: 2
     estimated_weeks: 1
 
   - id: milestone_10
     name: Groups & MCP API
-    status: not_started
+    status: completed
     file: agent/milestones/milestone-10-groups-mcp-api.md
     tasks_total: 2
-    tasks_completed: 0
+    tasks_completed: 2
     estimated_weeks: 1
 
   - id: milestone_11
@@ -347,38 +347,38 @@ tasks:
   milestone_9:
     - id: task-31
       name: Message API Routes
-      status: not_started
-      started: null
+      status: completed
+      started: 2026-03-16T00:00:00Z
       file: agent/tasks/milestone-9-messaging-api/task-31-message-api-routes.md
       estimated_hours: 3-4
       actual_hours: null
-      completed_date: null
+      completed_date: 2026-03-16T00:15:00Z
     - id: task-32
       name: Conversation POST + Quick Fixes
-      status: not_started
-      started: null
+      status: completed
+      started: 2026-03-16T00:00:00Z
       file: agent/tasks/milestone-9-messaging-api/task-32-conversation-post-quick-fixes.md
       estimated_hours: 1-2
       actual_hours: null
-      completed_date: null
+      completed_date: 2026-03-16T00:10:00Z
 
   milestone_10:
     - id: task-33
       name: Group API Routes
-      status: not_started
-      started: null
+      status: completed
+      started: 2026-03-16T00:00:00Z
       file: agent/tasks/milestone-10-groups-mcp-api/task-33-group-api-routes.md
       estimated_hours: 3-4
       actual_hours: null
-      completed_date: null
+      completed_date: 2026-03-16T00:15:00Z
     - id: task-34
-      name: MCP Tool API Routes
-      status: not_started
-      started: null
+      name: Wire MCP Provider into ChatEngine
+      status: completed
+      started: 2026-03-16T00:00:00Z
       file: agent/tasks/milestone-10-groups-mcp-api/task-34-mcp-tool-api-routes.md
-      estimated_hours: 2-3
+      estimated_hours: 3-4
       actual_hours: null
-      completed_date: null
+      completed_date: 2026-03-16T00:20:00Z
 
   milestone_11:
     - id: task-35

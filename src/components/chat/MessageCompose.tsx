@@ -89,8 +89,8 @@ export function MessageCompose({
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    // Enter to send (Shift+Enter for newline)
-    if (e.key === 'Enter' && !e.shiftKey) {
+    // Cmd+Enter or Shift+Enter to send, plain Enter for newline
+    if (e.key === 'Enter' && (e.metaKey || e.shiftKey)) {
       e.preventDefault()
       handleSend()
     }

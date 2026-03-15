@@ -48,7 +48,7 @@ export const Route = createFileRoute('/api/groups/$groupId')({
         }
 
         try {
-          const body = await request.json()
+          const body = await request.json() as any
           const { name, description, is_discoverable } = body
 
           await GroupDatabaseService.updateGroup(groupId, {

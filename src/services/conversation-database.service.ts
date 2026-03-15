@@ -13,6 +13,7 @@ import {
   getDocument,
   setDocument,
   updateDocument,
+  deleteDocument,
 } from '@prmichaelsen/firebase-admin-sdk-v8'
 import { initFirebaseAdmin } from '@/lib/firebase-admin'
 
@@ -278,5 +279,47 @@ export class ConversationDatabaseService {
       console.error('[ConversationDatabaseService] getMessages failed:', error)
       return []
     }
+  }
+
+  /**
+   * Add a participant to a shared conversation.
+   */
+  static async addParticipant(conversationId: string, userId: string): Promise<void> {
+    initFirebaseAdmin()
+    const path = getSharedConversations()
+    const doc = await getDocument(path, conversationId) as any
+    if (!doc) throw new Error('Conversation not found')
+    const participants: string[] = doc.participant_user_ids ?? []
+    if (!participants.includes(userId)) {
+      participants.push(userId)
+      await updateDocument(path, conversationId, {
+        participant_user_ids: participants,
+        updated_at: new Date().toISOString(),
+      })
+    }
+  }
+
+  /**
+   * Remove a participant from a shared conversation.
+   */
+  static async removeParticipant(conversationId: string, userId: string): Promise<void> {
+    initFirebaseAdmin()
+    const path = getSharedConversations()
+    const doc = await getDocument(path, conversationId) as any
+    if (!doc) throw new Error('Conversation not found')
+    const participants: string[] = (doc.participant_user_ids ?? []).filter((id: string) => id !== userId)
+    await updateDocument(path, conversationId, {
+      participant_user_ids: participants,
+      updated_at: new Date().toISOString(),
+    })
+  }
+
+  /**
+   * Delete a conversation from the shared collection.
+   */
+  static async deleteConversation(conversationId: string): Promise<void> {
+    initFirebaseAdmin()
+    const path = getSharedConversations()
+    await deleteDocument(path, conversationId)
   }
 }

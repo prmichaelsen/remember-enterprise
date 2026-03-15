@@ -43,7 +43,7 @@ export const MCPService = {
     if (!res.ok) {
       throw new Error(`Failed to list MCP tools (${res.status})`)
     }
-    const data = await res.json()
+    const data = (await res.json()) as any
     return data.tools ?? []
   },
 
@@ -70,7 +70,7 @@ export const MCPService = {
       }),
     })
     if (!res.ok) {
-      const body = await res.json().catch(() => ({}))
+      const body = (await res.json().catch(() => ({}))) as any
       return {
         toolName: params.toolName,
         status: 'error',

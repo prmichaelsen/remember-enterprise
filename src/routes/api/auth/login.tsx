@@ -10,7 +10,7 @@ export const Route = createFileRoute('/api/auth/login')({
         initFirebaseAdmin()
 
         try {
-          const { idToken } = await request.json()
+          const { idToken } = await request.json() as { idToken: string }
           if (!idToken) {
             return new Response(JSON.stringify({ error: 'Missing idToken' }), {
               status: 400,
@@ -25,7 +25,7 @@ export const Route = createFileRoute('/api/auth/login')({
             status: 200,
             headers: {
               'Content-Type': 'application/json',
-              'Set-Cookie': buildSessionCookieHeader(sessionCookie),
+              'Set-Cookie': buildSessionCookieHeader(sessionCookie, request),
             },
           })
         } catch {

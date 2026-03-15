@@ -20,7 +20,7 @@ export const Route = createFileRoute('/api/mcp/tools/$toolName/invoke')({
         }
 
         try {
-          const body = await request.json()
+          const body = await request.json() as any
           const args = body.args ?? {}
 
           let data: unknown

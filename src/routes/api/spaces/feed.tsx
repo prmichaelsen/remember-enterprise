@@ -9,9 +9,8 @@ export const Route = createFileRoute('/api/spaces/feed')({
       GET: async ({ request }: { request: Request }) => {
         initFirebaseAdmin()
         const session = await getServerSession(request)
-        if (!session) {
-          return Response.json({ error: 'Unauthorized' }, { status: 401 })
-        }
+        // The Void is public — allow anonymous access with a guest userId
+        const userId = session?.uid ?? 'anonymous'
 
         const url = new URL(request.url)
         const algorithm = url.searchParams.get('algorithm') ?? 'smart'
@@ -28,13 +27,13 @@ export const Route = createFileRoute('/api/spaces/feed')({
           let res
           switch (algorithm) {
             case 'chronological':
-              res = await svc.spaces.byTime(session.uid, { ...baseInput, direction: 'desc' })
+              res = await svc.spaces.byTime(userId, { ...baseInput, direction: 'desc' })
               break
             case 'rating':
-              res = await svc.spaces.byRating(session.uid, baseInput)
+              res = await svc.spaces.byRating(userId, baseInput)
               break
             case 'significance':
-              res = await svc.spaces.byProperty(session.uid, {
+              res = await svc.spaces.byProperty(userId, {
                 ...baseInput,
                 sort_field: 'total_significance',
                 sort_direction: 'desc',
@@ -43,11 +42,11 @@ export const Route = createFileRoute('/api/spaces/feed')({
             case 'discovery':
             case 'smart':
             default:
-              res = await svc.spaces.search(session.uid, baseInput)
+              res = await svc.spaces.search(userId, baseInput)
               break
           }
 
-          const data = res.throwOnError()
+          const data = res.throwOnError() as any
           return Response.json({
             memories: data.memories ?? [],
             total: data.total ?? 0,

@@ -34,7 +34,7 @@ export const Route = createFileRoute('/api/memories/$memoryId/rate')({
         }
 
         try {
-          const body = await request.json()
+          const body = await request.json() as any
           const { rating } = body
 
           if (typeof rating !== 'number' || rating < 1 || rating > 5 || !Number.isInteger(rating)) {

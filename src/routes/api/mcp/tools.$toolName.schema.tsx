@@ -34,7 +34,7 @@ const TOOL_SCHEMAS: Record<string, object> = {
   },
 }
 
-export const Route = createFileRoute('/api/mcp/tools/$toolName')({
+export const Route = createFileRoute('/api/mcp/tools/$toolName/schema')({
   server: {
     handlers: {
       GET: async ({ request, params }: { request: Request; params: { toolName: string } }) => {

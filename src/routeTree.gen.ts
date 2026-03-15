@@ -13,6 +13,7 @@ import { Route as VoidRouteImport } from './routes/void'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as MemoriesRouteImport } from './routes/memories'
 import { Route as GhostRouteImport } from './routes/ghost'
+import { Route as FriendsRouteImport } from './routes/friends'
 import { Route as ConversationsRouteImport } from './routes/conversations'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -20,17 +21,25 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings/index'
 import { Route as ConversationsIndexRouteImport } from './routes/conversations/index'
 import { Route as ChatIndexRouteImport } from './routes/chat/index'
+import { Route as GroupLinksCodeRouteImport } from './routes/group-links/$code'
+import { Route as FriendLinksCodeRouteImport } from './routes/friend-links/$code'
+import { Route as DmLinksCodeRouteImport } from './routes/dm-links/$code'
 import { Route as ConversationsConversationIdRouteImport } from './routes/conversations/$conversationId'
 import { Route as ChatConversationIdRouteImport } from './routes/chat/$conversationId'
 import { Route as ApiWsRouteImport } from './routes/api/ws'
 import { Route as ApiUploadRouteImport } from './routes/api/upload'
 import { Route as ApiNotificationsWsRouteImport } from './routes/api/notifications-ws'
+import { Route as ApiRelationshipsIndexRouteImport } from './routes/api/relationships/index'
 import { Route as ApiNotificationsIndexRouteImport } from './routes/api/notifications/index'
 import { Route as ApiMemoriesIndexRouteImport } from './routes/api/memories/index'
+import { Route as ApiGroupsIndexRouteImport } from './routes/api/groups/index'
 import { Route as ApiGhostsIndexRouteImport } from './routes/api/ghosts/index'
+import { Route as ApiFriendLinksIndexRouteImport } from './routes/api/friend-links/index'
+import { Route as ApiDmLinksIndexRouteImport } from './routes/api/dm-links/index'
 import { Route as ApiConversationsIndexRouteImport } from './routes/api/conversations/index'
 import { Route as ApiUsersSearchRouteImport } from './routes/api/users/search'
 import { Route as ApiSpacesFeedRouteImport } from './routes/api/spaces/feed'
+import { Route as ApiRelationshipsRelatedUserIdRouteImport } from './routes/api/relationships/$relatedUserId'
 import { Route as ApiNotificationsUnreadCountRouteImport } from './routes/api/notifications/unread-count'
 import { Route as ApiNotificationsReadAllRouteImport } from './routes/api/notifications/read-all'
 import { Route as ApiNotificationsIdRouteImport } from './routes/api/notifications/$id'
@@ -38,6 +47,8 @@ import { Route as ApiMemoriesSearchRouteImport } from './routes/api/memories/sea
 import { Route as ApiMemoriesFeedRouteImport } from './routes/api/memories/feed'
 import { Route as ApiMemoriesCheckDuplicateRouteImport } from './routes/api/memories/check-duplicate'
 import { Route as ApiMemoriesMemoryIdRouteImport } from './routes/api/memories/$memoryId'
+import { Route as ApiMcpToolsRouteImport } from './routes/api/mcp/tools'
+import { Route as ApiGroupsGroupIdRouteImport } from './routes/api/groups/$groupId'
 import { Route as ApiConversationsConversationIdRouteImport } from './routes/api/conversations/$conversationId'
 import { Route as ApiAuthSessionRouteImport } from './routes/api/auth/session'
 import { Route as ApiAuthLogoutRouteImport } from './routes/api/auth/logout'
@@ -46,10 +57,22 @@ import { Route as ApiGhostsConversationsIndexRouteImport } from './routes/api/gh
 import { Route as ApiNotificationsIdReadRouteImport } from './routes/api/notifications/$id.read'
 import { Route as ApiMemoriesMemoryIdSimilarRouteImport } from './routes/api/memories/$memoryId/similar'
 import { Route as ApiMemoriesMemoryIdRateRouteImport } from './routes/api/memories/$memoryId/rate'
+import { Route as ApiGroupsGroupIdPermissionsRouteImport } from './routes/api/groups/$groupId.permissions'
+import { Route as ApiGroupsGroupIdMembersRouteImport } from './routes/api/groups/$groupId.members'
+import { Route as ApiGroupsGroupIdLinksRouteImport } from './routes/api/groups/$groupId.links'
+import { Route as ApiGroupLinksCodeRedeemRouteImport } from './routes/api/group-links/$code.redeem'
 import { Route as ApiGhostsGhostIdConversationRouteImport } from './routes/api/ghosts/$ghostId.conversation'
+import { Route as ApiFriendLinksCodeRedeemRouteImport } from './routes/api/friend-links/$code.redeem'
+import { Route as ApiDmLinksCodeRedeemRouteImport } from './routes/api/dm-links/$code.redeem'
+import { Route as ApiConversationsConversationIdReadRouteImport } from './routes/api/conversations/$conversationId.read'
 import { Route as ApiConversationsConversationIdParticipantsRouteImport } from './routes/api/conversations/$conversationId.participants'
+import { Route as ApiConversationsConversationIdMessagesRouteImport } from './routes/api/conversations/$conversationId.messages'
 import { Route as ApiConversationsConversationIdLastMessageRouteImport } from './routes/api/conversations/$conversationId.last-message'
+import { Route as ApiMcpToolsToolNameSchemaRouteImport } from './routes/api/mcp/tools.$toolName.schema'
+import { Route as ApiMcpToolsToolNameInvokeRouteImport } from './routes/api/mcp/tools.$toolName.invoke'
+import { Route as ApiGroupsGroupIdMembersUserIdRouteImport } from './routes/api/groups/$groupId.members.$userId'
 import { Route as ApiGhostsConversationsConversationIdMessagesRouteImport } from './routes/api/ghosts/conversations/$conversationId.messages'
+import { Route as ApiConversationsConversationIdMessagesMessageIdRouteImport } from './routes/api/conversations/$conversationId.messages.$messageId'
 import { Route as ApiGhostsConversationsConversationIdMessagesStreamRouteImport } from './routes/api/ghosts/conversations/$conversationId.messages.stream'
 
 const VoidRoute = VoidRouteImport.update({
@@ -70,6 +93,11 @@ const MemoriesRoute = MemoriesRouteImport.update({
 const GhostRoute = GhostRouteImport.update({
   id: '/ghost',
   path: '/ghost',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FriendsRoute = FriendsRouteImport.update({
+  id: '/friends',
+  path: '/friends',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConversationsRoute = ConversationsRouteImport.update({
@@ -107,6 +135,21 @@ const ChatIndexRoute = ChatIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ChatRoute,
 } as any)
+const GroupLinksCodeRoute = GroupLinksCodeRouteImport.update({
+  id: '/group-links/$code',
+  path: '/group-links/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FriendLinksCodeRoute = FriendLinksCodeRouteImport.update({
+  id: '/friend-links/$code',
+  path: '/friend-links/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DmLinksCodeRoute = DmLinksCodeRouteImport.update({
+  id: '/dm-links/$code',
+  path: '/dm-links/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ConversationsConversationIdRoute =
   ConversationsConversationIdRouteImport.update({
     id: '/$conversationId',
@@ -133,6 +176,11 @@ const ApiNotificationsWsRoute = ApiNotificationsWsRouteImport.update({
   path: '/api/notifications-ws',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiRelationshipsIndexRoute = ApiRelationshipsIndexRouteImport.update({
+  id: '/api/relationships/',
+  path: '/api/relationships/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiNotificationsIndexRoute = ApiNotificationsIndexRouteImport.update({
   id: '/api/notifications/',
   path: '/api/notifications/',
@@ -143,9 +191,24 @@ const ApiMemoriesIndexRoute = ApiMemoriesIndexRouteImport.update({
   path: '/api/memories/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiGroupsIndexRoute = ApiGroupsIndexRouteImport.update({
+  id: '/api/groups/',
+  path: '/api/groups/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiGhostsIndexRoute = ApiGhostsIndexRouteImport.update({
   id: '/api/ghosts/',
   path: '/api/ghosts/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiFriendLinksIndexRoute = ApiFriendLinksIndexRouteImport.update({
+  id: '/api/friend-links/',
+  path: '/api/friend-links/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiDmLinksIndexRoute = ApiDmLinksIndexRouteImport.update({
+  id: '/api/dm-links/',
+  path: '/api/dm-links/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiConversationsIndexRoute = ApiConversationsIndexRouteImport.update({
@@ -163,6 +226,12 @@ const ApiSpacesFeedRoute = ApiSpacesFeedRouteImport.update({
   path: '/api/spaces/feed',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiRelationshipsRelatedUserIdRoute =
+  ApiRelationshipsRelatedUserIdRouteImport.update({
+    id: '/api/relationships/$relatedUserId',
+    path: '/api/relationships/$relatedUserId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiNotificationsUnreadCountRoute =
   ApiNotificationsUnreadCountRouteImport.update({
     id: '/api/notifications/unread-count',
@@ -198,6 +267,16 @@ const ApiMemoriesCheckDuplicateRoute =
 const ApiMemoriesMemoryIdRoute = ApiMemoriesMemoryIdRouteImport.update({
   id: '/api/memories/$memoryId',
   path: '/api/memories/$memoryId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMcpToolsRoute = ApiMcpToolsRouteImport.update({
+  id: '/api/mcp/tools',
+  path: '/api/mcp/tools',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGroupsGroupIdRoute = ApiGroupsGroupIdRouteImport.update({
+  id: '/api/groups/$groupId',
+  path: '/api/groups/$groupId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiConversationsConversationIdRoute =
@@ -243,16 +322,60 @@ const ApiMemoriesMemoryIdRateRoute = ApiMemoriesMemoryIdRateRouteImport.update({
   path: '/rate',
   getParentRoute: () => ApiMemoriesMemoryIdRoute,
 } as any)
+const ApiGroupsGroupIdPermissionsRoute =
+  ApiGroupsGroupIdPermissionsRouteImport.update({
+    id: '/permissions',
+    path: '/permissions',
+    getParentRoute: () => ApiGroupsGroupIdRoute,
+  } as any)
+const ApiGroupsGroupIdMembersRoute = ApiGroupsGroupIdMembersRouteImport.update({
+  id: '/members',
+  path: '/members',
+  getParentRoute: () => ApiGroupsGroupIdRoute,
+} as any)
+const ApiGroupsGroupIdLinksRoute = ApiGroupsGroupIdLinksRouteImport.update({
+  id: '/links',
+  path: '/links',
+  getParentRoute: () => ApiGroupsGroupIdRoute,
+} as any)
+const ApiGroupLinksCodeRedeemRoute = ApiGroupLinksCodeRedeemRouteImport.update({
+  id: '/api/group-links/$code/redeem',
+  path: '/api/group-links/$code/redeem',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiGhostsGhostIdConversationRoute =
   ApiGhostsGhostIdConversationRouteImport.update({
     id: '/api/ghosts/$ghostId/conversation',
     path: '/api/ghosts/$ghostId/conversation',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiFriendLinksCodeRedeemRoute =
+  ApiFriendLinksCodeRedeemRouteImport.update({
+    id: '/api/friend-links/$code/redeem',
+    path: '/api/friend-links/$code/redeem',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiDmLinksCodeRedeemRoute = ApiDmLinksCodeRedeemRouteImport.update({
+  id: '/api/dm-links/$code/redeem',
+  path: '/api/dm-links/$code/redeem',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiConversationsConversationIdReadRoute =
+  ApiConversationsConversationIdReadRouteImport.update({
+    id: '/read',
+    path: '/read',
+    getParentRoute: () => ApiConversationsConversationIdRoute,
+  } as any)
 const ApiConversationsConversationIdParticipantsRoute =
   ApiConversationsConversationIdParticipantsRouteImport.update({
     id: '/participants',
     path: '/participants',
+    getParentRoute: () => ApiConversationsConversationIdRoute,
+  } as any)
+const ApiConversationsConversationIdMessagesRoute =
+  ApiConversationsConversationIdMessagesRouteImport.update({
+    id: '/messages',
+    path: '/messages',
     getParentRoute: () => ApiConversationsConversationIdRoute,
   } as any)
 const ApiConversationsConversationIdLastMessageRoute =
@@ -261,11 +384,35 @@ const ApiConversationsConversationIdLastMessageRoute =
     path: '/last-message',
     getParentRoute: () => ApiConversationsConversationIdRoute,
   } as any)
+const ApiMcpToolsToolNameSchemaRoute =
+  ApiMcpToolsToolNameSchemaRouteImport.update({
+    id: '/$toolName/schema',
+    path: '/$toolName/schema',
+    getParentRoute: () => ApiMcpToolsRoute,
+  } as any)
+const ApiMcpToolsToolNameInvokeRoute =
+  ApiMcpToolsToolNameInvokeRouteImport.update({
+    id: '/$toolName/invoke',
+    path: '/$toolName/invoke',
+    getParentRoute: () => ApiMcpToolsRoute,
+  } as any)
+const ApiGroupsGroupIdMembersUserIdRoute =
+  ApiGroupsGroupIdMembersUserIdRouteImport.update({
+    id: '/$userId',
+    path: '/$userId',
+    getParentRoute: () => ApiGroupsGroupIdMembersRoute,
+  } as any)
 const ApiGhostsConversationsConversationIdMessagesRoute =
   ApiGhostsConversationsConversationIdMessagesRouteImport.update({
     id: '/api/ghosts/conversations/$conversationId/messages',
     path: '/api/ghosts/conversations/$conversationId/messages',
     getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiConversationsConversationIdMessagesMessageIdRoute =
+  ApiConversationsConversationIdMessagesMessageIdRouteImport.update({
+    id: '/$messageId',
+    path: '/$messageId',
+    getParentRoute: () => ApiConversationsConversationIdMessagesRoute,
   } as any)
 const ApiGhostsConversationsConversationIdMessagesStreamRoute =
   ApiGhostsConversationsConversationIdMessagesStreamRouteImport.update({
@@ -279,6 +426,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/chat': typeof ChatRouteWithChildren
   '/conversations': typeof ConversationsRouteWithChildren
+  '/friends': typeof FriendsRoute
   '/ghost': typeof GhostRoute
   '/memories': typeof MemoriesRoute
   '/settings': typeof SettingsRouteWithChildren
@@ -288,6 +436,9 @@ export interface FileRoutesByFullPath {
   '/api/ws': typeof ApiWsRoute
   '/chat/$conversationId': typeof ChatConversationIdRoute
   '/conversations/$conversationId': typeof ConversationsConversationIdRoute
+  '/dm-links/$code': typeof DmLinksCodeRoute
+  '/friend-links/$code': typeof FriendLinksCodeRoute
+  '/group-links/$code': typeof GroupLinksCodeRoute
   '/chat/': typeof ChatIndexRoute
   '/conversations/': typeof ConversationsIndexRoute
   '/settings/': typeof SettingsIndexRoute
@@ -295,6 +446,8 @@ export interface FileRoutesByFullPath {
   '/api/auth/logout': typeof ApiAuthLogoutRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/conversations/$conversationId': typeof ApiConversationsConversationIdRouteWithChildren
+  '/api/groups/$groupId': typeof ApiGroupsGroupIdRouteWithChildren
+  '/api/mcp/tools': typeof ApiMcpToolsRouteWithChildren
   '/api/memories/$memoryId': typeof ApiMemoriesMemoryIdRouteWithChildren
   '/api/memories/check-duplicate': typeof ApiMemoriesCheckDuplicateRoute
   '/api/memories/feed': typeof ApiMemoriesFeedRoute
@@ -302,25 +455,43 @@ export interface FileRoutesByFullPath {
   '/api/notifications/$id': typeof ApiNotificationsIdRouteWithChildren
   '/api/notifications/read-all': typeof ApiNotificationsReadAllRoute
   '/api/notifications/unread-count': typeof ApiNotificationsUnreadCountRoute
+  '/api/relationships/$relatedUserId': typeof ApiRelationshipsRelatedUserIdRoute
   '/api/spaces/feed': typeof ApiSpacesFeedRoute
   '/api/users/search': typeof ApiUsersSearchRoute
   '/api/conversations/': typeof ApiConversationsIndexRoute
+  '/api/dm-links/': typeof ApiDmLinksIndexRoute
+  '/api/friend-links/': typeof ApiFriendLinksIndexRoute
   '/api/ghosts/': typeof ApiGhostsIndexRoute
+  '/api/groups/': typeof ApiGroupsIndexRoute
   '/api/memories/': typeof ApiMemoriesIndexRoute
   '/api/notifications/': typeof ApiNotificationsIndexRoute
+  '/api/relationships/': typeof ApiRelationshipsIndexRoute
   '/api/conversations/$conversationId/last-message': typeof ApiConversationsConversationIdLastMessageRoute
+  '/api/conversations/$conversationId/messages': typeof ApiConversationsConversationIdMessagesRouteWithChildren
   '/api/conversations/$conversationId/participants': typeof ApiConversationsConversationIdParticipantsRoute
+  '/api/conversations/$conversationId/read': typeof ApiConversationsConversationIdReadRoute
+  '/api/dm-links/$code/redeem': typeof ApiDmLinksCodeRedeemRoute
+  '/api/friend-links/$code/redeem': typeof ApiFriendLinksCodeRedeemRoute
   '/api/ghosts/$ghostId/conversation': typeof ApiGhostsGhostIdConversationRoute
+  '/api/group-links/$code/redeem': typeof ApiGroupLinksCodeRedeemRoute
+  '/api/groups/$groupId/links': typeof ApiGroupsGroupIdLinksRoute
+  '/api/groups/$groupId/members': typeof ApiGroupsGroupIdMembersRouteWithChildren
+  '/api/groups/$groupId/permissions': typeof ApiGroupsGroupIdPermissionsRoute
   '/api/memories/$memoryId/rate': typeof ApiMemoriesMemoryIdRateRoute
   '/api/memories/$memoryId/similar': typeof ApiMemoriesMemoryIdSimilarRoute
   '/api/notifications/$id/read': typeof ApiNotificationsIdReadRoute
   '/api/ghosts/conversations/': typeof ApiGhostsConversationsIndexRoute
+  '/api/conversations/$conversationId/messages/$messageId': typeof ApiConversationsConversationIdMessagesMessageIdRoute
   '/api/ghosts/conversations/$conversationId/messages': typeof ApiGhostsConversationsConversationIdMessagesRouteWithChildren
+  '/api/groups/$groupId/members/$userId': typeof ApiGroupsGroupIdMembersUserIdRoute
+  '/api/mcp/tools/$toolName/invoke': typeof ApiMcpToolsToolNameInvokeRoute
+  '/api/mcp/tools/$toolName/schema': typeof ApiMcpToolsToolNameSchemaRoute
   '/api/ghosts/conversations/$conversationId/messages/stream': typeof ApiGhostsConversationsConversationIdMessagesStreamRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/friends': typeof FriendsRoute
   '/ghost': typeof GhostRoute
   '/memories': typeof MemoriesRoute
   '/void': typeof VoidRoute
@@ -329,6 +500,9 @@ export interface FileRoutesByTo {
   '/api/ws': typeof ApiWsRoute
   '/chat/$conversationId': typeof ChatConversationIdRoute
   '/conversations/$conversationId': typeof ConversationsConversationIdRoute
+  '/dm-links/$code': typeof DmLinksCodeRoute
+  '/friend-links/$code': typeof FriendLinksCodeRoute
+  '/group-links/$code': typeof GroupLinksCodeRoute
   '/chat': typeof ChatIndexRoute
   '/conversations': typeof ConversationsIndexRoute
   '/settings': typeof SettingsIndexRoute
@@ -336,6 +510,8 @@ export interface FileRoutesByTo {
   '/api/auth/logout': typeof ApiAuthLogoutRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/conversations/$conversationId': typeof ApiConversationsConversationIdRouteWithChildren
+  '/api/groups/$groupId': typeof ApiGroupsGroupIdRouteWithChildren
+  '/api/mcp/tools': typeof ApiMcpToolsRouteWithChildren
   '/api/memories/$memoryId': typeof ApiMemoriesMemoryIdRouteWithChildren
   '/api/memories/check-duplicate': typeof ApiMemoriesCheckDuplicateRoute
   '/api/memories/feed': typeof ApiMemoriesFeedRoute
@@ -343,20 +519,37 @@ export interface FileRoutesByTo {
   '/api/notifications/$id': typeof ApiNotificationsIdRouteWithChildren
   '/api/notifications/read-all': typeof ApiNotificationsReadAllRoute
   '/api/notifications/unread-count': typeof ApiNotificationsUnreadCountRoute
+  '/api/relationships/$relatedUserId': typeof ApiRelationshipsRelatedUserIdRoute
   '/api/spaces/feed': typeof ApiSpacesFeedRoute
   '/api/users/search': typeof ApiUsersSearchRoute
   '/api/conversations': typeof ApiConversationsIndexRoute
+  '/api/dm-links': typeof ApiDmLinksIndexRoute
+  '/api/friend-links': typeof ApiFriendLinksIndexRoute
   '/api/ghosts': typeof ApiGhostsIndexRoute
+  '/api/groups': typeof ApiGroupsIndexRoute
   '/api/memories': typeof ApiMemoriesIndexRoute
   '/api/notifications': typeof ApiNotificationsIndexRoute
+  '/api/relationships': typeof ApiRelationshipsIndexRoute
   '/api/conversations/$conversationId/last-message': typeof ApiConversationsConversationIdLastMessageRoute
+  '/api/conversations/$conversationId/messages': typeof ApiConversationsConversationIdMessagesRouteWithChildren
   '/api/conversations/$conversationId/participants': typeof ApiConversationsConversationIdParticipantsRoute
+  '/api/conversations/$conversationId/read': typeof ApiConversationsConversationIdReadRoute
+  '/api/dm-links/$code/redeem': typeof ApiDmLinksCodeRedeemRoute
+  '/api/friend-links/$code/redeem': typeof ApiFriendLinksCodeRedeemRoute
   '/api/ghosts/$ghostId/conversation': typeof ApiGhostsGhostIdConversationRoute
+  '/api/group-links/$code/redeem': typeof ApiGroupLinksCodeRedeemRoute
+  '/api/groups/$groupId/links': typeof ApiGroupsGroupIdLinksRoute
+  '/api/groups/$groupId/members': typeof ApiGroupsGroupIdMembersRouteWithChildren
+  '/api/groups/$groupId/permissions': typeof ApiGroupsGroupIdPermissionsRoute
   '/api/memories/$memoryId/rate': typeof ApiMemoriesMemoryIdRateRoute
   '/api/memories/$memoryId/similar': typeof ApiMemoriesMemoryIdSimilarRoute
   '/api/notifications/$id/read': typeof ApiNotificationsIdReadRoute
   '/api/ghosts/conversations': typeof ApiGhostsConversationsIndexRoute
+  '/api/conversations/$conversationId/messages/$messageId': typeof ApiConversationsConversationIdMessagesMessageIdRoute
   '/api/ghosts/conversations/$conversationId/messages': typeof ApiGhostsConversationsConversationIdMessagesRouteWithChildren
+  '/api/groups/$groupId/members/$userId': typeof ApiGroupsGroupIdMembersUserIdRoute
+  '/api/mcp/tools/$toolName/invoke': typeof ApiMcpToolsToolNameInvokeRoute
+  '/api/mcp/tools/$toolName/schema': typeof ApiMcpToolsToolNameSchemaRoute
   '/api/ghosts/conversations/$conversationId/messages/stream': typeof ApiGhostsConversationsConversationIdMessagesStreamRoute
 }
 export interface FileRoutesById {
@@ -365,6 +558,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/chat': typeof ChatRouteWithChildren
   '/conversations': typeof ConversationsRouteWithChildren
+  '/friends': typeof FriendsRoute
   '/ghost': typeof GhostRoute
   '/memories': typeof MemoriesRoute
   '/settings': typeof SettingsRouteWithChildren
@@ -374,6 +568,9 @@ export interface FileRoutesById {
   '/api/ws': typeof ApiWsRoute
   '/chat/$conversationId': typeof ChatConversationIdRoute
   '/conversations/$conversationId': typeof ConversationsConversationIdRoute
+  '/dm-links/$code': typeof DmLinksCodeRoute
+  '/friend-links/$code': typeof FriendLinksCodeRoute
+  '/group-links/$code': typeof GroupLinksCodeRoute
   '/chat/': typeof ChatIndexRoute
   '/conversations/': typeof ConversationsIndexRoute
   '/settings/': typeof SettingsIndexRoute
@@ -381,6 +578,8 @@ export interface FileRoutesById {
   '/api/auth/logout': typeof ApiAuthLogoutRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/conversations/$conversationId': typeof ApiConversationsConversationIdRouteWithChildren
+  '/api/groups/$groupId': typeof ApiGroupsGroupIdRouteWithChildren
+  '/api/mcp/tools': typeof ApiMcpToolsRouteWithChildren
   '/api/memories/$memoryId': typeof ApiMemoriesMemoryIdRouteWithChildren
   '/api/memories/check-duplicate': typeof ApiMemoriesCheckDuplicateRoute
   '/api/memories/feed': typeof ApiMemoriesFeedRoute
@@ -388,20 +587,37 @@ export interface FileRoutesById {
   '/api/notifications/$id': typeof ApiNotificationsIdRouteWithChildren
   '/api/notifications/read-all': typeof ApiNotificationsReadAllRoute
   '/api/notifications/unread-count': typeof ApiNotificationsUnreadCountRoute
+  '/api/relationships/$relatedUserId': typeof ApiRelationshipsRelatedUserIdRoute
   '/api/spaces/feed': typeof ApiSpacesFeedRoute
   '/api/users/search': typeof ApiUsersSearchRoute
   '/api/conversations/': typeof ApiConversationsIndexRoute
+  '/api/dm-links/': typeof ApiDmLinksIndexRoute
+  '/api/friend-links/': typeof ApiFriendLinksIndexRoute
   '/api/ghosts/': typeof ApiGhostsIndexRoute
+  '/api/groups/': typeof ApiGroupsIndexRoute
   '/api/memories/': typeof ApiMemoriesIndexRoute
   '/api/notifications/': typeof ApiNotificationsIndexRoute
+  '/api/relationships/': typeof ApiRelationshipsIndexRoute
   '/api/conversations/$conversationId/last-message': typeof ApiConversationsConversationIdLastMessageRoute
+  '/api/conversations/$conversationId/messages': typeof ApiConversationsConversationIdMessagesRouteWithChildren
   '/api/conversations/$conversationId/participants': typeof ApiConversationsConversationIdParticipantsRoute
+  '/api/conversations/$conversationId/read': typeof ApiConversationsConversationIdReadRoute
+  '/api/dm-links/$code/redeem': typeof ApiDmLinksCodeRedeemRoute
+  '/api/friend-links/$code/redeem': typeof ApiFriendLinksCodeRedeemRoute
   '/api/ghosts/$ghostId/conversation': typeof ApiGhostsGhostIdConversationRoute
+  '/api/group-links/$code/redeem': typeof ApiGroupLinksCodeRedeemRoute
+  '/api/groups/$groupId/links': typeof ApiGroupsGroupIdLinksRoute
+  '/api/groups/$groupId/members': typeof ApiGroupsGroupIdMembersRouteWithChildren
+  '/api/groups/$groupId/permissions': typeof ApiGroupsGroupIdPermissionsRoute
   '/api/memories/$memoryId/rate': typeof ApiMemoriesMemoryIdRateRoute
   '/api/memories/$memoryId/similar': typeof ApiMemoriesMemoryIdSimilarRoute
   '/api/notifications/$id/read': typeof ApiNotificationsIdReadRoute
   '/api/ghosts/conversations/': typeof ApiGhostsConversationsIndexRoute
+  '/api/conversations/$conversationId/messages/$messageId': typeof ApiConversationsConversationIdMessagesMessageIdRoute
   '/api/ghosts/conversations/$conversationId/messages': typeof ApiGhostsConversationsConversationIdMessagesRouteWithChildren
+  '/api/groups/$groupId/members/$userId': typeof ApiGroupsGroupIdMembersUserIdRoute
+  '/api/mcp/tools/$toolName/invoke': typeof ApiMcpToolsToolNameInvokeRoute
+  '/api/mcp/tools/$toolName/schema': typeof ApiMcpToolsToolNameSchemaRoute
   '/api/ghosts/conversations/$conversationId/messages/stream': typeof ApiGhostsConversationsConversationIdMessagesStreamRoute
 }
 export interface FileRouteTypes {
@@ -411,6 +627,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/chat'
     | '/conversations'
+    | '/friends'
     | '/ghost'
     | '/memories'
     | '/settings'
@@ -420,6 +637,9 @@ export interface FileRouteTypes {
     | '/api/ws'
     | '/chat/$conversationId'
     | '/conversations/$conversationId'
+    | '/dm-links/$code'
+    | '/friend-links/$code'
+    | '/group-links/$code'
     | '/chat/'
     | '/conversations/'
     | '/settings/'
@@ -427,6 +647,8 @@ export interface FileRouteTypes {
     | '/api/auth/logout'
     | '/api/auth/session'
     | '/api/conversations/$conversationId'
+    | '/api/groups/$groupId'
+    | '/api/mcp/tools'
     | '/api/memories/$memoryId'
     | '/api/memories/check-duplicate'
     | '/api/memories/feed'
@@ -434,25 +656,43 @@ export interface FileRouteTypes {
     | '/api/notifications/$id'
     | '/api/notifications/read-all'
     | '/api/notifications/unread-count'
+    | '/api/relationships/$relatedUserId'
     | '/api/spaces/feed'
     | '/api/users/search'
     | '/api/conversations/'
+    | '/api/dm-links/'
+    | '/api/friend-links/'
     | '/api/ghosts/'
+    | '/api/groups/'
     | '/api/memories/'
     | '/api/notifications/'
+    | '/api/relationships/'
     | '/api/conversations/$conversationId/last-message'
+    | '/api/conversations/$conversationId/messages'
     | '/api/conversations/$conversationId/participants'
+    | '/api/conversations/$conversationId/read'
+    | '/api/dm-links/$code/redeem'
+    | '/api/friend-links/$code/redeem'
     | '/api/ghosts/$ghostId/conversation'
+    | '/api/group-links/$code/redeem'
+    | '/api/groups/$groupId/links'
+    | '/api/groups/$groupId/members'
+    | '/api/groups/$groupId/permissions'
     | '/api/memories/$memoryId/rate'
     | '/api/memories/$memoryId/similar'
     | '/api/notifications/$id/read'
     | '/api/ghosts/conversations/'
+    | '/api/conversations/$conversationId/messages/$messageId'
     | '/api/ghosts/conversations/$conversationId/messages'
+    | '/api/groups/$groupId/members/$userId'
+    | '/api/mcp/tools/$toolName/invoke'
+    | '/api/mcp/tools/$toolName/schema'
     | '/api/ghosts/conversations/$conversationId/messages/stream'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
+    | '/friends'
     | '/ghost'
     | '/memories'
     | '/void'
@@ -461,6 +701,9 @@ export interface FileRouteTypes {
     | '/api/ws'
     | '/chat/$conversationId'
     | '/conversations/$conversationId'
+    | '/dm-links/$code'
+    | '/friend-links/$code'
+    | '/group-links/$code'
     | '/chat'
     | '/conversations'
     | '/settings'
@@ -468,6 +711,8 @@ export interface FileRouteTypes {
     | '/api/auth/logout'
     | '/api/auth/session'
     | '/api/conversations/$conversationId'
+    | '/api/groups/$groupId'
+    | '/api/mcp/tools'
     | '/api/memories/$memoryId'
     | '/api/memories/check-duplicate'
     | '/api/memories/feed'
@@ -475,20 +720,37 @@ export interface FileRouteTypes {
     | '/api/notifications/$id'
     | '/api/notifications/read-all'
     | '/api/notifications/unread-count'
+    | '/api/relationships/$relatedUserId'
     | '/api/spaces/feed'
     | '/api/users/search'
     | '/api/conversations'
+    | '/api/dm-links'
+    | '/api/friend-links'
     | '/api/ghosts'
+    | '/api/groups'
     | '/api/memories'
     | '/api/notifications'
+    | '/api/relationships'
     | '/api/conversations/$conversationId/last-message'
+    | '/api/conversations/$conversationId/messages'
     | '/api/conversations/$conversationId/participants'
+    | '/api/conversations/$conversationId/read'
+    | '/api/dm-links/$code/redeem'
+    | '/api/friend-links/$code/redeem'
     | '/api/ghosts/$ghostId/conversation'
+    | '/api/group-links/$code/redeem'
+    | '/api/groups/$groupId/links'
+    | '/api/groups/$groupId/members'
+    | '/api/groups/$groupId/permissions'
     | '/api/memories/$memoryId/rate'
     | '/api/memories/$memoryId/similar'
     | '/api/notifications/$id/read'
     | '/api/ghosts/conversations'
+    | '/api/conversations/$conversationId/messages/$messageId'
     | '/api/ghosts/conversations/$conversationId/messages'
+    | '/api/groups/$groupId/members/$userId'
+    | '/api/mcp/tools/$toolName/invoke'
+    | '/api/mcp/tools/$toolName/schema'
     | '/api/ghosts/conversations/$conversationId/messages/stream'
   id:
     | '__root__'
@@ -496,6 +758,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/chat'
     | '/conversations'
+    | '/friends'
     | '/ghost'
     | '/memories'
     | '/settings'
@@ -505,6 +768,9 @@ export interface FileRouteTypes {
     | '/api/ws'
     | '/chat/$conversationId'
     | '/conversations/$conversationId'
+    | '/dm-links/$code'
+    | '/friend-links/$code'
+    | '/group-links/$code'
     | '/chat/'
     | '/conversations/'
     | '/settings/'
@@ -512,6 +778,8 @@ export interface FileRouteTypes {
     | '/api/auth/logout'
     | '/api/auth/session'
     | '/api/conversations/$conversationId'
+    | '/api/groups/$groupId'
+    | '/api/mcp/tools'
     | '/api/memories/$memoryId'
     | '/api/memories/check-duplicate'
     | '/api/memories/feed'
@@ -519,20 +787,37 @@ export interface FileRouteTypes {
     | '/api/notifications/$id'
     | '/api/notifications/read-all'
     | '/api/notifications/unread-count'
+    | '/api/relationships/$relatedUserId'
     | '/api/spaces/feed'
     | '/api/users/search'
     | '/api/conversations/'
+    | '/api/dm-links/'
+    | '/api/friend-links/'
     | '/api/ghosts/'
+    | '/api/groups/'
     | '/api/memories/'
     | '/api/notifications/'
+    | '/api/relationships/'
     | '/api/conversations/$conversationId/last-message'
+    | '/api/conversations/$conversationId/messages'
     | '/api/conversations/$conversationId/participants'
+    | '/api/conversations/$conversationId/read'
+    | '/api/dm-links/$code/redeem'
+    | '/api/friend-links/$code/redeem'
     | '/api/ghosts/$ghostId/conversation'
+    | '/api/group-links/$code/redeem'
+    | '/api/groups/$groupId/links'
+    | '/api/groups/$groupId/members'
+    | '/api/groups/$groupId/permissions'
     | '/api/memories/$memoryId/rate'
     | '/api/memories/$memoryId/similar'
     | '/api/notifications/$id/read'
     | '/api/ghosts/conversations/'
+    | '/api/conversations/$conversationId/messages/$messageId'
     | '/api/ghosts/conversations/$conversationId/messages'
+    | '/api/groups/$groupId/members/$userId'
+    | '/api/mcp/tools/$toolName/invoke'
+    | '/api/mcp/tools/$toolName/schema'
     | '/api/ghosts/conversations/$conversationId/messages/stream'
   fileRoutesById: FileRoutesById
 }
@@ -541,6 +826,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ChatRoute: typeof ChatRouteWithChildren
   ConversationsRoute: typeof ConversationsRouteWithChildren
+  FriendsRoute: typeof FriendsRoute
   GhostRoute: typeof GhostRoute
   MemoriesRoute: typeof MemoriesRoute
   SettingsRoute: typeof SettingsRouteWithChildren
@@ -548,10 +834,15 @@ export interface RootRouteChildren {
   ApiNotificationsWsRoute: typeof ApiNotificationsWsRoute
   ApiUploadRoute: typeof ApiUploadRoute
   ApiWsRoute: typeof ApiWsRoute
+  DmLinksCodeRoute: typeof DmLinksCodeRoute
+  FriendLinksCodeRoute: typeof FriendLinksCodeRoute
+  GroupLinksCodeRoute: typeof GroupLinksCodeRoute
   ApiAuthLoginRoute: typeof ApiAuthLoginRoute
   ApiAuthLogoutRoute: typeof ApiAuthLogoutRoute
   ApiAuthSessionRoute: typeof ApiAuthSessionRoute
   ApiConversationsConversationIdRoute: typeof ApiConversationsConversationIdRouteWithChildren
+  ApiGroupsGroupIdRoute: typeof ApiGroupsGroupIdRouteWithChildren
+  ApiMcpToolsRoute: typeof ApiMcpToolsRouteWithChildren
   ApiMemoriesMemoryIdRoute: typeof ApiMemoriesMemoryIdRouteWithChildren
   ApiMemoriesCheckDuplicateRoute: typeof ApiMemoriesCheckDuplicateRoute
   ApiMemoriesFeedRoute: typeof ApiMemoriesFeedRoute
@@ -559,13 +850,21 @@ export interface RootRouteChildren {
   ApiNotificationsIdRoute: typeof ApiNotificationsIdRouteWithChildren
   ApiNotificationsReadAllRoute: typeof ApiNotificationsReadAllRoute
   ApiNotificationsUnreadCountRoute: typeof ApiNotificationsUnreadCountRoute
+  ApiRelationshipsRelatedUserIdRoute: typeof ApiRelationshipsRelatedUserIdRoute
   ApiSpacesFeedRoute: typeof ApiSpacesFeedRoute
   ApiUsersSearchRoute: typeof ApiUsersSearchRoute
   ApiConversationsIndexRoute: typeof ApiConversationsIndexRoute
+  ApiDmLinksIndexRoute: typeof ApiDmLinksIndexRoute
+  ApiFriendLinksIndexRoute: typeof ApiFriendLinksIndexRoute
   ApiGhostsIndexRoute: typeof ApiGhostsIndexRoute
+  ApiGroupsIndexRoute: typeof ApiGroupsIndexRoute
   ApiMemoriesIndexRoute: typeof ApiMemoriesIndexRoute
   ApiNotificationsIndexRoute: typeof ApiNotificationsIndexRoute
+  ApiRelationshipsIndexRoute: typeof ApiRelationshipsIndexRoute
+  ApiDmLinksCodeRedeemRoute: typeof ApiDmLinksCodeRedeemRoute
+  ApiFriendLinksCodeRedeemRoute: typeof ApiFriendLinksCodeRedeemRoute
   ApiGhostsGhostIdConversationRoute: typeof ApiGhostsGhostIdConversationRoute
+  ApiGroupLinksCodeRedeemRoute: typeof ApiGroupLinksCodeRedeemRoute
   ApiGhostsConversationsIndexRoute: typeof ApiGhostsConversationsIndexRoute
   ApiGhostsConversationsConversationIdMessagesRoute: typeof ApiGhostsConversationsConversationIdMessagesRouteWithChildren
 }
@@ -598,6 +897,13 @@ declare module '@tanstack/react-router' {
       path: '/ghost'
       fullPath: '/ghost'
       preLoaderRoute: typeof GhostRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/friends': {
+      id: '/friends'
+      path: '/friends'
+      fullPath: '/friends'
+      preLoaderRoute: typeof FriendsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/conversations': {
@@ -649,6 +955,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChatIndexRouteImport
       parentRoute: typeof ChatRoute
     }
+    '/group-links/$code': {
+      id: '/group-links/$code'
+      path: '/group-links/$code'
+      fullPath: '/group-links/$code'
+      preLoaderRoute: typeof GroupLinksCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/friend-links/$code': {
+      id: '/friend-links/$code'
+      path: '/friend-links/$code'
+      fullPath: '/friend-links/$code'
+      preLoaderRoute: typeof FriendLinksCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dm-links/$code': {
+      id: '/dm-links/$code'
+      path: '/dm-links/$code'
+      fullPath: '/dm-links/$code'
+      preLoaderRoute: typeof DmLinksCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/conversations/$conversationId': {
       id: '/conversations/$conversationId'
       path: '/$conversationId'
@@ -684,6 +1011,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiNotificationsWsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/relationships/': {
+      id: '/api/relationships/'
+      path: '/api/relationships'
+      fullPath: '/api/relationships/'
+      preLoaderRoute: typeof ApiRelationshipsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/notifications/': {
       id: '/api/notifications/'
       path: '/api/notifications'
@@ -698,11 +1032,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiMemoriesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/groups/': {
+      id: '/api/groups/'
+      path: '/api/groups'
+      fullPath: '/api/groups/'
+      preLoaderRoute: typeof ApiGroupsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/ghosts/': {
       id: '/api/ghosts/'
       path: '/api/ghosts'
       fullPath: '/api/ghosts/'
       preLoaderRoute: typeof ApiGhostsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/friend-links/': {
+      id: '/api/friend-links/'
+      path: '/api/friend-links'
+      fullPath: '/api/friend-links/'
+      preLoaderRoute: typeof ApiFriendLinksIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/dm-links/': {
+      id: '/api/dm-links/'
+      path: '/api/dm-links'
+      fullPath: '/api/dm-links/'
+      preLoaderRoute: typeof ApiDmLinksIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/conversations/': {
@@ -724,6 +1079,13 @@ declare module '@tanstack/react-router' {
       path: '/api/spaces/feed'
       fullPath: '/api/spaces/feed'
       preLoaderRoute: typeof ApiSpacesFeedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/relationships/$relatedUserId': {
+      id: '/api/relationships/$relatedUserId'
+      path: '/api/relationships/$relatedUserId'
+      fullPath: '/api/relationships/$relatedUserId'
+      preLoaderRoute: typeof ApiRelationshipsRelatedUserIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/notifications/unread-count': {
@@ -773,6 +1135,20 @@ declare module '@tanstack/react-router' {
       path: '/api/memories/$memoryId'
       fullPath: '/api/memories/$memoryId'
       preLoaderRoute: typeof ApiMemoriesMemoryIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/mcp/tools': {
+      id: '/api/mcp/tools'
+      path: '/api/mcp/tools'
+      fullPath: '/api/mcp/tools'
+      preLoaderRoute: typeof ApiMcpToolsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/groups/$groupId': {
+      id: '/api/groups/$groupId'
+      path: '/api/groups/$groupId'
+      fullPath: '/api/groups/$groupId'
+      preLoaderRoute: typeof ApiGroupsGroupIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/conversations/$conversationId': {
@@ -831,6 +1207,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiMemoriesMemoryIdRateRouteImport
       parentRoute: typeof ApiMemoriesMemoryIdRoute
     }
+    '/api/groups/$groupId/permissions': {
+      id: '/api/groups/$groupId/permissions'
+      path: '/permissions'
+      fullPath: '/api/groups/$groupId/permissions'
+      preLoaderRoute: typeof ApiGroupsGroupIdPermissionsRouteImport
+      parentRoute: typeof ApiGroupsGroupIdRoute
+    }
+    '/api/groups/$groupId/members': {
+      id: '/api/groups/$groupId/members'
+      path: '/members'
+      fullPath: '/api/groups/$groupId/members'
+      preLoaderRoute: typeof ApiGroupsGroupIdMembersRouteImport
+      parentRoute: typeof ApiGroupsGroupIdRoute
+    }
+    '/api/groups/$groupId/links': {
+      id: '/api/groups/$groupId/links'
+      path: '/links'
+      fullPath: '/api/groups/$groupId/links'
+      preLoaderRoute: typeof ApiGroupsGroupIdLinksRouteImport
+      parentRoute: typeof ApiGroupsGroupIdRoute
+    }
+    '/api/group-links/$code/redeem': {
+      id: '/api/group-links/$code/redeem'
+      path: '/api/group-links/$code/redeem'
+      fullPath: '/api/group-links/$code/redeem'
+      preLoaderRoute: typeof ApiGroupLinksCodeRedeemRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/ghosts/$ghostId/conversation': {
       id: '/api/ghosts/$ghostId/conversation'
       path: '/api/ghosts/$ghostId/conversation'
@@ -838,11 +1242,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiGhostsGhostIdConversationRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/friend-links/$code/redeem': {
+      id: '/api/friend-links/$code/redeem'
+      path: '/api/friend-links/$code/redeem'
+      fullPath: '/api/friend-links/$code/redeem'
+      preLoaderRoute: typeof ApiFriendLinksCodeRedeemRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/dm-links/$code/redeem': {
+      id: '/api/dm-links/$code/redeem'
+      path: '/api/dm-links/$code/redeem'
+      fullPath: '/api/dm-links/$code/redeem'
+      preLoaderRoute: typeof ApiDmLinksCodeRedeemRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/conversations/$conversationId/read': {
+      id: '/api/conversations/$conversationId/read'
+      path: '/read'
+      fullPath: '/api/conversations/$conversationId/read'
+      preLoaderRoute: typeof ApiConversationsConversationIdReadRouteImport
+      parentRoute: typeof ApiConversationsConversationIdRoute
+    }
     '/api/conversations/$conversationId/participants': {
       id: '/api/conversations/$conversationId/participants'
       path: '/participants'
       fullPath: '/api/conversations/$conversationId/participants'
       preLoaderRoute: typeof ApiConversationsConversationIdParticipantsRouteImport
+      parentRoute: typeof ApiConversationsConversationIdRoute
+    }
+    '/api/conversations/$conversationId/messages': {
+      id: '/api/conversations/$conversationId/messages'
+      path: '/messages'
+      fullPath: '/api/conversations/$conversationId/messages'
+      preLoaderRoute: typeof ApiConversationsConversationIdMessagesRouteImport
       parentRoute: typeof ApiConversationsConversationIdRoute
     }
     '/api/conversations/$conversationId/last-message': {
@@ -852,12 +1284,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiConversationsConversationIdLastMessageRouteImport
       parentRoute: typeof ApiConversationsConversationIdRoute
     }
+    '/api/mcp/tools/$toolName/schema': {
+      id: '/api/mcp/tools/$toolName/schema'
+      path: '/$toolName/schema'
+      fullPath: '/api/mcp/tools/$toolName/schema'
+      preLoaderRoute: typeof ApiMcpToolsToolNameSchemaRouteImport
+      parentRoute: typeof ApiMcpToolsRoute
+    }
+    '/api/mcp/tools/$toolName/invoke': {
+      id: '/api/mcp/tools/$toolName/invoke'
+      path: '/$toolName/invoke'
+      fullPath: '/api/mcp/tools/$toolName/invoke'
+      preLoaderRoute: typeof ApiMcpToolsToolNameInvokeRouteImport
+      parentRoute: typeof ApiMcpToolsRoute
+    }
+    '/api/groups/$groupId/members/$userId': {
+      id: '/api/groups/$groupId/members/$userId'
+      path: '/$userId'
+      fullPath: '/api/groups/$groupId/members/$userId'
+      preLoaderRoute: typeof ApiGroupsGroupIdMembersUserIdRouteImport
+      parentRoute: typeof ApiGroupsGroupIdMembersRoute
+    }
     '/api/ghosts/conversations/$conversationId/messages': {
       id: '/api/ghosts/conversations/$conversationId/messages'
       path: '/api/ghosts/conversations/$conversationId/messages'
       fullPath: '/api/ghosts/conversations/$conversationId/messages'
       preLoaderRoute: typeof ApiGhostsConversationsConversationIdMessagesRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/api/conversations/$conversationId/messages/$messageId': {
+      id: '/api/conversations/$conversationId/messages/$messageId'
+      path: '/$messageId'
+      fullPath: '/api/conversations/$conversationId/messages/$messageId'
+      preLoaderRoute: typeof ApiConversationsConversationIdMessagesMessageIdRouteImport
+      parentRoute: typeof ApiConversationsConversationIdMessagesRoute
     }
     '/api/ghosts/conversations/$conversationId/messages/stream': {
       id: '/api/ghosts/conversations/$conversationId/messages/stream'
@@ -907,23 +1367,87 @@ const SettingsRouteWithChildren = SettingsRoute._addFileChildren(
   SettingsRouteChildren,
 )
 
+interface ApiConversationsConversationIdMessagesRouteChildren {
+  ApiConversationsConversationIdMessagesMessageIdRoute: typeof ApiConversationsConversationIdMessagesMessageIdRoute
+}
+
+const ApiConversationsConversationIdMessagesRouteChildren: ApiConversationsConversationIdMessagesRouteChildren =
+  {
+    ApiConversationsConversationIdMessagesMessageIdRoute:
+      ApiConversationsConversationIdMessagesMessageIdRoute,
+  }
+
+const ApiConversationsConversationIdMessagesRouteWithChildren =
+  ApiConversationsConversationIdMessagesRoute._addFileChildren(
+    ApiConversationsConversationIdMessagesRouteChildren,
+  )
+
 interface ApiConversationsConversationIdRouteChildren {
   ApiConversationsConversationIdLastMessageRoute: typeof ApiConversationsConversationIdLastMessageRoute
+  ApiConversationsConversationIdMessagesRoute: typeof ApiConversationsConversationIdMessagesRouteWithChildren
   ApiConversationsConversationIdParticipantsRoute: typeof ApiConversationsConversationIdParticipantsRoute
+  ApiConversationsConversationIdReadRoute: typeof ApiConversationsConversationIdReadRoute
 }
 
 const ApiConversationsConversationIdRouteChildren: ApiConversationsConversationIdRouteChildren =
   {
     ApiConversationsConversationIdLastMessageRoute:
       ApiConversationsConversationIdLastMessageRoute,
+    ApiConversationsConversationIdMessagesRoute:
+      ApiConversationsConversationIdMessagesRouteWithChildren,
     ApiConversationsConversationIdParticipantsRoute:
       ApiConversationsConversationIdParticipantsRoute,
+    ApiConversationsConversationIdReadRoute:
+      ApiConversationsConversationIdReadRoute,
   }
 
 const ApiConversationsConversationIdRouteWithChildren =
   ApiConversationsConversationIdRoute._addFileChildren(
     ApiConversationsConversationIdRouteChildren,
   )
+
+interface ApiGroupsGroupIdMembersRouteChildren {
+  ApiGroupsGroupIdMembersUserIdRoute: typeof ApiGroupsGroupIdMembersUserIdRoute
+}
+
+const ApiGroupsGroupIdMembersRouteChildren: ApiGroupsGroupIdMembersRouteChildren =
+  {
+    ApiGroupsGroupIdMembersUserIdRoute: ApiGroupsGroupIdMembersUserIdRoute,
+  }
+
+const ApiGroupsGroupIdMembersRouteWithChildren =
+  ApiGroupsGroupIdMembersRoute._addFileChildren(
+    ApiGroupsGroupIdMembersRouteChildren,
+  )
+
+interface ApiGroupsGroupIdRouteChildren {
+  ApiGroupsGroupIdLinksRoute: typeof ApiGroupsGroupIdLinksRoute
+  ApiGroupsGroupIdMembersRoute: typeof ApiGroupsGroupIdMembersRouteWithChildren
+  ApiGroupsGroupIdPermissionsRoute: typeof ApiGroupsGroupIdPermissionsRoute
+}
+
+const ApiGroupsGroupIdRouteChildren: ApiGroupsGroupIdRouteChildren = {
+  ApiGroupsGroupIdLinksRoute: ApiGroupsGroupIdLinksRoute,
+  ApiGroupsGroupIdMembersRoute: ApiGroupsGroupIdMembersRouteWithChildren,
+  ApiGroupsGroupIdPermissionsRoute: ApiGroupsGroupIdPermissionsRoute,
+}
+
+const ApiGroupsGroupIdRouteWithChildren =
+  ApiGroupsGroupIdRoute._addFileChildren(ApiGroupsGroupIdRouteChildren)
+
+interface ApiMcpToolsRouteChildren {
+  ApiMcpToolsToolNameInvokeRoute: typeof ApiMcpToolsToolNameInvokeRoute
+  ApiMcpToolsToolNameSchemaRoute: typeof ApiMcpToolsToolNameSchemaRoute
+}
+
+const ApiMcpToolsRouteChildren: ApiMcpToolsRouteChildren = {
+  ApiMcpToolsToolNameInvokeRoute: ApiMcpToolsToolNameInvokeRoute,
+  ApiMcpToolsToolNameSchemaRoute: ApiMcpToolsToolNameSchemaRoute,
+}
+
+const ApiMcpToolsRouteWithChildren = ApiMcpToolsRoute._addFileChildren(
+  ApiMcpToolsRouteChildren,
+)
 
 interface ApiMemoriesMemoryIdRouteChildren {
   ApiMemoriesMemoryIdRateRoute: typeof ApiMemoriesMemoryIdRateRoute
@@ -969,6 +1493,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ChatRoute: ChatRouteWithChildren,
   ConversationsRoute: ConversationsRouteWithChildren,
+  FriendsRoute: FriendsRoute,
   GhostRoute: GhostRoute,
   MemoriesRoute: MemoriesRoute,
   SettingsRoute: SettingsRouteWithChildren,
@@ -976,11 +1501,16 @@ const rootRouteChildren: RootRouteChildren = {
   ApiNotificationsWsRoute: ApiNotificationsWsRoute,
   ApiUploadRoute: ApiUploadRoute,
   ApiWsRoute: ApiWsRoute,
+  DmLinksCodeRoute: DmLinksCodeRoute,
+  FriendLinksCodeRoute: FriendLinksCodeRoute,
+  GroupLinksCodeRoute: GroupLinksCodeRoute,
   ApiAuthLoginRoute: ApiAuthLoginRoute,
   ApiAuthLogoutRoute: ApiAuthLogoutRoute,
   ApiAuthSessionRoute: ApiAuthSessionRoute,
   ApiConversationsConversationIdRoute:
     ApiConversationsConversationIdRouteWithChildren,
+  ApiGroupsGroupIdRoute: ApiGroupsGroupIdRouteWithChildren,
+  ApiMcpToolsRoute: ApiMcpToolsRouteWithChildren,
   ApiMemoriesMemoryIdRoute: ApiMemoriesMemoryIdRouteWithChildren,
   ApiMemoriesCheckDuplicateRoute: ApiMemoriesCheckDuplicateRoute,
   ApiMemoriesFeedRoute: ApiMemoriesFeedRoute,
@@ -988,13 +1518,21 @@ const rootRouteChildren: RootRouteChildren = {
   ApiNotificationsIdRoute: ApiNotificationsIdRouteWithChildren,
   ApiNotificationsReadAllRoute: ApiNotificationsReadAllRoute,
   ApiNotificationsUnreadCountRoute: ApiNotificationsUnreadCountRoute,
+  ApiRelationshipsRelatedUserIdRoute: ApiRelationshipsRelatedUserIdRoute,
   ApiSpacesFeedRoute: ApiSpacesFeedRoute,
   ApiUsersSearchRoute: ApiUsersSearchRoute,
   ApiConversationsIndexRoute: ApiConversationsIndexRoute,
+  ApiDmLinksIndexRoute: ApiDmLinksIndexRoute,
+  ApiFriendLinksIndexRoute: ApiFriendLinksIndexRoute,
   ApiGhostsIndexRoute: ApiGhostsIndexRoute,
+  ApiGroupsIndexRoute: ApiGroupsIndexRoute,
   ApiMemoriesIndexRoute: ApiMemoriesIndexRoute,
   ApiNotificationsIndexRoute: ApiNotificationsIndexRoute,
+  ApiRelationshipsIndexRoute: ApiRelationshipsIndexRoute,
+  ApiDmLinksCodeRedeemRoute: ApiDmLinksCodeRedeemRoute,
+  ApiFriendLinksCodeRedeemRoute: ApiFriendLinksCodeRedeemRoute,
   ApiGhostsGhostIdConversationRoute: ApiGhostsGhostIdConversationRoute,
+  ApiGroupLinksCodeRedeemRoute: ApiGroupLinksCodeRedeemRoute,
   ApiGhostsConversationsIndexRoute: ApiGhostsConversationsIndexRoute,
   ApiGhostsConversationsConversationIdMessagesRoute:
     ApiGhostsConversationsConversationIdMessagesRouteWithChildren,

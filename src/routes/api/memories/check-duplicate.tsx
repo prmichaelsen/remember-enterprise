@@ -12,7 +12,7 @@ export const Route = createFileRoute('/api/memories/check-duplicate')({
         }
 
         try {
-          const body = await request.json()
+          const body = await request.json() as any
           const { content, conversation_id } = body
 
           if (!content || typeof content !== 'string') {

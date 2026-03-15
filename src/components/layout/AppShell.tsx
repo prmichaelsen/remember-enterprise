@@ -14,6 +14,9 @@ import { NotificationClientService } from '@/services/notification-client.servic
 import { UnifiedHeader, HEADER_HEIGHT_CLASS } from './UnifiedHeader'
 import { Sidebar } from './Sidebar'
 import { MobileBottomNav } from './MobileBottomNav'
+// FCM disabled until Firebase appId is configured
+// import { PushPermissionPrompt } from '@/components/notifications/PushPermissionPrompt'
+// import { initializeFCM } from '@/lib/fcm'
 import type { Notification } from '@/types/notifications'
 
 interface AppShellProps {
@@ -62,12 +65,12 @@ export function AppShell({ currentTheme, onThemeToggle }: AppShellProps) {
     created_at: n.createdAt,
   }))
 
-  // Initialize FCM on mount (if permission already granted)
-  useEffect(() => {
-    if (user) {
-      initializeFCM().catch(() => {})
-    }
-  }, [user])
+  // FCM disabled until Firebase appId is configured
+  // useEffect(() => {
+  //   if (user) {
+  //     initializeFCM().catch(() => {})
+  //   }
+  // }, [user])
 
   // Close sidebar when route changes (mobile)
   useEffect(() => {
@@ -117,8 +120,8 @@ export function AppShell({ currentTheme, onThemeToggle }: AppShellProps) {
       {/* Mobile Bottom Nav */}
       <MobileBottomNav />
 
-      {/* Push Permission Prompt (shown once) */}
-      {user && <PushPermissionPrompt />}
+      {/* FCM disabled until Firebase appId is configured */}
+      {/* {user && <PushPermissionPrompt />} */}
     </div>
   )
 }

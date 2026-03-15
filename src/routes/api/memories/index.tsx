@@ -15,7 +15,7 @@ export const Route = createFileRoute('/api/memories/')({
         }
 
         try {
-          const body = await request.json()
+          const body = await request.json() as any
           const { content, title, tags, scope, group_id, source_message_id } = body
 
           if (!content || typeof content !== 'string') {
