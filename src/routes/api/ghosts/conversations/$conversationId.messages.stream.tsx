@@ -8,7 +8,9 @@ import {
 } from '@prmichaelsen/firebase-admin-sdk-v8'
 import { ChatEngine } from '@/lib/chat/chat-engine'
 import { AnthropicAIProvider } from '@/lib/chat/anthropic-ai-provider'
+import { buildGhostSystemPrompt } from '@/lib/chat/prompt-builder'
 import type { GhostPersona, GhostMessage } from '@/services/ghost.service'
+import type { MemoryRecord } from '@/lib/chat/prompt-builder'
 
 export const Route = createFileRoute(
   '/api/ghosts/conversations/$conversationId/messages/stream',
@@ -73,17 +75,24 @@ export const Route = createFileRoute(
         const ghostId = conversationDoc.ghostId as string
 
         // Load ghost persona
-        let ghost: GhostPersona | null = null
+        const defaultGhost: GhostPersona = {
+          id: ghostId,
+          name: 'Assistant',
+          description: 'A helpful assistant.',
+          avatarUrl: '',
+          trustTier: 'public',
+          systemPromptFragment: 'You are a helpful assistant.',
+          createdAt: new Date().toISOString(),
+        }
+        let ghost: GhostPersona = defaultGhost
         try {
           const ghostDoc = await getDocument('ghosts', ghostId)
           if (ghostDoc) {
             ghost = { ...(ghostDoc as unknown as GhostPersona), id: ghostId }
           }
         } catch {
-          // Ghost may have been deleted; proceed with a default prompt
+          // Ghost may have been deleted; proceed with default
         }
-
-        const systemPrompt = ghost?.systemPromptFragment ?? 'You are a helpful assistant.'
 
         // Load conversation history (last 50 messages)
         const messagesPath = `users/${session.uid}/ghost_conversations/${conversationId}/messages`
@@ -108,14 +117,19 @@ export const Route = createFileRoute(
           { role: 'user', content },
         )
 
-        // Build memory context string for injection
-        let memoryPrompt = ''
-        if (memoryContext.length > 0) {
-          const memorySnippets = memoryContext
-            .map((m: any) => m.content ?? m.text ?? JSON.stringify(m))
-            .join('\n- ')
-          memoryPrompt = `\n\nRelevant memories about this user:\n- ${memorySnippets}`
-        }
+        // Build system prompt using prompt-builder (Task 30)
+        const memoryRecords: MemoryRecord[] = memoryContext.map((m: any) => ({
+          id: m.id ?? '',
+          title: m.title ?? '',
+          content: m.content ?? m.text ?? JSON.stringify(m),
+          scope: m.scope,
+          created_at: m.created_at ?? m.createdAt,
+        }))
+
+        const systemPrompt = buildGhostSystemPrompt({
+          ghostPersona: ghost,
+          memoryContext: memoryRecords,
+        })
 
         // Check for API key
         const apiKey =
@@ -135,16 +149,11 @@ export const Route = createFileRoute(
           role: msg.role as 'user' | 'assistant',
           content: msg.content,
         }))
-
-        // Add the current user message
         chatMessages.push({ role: 'user', content })
 
         // Create the AI provider and chat engine
-        const provider = new AnthropicAIProvider({ apiKey })
-        const engine = new ChatEngine({
-          provider,
-          systemPrompt: systemPrompt + memoryPrompt,
-        })
+        const provider = new AnthropicAIProvider(apiKey)
+        const engine = new ChatEngine(provider)
 
         // Stream response as SSE
         let fullAssistantContent = ''
@@ -154,39 +163,39 @@ export const Route = createFileRoute(
             const encoder = new TextEncoder()
 
             try {
-              await engine.streamChat(chatMessages, {
-                onChunk(chunk: string) {
-                  fullAssistantContent += chunk
-                  const sseData = `data: ${JSON.stringify({ chunk })}\n\n`
-                  controller.enqueue(encoder.encode(sseData))
-                },
-                async onComplete() {
-                  // Send done signal
-                  controller.enqueue(encoder.encode('data: [DONE]\n\n'))
-
-                  // Persist assistant message
-                  try {
-                    await GhostDatabaseService.sendMessage(
-                      session.uid,
-                      conversationId,
-                      { role: 'assistant', content: fullAssistantContent },
-                    )
-                  } catch (err) {
-                    console.error(
-                      '[ghost-stream] Failed to persist assistant message:',
-                      err,
-                    )
+              await engine.processMessage({
+                messages: chatMessages,
+                systemPrompt,
+                onEvent(event) {
+                  if (event.type === 'chunk') {
+                    fullAssistantContent += event.content
+                    const sseData = `data: ${JSON.stringify({ chunk: event.content })}\n\n`
+                    controller.enqueue(encoder.encode(sseData))
+                  } else if (event.type === 'error') {
+                    const sseError = `data: ${JSON.stringify({ error: event.error })}\n\n`
+                    controller.enqueue(encoder.encode(sseError))
                   }
-
-                  controller.close()
-                },
-                onError(error: string) {
-                  const sseError = `data: ${JSON.stringify({ error })}\n\n`
-                  controller.enqueue(encoder.encode(sseError))
-                  controller.enqueue(encoder.encode('data: [DONE]\n\n'))
-                  controller.close()
                 },
               })
+
+              // Stream complete — send done signal
+              controller.enqueue(encoder.encode('data: [DONE]\n\n'))
+
+              // Persist assistant message
+              try {
+                await GhostDatabaseService.sendMessage(
+                  session.uid,
+                  conversationId,
+                  { role: 'assistant', content: fullAssistantContent },
+                )
+              } catch (err) {
+                console.error(
+                  '[ghost-stream] Failed to persist assistant message:',
+                  err,
+                )
+              }
+
+              controller.close()
             } catch (err) {
               console.error('[ghost-stream] Stream error:', err)
               const errorMsg =

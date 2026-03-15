@@ -65,10 +65,10 @@ milestones:
 
   - id: milestone_8
     name: LLM Integration
-    status: not_started
+    status: completed
     file: agent/milestones/milestone-8-llm-integration.md
     tasks_total: 3
-    tasks_completed: 0
+    tasks_completed: 3
     estimated_weeks: 1
 
 tasks:
@@ -297,28 +297,28 @@ tasks:
   milestone_8:
     - id: task-28
       name: Install Anthropic SDK & Create ChatEngine
-      status: not_started
-      started: null
+      status: completed
+      started: 2026-03-15T23:30:00Z
       file: agent/tasks/milestone-8-llm-integration/task-28-chat-engine.md
       estimated_hours: 3
       actual_hours: null
-      completed_date: null
+      completed_date: 2026-03-15T23:45:00Z
     - id: task-29
       name: Ghost Streaming Endpoint
-      status: not_started
-      started: null
+      status: completed
+      started: 2026-03-15T23:45:00Z
       file: agent/tasks/milestone-8-llm-integration/task-29-ghost-streaming-endpoint.md
       estimated_hours: 2
       actual_hours: null
-      completed_date: null
+      completed_date: 2026-03-16T00:00:00Z
     - id: task-30
       name: Memory-Augmented System Prompts
-      status: not_started
-      started: null
+      status: completed
+      started: 2026-03-15T23:30:00Z
       file: agent/tasks/milestone-8-llm-integration/task-30-memory-augmented-prompts.md
       estimated_hours: 2
       actual_hours: null
-      completed_date: null
+      completed_date: 2026-03-15T23:45:00Z
 
 documentation:
   design_documents: 2
@@ -328,8 +328,8 @@ documentation:
 
 progress:
   planning: 100
-  implementation: 90
-  overall: 92
+  implementation: 100
+  overall: 100
 
 recent_work:
   - date: 2026-03-15
@@ -348,10 +348,9 @@ recent_work:
     description: "Audit #1: requirements vs implementation — 14/14 P0 features, 100% color system compliance"
 
 next_steps:
-  - Start M8 Task 28 (Install Anthropic SDK & Create ChatEngine)
-  - Wire ghost streaming endpoint (Task 29)
-  - Memory-augmented system prompts (Task 30)
-  - Deploy and test end-to-end with ANTHROPIC_API_KEY secret
+  - Set ANTHROPIC_API_KEY as Cloudflare secret (npx wrangler secret put ANTHROPIC_API_KEY)
+  - Deploy and test ghost streaming end-to-end
+  - Verify memory-augmented responses reference user's saved memories
 
 notes: []
 
