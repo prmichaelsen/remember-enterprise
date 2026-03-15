@@ -7,7 +7,7 @@ project:
     Enterprise memory platform for teams and organizations.
 
 milestones:
-  - id: M1
+  - id: milestone_1
     name: Project Scaffolding & Infrastructure
     status: in_progress
     file: agent/milestones/milestone-1-project-scaffolding.md
@@ -15,28 +15,28 @@ milestones:
     tasks_completed: 4
     estimated_weeks: 2
 
-  - id: M2
+  - id: milestone_2
     name: Core Messaging
-    status: in_progress
+    status: completed
     file: agent/milestones/milestone-2-core-messaging.md
     tasks_total: 5
-    tasks_completed: 0
+    tasks_completed: 5
     estimated_weeks: 3
 
-  - id: M3
+  - id: milestone_3
     name: Memory Integration
-    status: not_started
+    status: completed
     file: agent/milestones/milestone-3-memory-integration.md
     tasks_total: 4
-    tasks_completed: 0
+    tasks_completed: 4
     estimated_weeks: 2
 
-  - id: M4
+  - id: milestone_4
     name: Notifications & Polish
-    status: not_started
+    status: completed
     file: agent/milestones/milestone-4-notifications-polish.md
     tasks_total: 3
-    tasks_completed: 0
+    tasks_completed: 3
     estimated_weeks: 1
 
 tasks:
@@ -85,104 +85,104 @@ tasks:
   milestone_2:
     - id: task-6
       name: Conversation Sidebar & Navigation
-      status: not_started
-      started: null
+      status: completed
+      started: 2026-03-15T20:30:00Z
       file: agent/tasks/milestone-2-core-messaging/task-6-conversation-sidebar.md
       estimated_hours: 3-4
       actual_hours: null
-      completed_date: null
+      completed_date: 2026-03-15T21:00:00Z
     - id: task-7
       name: DM Conversations
-      status: not_started
-      started: null
+      status: completed
+      started: 2026-03-15T20:30:00Z
       file: agent/tasks/milestone-2-core-messaging/task-7-dm-conversations.md
       estimated_hours: 3-4
       actual_hours: null
-      completed_date: null
+      completed_date: 2026-03-15T21:00:00Z
     - id: task-8
       name: Private Groups & ACL
-      status: not_started
-      started: null
+      status: completed
+      started: 2026-03-15T20:30:00Z
       file: agent/tasks/milestone-2-core-messaging/task-8-private-groups-acl.md
       estimated_hours: 3-4
       actual_hours: null
-      completed_date: null
+      completed_date: 2026-03-15T21:00:00Z
     - id: task-9
       name: Real-Time Message Delivery
-      status: not_started
-      started: null
+      status: completed
+      started: 2026-03-15T20:30:00Z
       file: agent/tasks/milestone-2-core-messaging/task-9-realtime-messages.md
       estimated_hours: 2-3
       actual_hours: null
-      completed_date: null
+      completed_date: 2026-03-15T21:00:00Z
     - id: task-10
       name: File & Image Uploads
-      status: not_started
-      started: null
+      status: completed
+      started: 2026-03-15T20:30:00Z
       file: agent/tasks/milestone-2-core-messaging/task-10-file-uploads.md
       estimated_hours: 2-3
       actual_hours: null
-      completed_date: null
+      completed_date: 2026-03-15T21:00:00Z
 
   milestone_3:
     - id: task-11
       name: Save-as-Memory CTA
-      status: not_started
-      started: null
+      status: completed
+      started: 2026-03-15T20:30:00Z
       file: agent/tasks/milestone-3-memory-integration/task-11-save-as-memory.md
       estimated_hours: 2-3
       actual_hours: null
-      completed_date: null
+      completed_date: 2026-03-15T21:00:00Z
     - id: task-12
       name: Memories Tab & Feed
-      status: not_started
-      started: null
+      status: completed
+      started: 2026-03-15T20:30:00Z
       file: agent/tasks/milestone-3-memory-integration/task-12-memories-tab.md
       estimated_hours: 3-4
       actual_hours: null
-      completed_date: null
+      completed_date: 2026-03-15T21:00:00Z
     - id: task-13
       name: MCP Tool Invocation
-      status: not_started
-      started: null
+      status: completed
+      started: 2026-03-15T20:30:00Z
       file: agent/tasks/milestone-3-memory-integration/task-13-mcp-tool-invocation.md
       estimated_hours: 3-4
       actual_hours: null
-      completed_date: null
+      completed_date: 2026-03-15T21:00:00Z
     - id: task-14
       name: Ghost Tab
-      status: not_started
-      started: null
+      status: completed
+      started: 2026-03-15T20:30:00Z
       file: agent/tasks/milestone-3-memory-integration/task-14-ghost-tab.md
       estimated_hours: 2-3
       actual_hours: null
-      completed_date: null
+      completed_date: 2026-03-15T21:00:00Z
 
   milestone_4:
     - id: task-15
       name: Notification Engine & UI
-      status: not_started
-      started: null
+      status: completed
+      started: 2026-03-15T20:30:00Z
       file: agent/tasks/milestone-4-notifications-polish/task-15-notification-engine.md
       estimated_hours: 3-4
       actual_hours: null
-      completed_date: null
+      completed_date: 2026-03-15T21:00:00Z
     - id: task-16
       name: Push Notifications
-      status: not_started
-      started: null
+      status: completed
+      started: 2026-03-15T20:30:00Z
       file: agent/tasks/milestone-4-notifications-polish/task-16-push-notifications.md
       estimated_hours: 2-3
       actual_hours: null
-      completed_date: null
+      completed_date: 2026-03-15T21:00:00Z
     - id: task-17
       name: Navigation Shell
-      status: not_started
-      started: null
+      status: completed
+      started: 2026-03-15T20:30:00Z
       file: agent/tasks/milestone-4-notifications-polish/task-17-navigation-shell.md
       estimated_hours: 2-3
       actual_hours: null
-      completed_date: null
+      completed_date: 2026-03-15T21:00:00Z
 
 documentation:
   design_documents: 2
@@ -192,8 +192,8 @@ documentation:
 
 progress:
   planning: 100
-  implementation: 29
-  overall: 35
+  implementation: 94
+  overall: 94
 
 recent_work:
   - date: 2026-03-15
@@ -201,12 +201,16 @@ recent_work:
   - date: 2026-03-15
     description: "Created requirements design doc, color system design doc, and full MVP plan (4 milestones, 17 tasks)"
   - date: 2026-03-15
-    description: "Completed M1 scaffolding (tasks 2-5) + types-first foundation. Launched parallel agents for M2/M3/M4."
+    description: "Completed M1 scaffolding (tasks 2-5) + types-first foundation"
+  - date: 2026-03-15
+    description: "Completed M2 (core messaging), M3 (memory integration), M4 (notifications & polish) via parallel agents"
+  - date: 2026-03-15
+    description: "Merged all branches, deployed to Cloudflare Workers, fixed Tailwind v4 @theme CSS token issue"
 
 next_steps:
-  - Merge parallel worktree branches (M2, M3, M4) when agents complete
-  - Integration pass to resolve cross-milestone type errors
-  - Task 1 (agentbase-core extraction) remains deferred
+  - Integration pass to resolve remaining TypeScript errors across milestones
+  - Task 1 (extract @prmichaelsen/agentbase-core) remains deferred
+  - Delete stale duplicate task file in agent/tasks/unassigned/
 
 notes: []
 
