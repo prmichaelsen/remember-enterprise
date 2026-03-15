@@ -1,113 +1,97 @@
 /**
- * Notification Service — CRUD operations for in-app notifications.
- * Stubs Firestore; ready for real backend integration.
+ * Notification Service — client-side API wrappers for notification operations.
+ * Server-side Firestore logic lives in notification-database.service.ts.
  */
 
 import type { Notification, NotificationType } from '@/types/notifications'
 
-/** In-memory store for development; replaced by Firestore in production. */
-let notificationStore: Notification[] = []
-let idCounter = 0
-
-function generateId(): string {
-  idCounter += 1
-  return `notif_${Date.now()}_${idCounter}`
-}
-
-// ---------------------------------------------------------------------------
-// CREATE
-// ---------------------------------------------------------------------------
-
 export interface CreateNotificationParams {
-  user_id: string
   type: NotificationType
   title: string
   body: string
   conversation_id?: string | null
 }
 
+/**
+ * Create a notification (typically called server-side, but exposed for completeness).
+ */
 export async function createNotification(
   params: CreateNotificationParams,
 ): Promise<Notification> {
-  const notification: Notification = {
-    id: generateId(),
-    user_id: params.user_id,
-    type: params.type,
-    title: params.title,
-    body: params.body,
-    conversation_id: params.conversation_id ?? null,
-    read: false,
-    created_at: new Date().toISOString(),
+  const res = await fetch('/api/notifications', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(body.error ?? `Failed to create notification (${res.status})`)
   }
-
-  notificationStore.unshift(notification)
-  return notification
+  return res.json()
 }
 
-// ---------------------------------------------------------------------------
-// READ
-// ---------------------------------------------------------------------------
-
+/**
+ * Fetch notifications for the current user.
+ */
 export async function getNotifications(
-  userId: string,
   options: { limit?: number; offset?: number } = {},
 ): Promise<Notification[]> {
-  const { limit = 20, offset = 0 } = options
-  return notificationStore
-    .filter((n) => n.user_id === userId)
-    .slice(offset, offset + limit)
-}
-
-export async function getNotificationById(
-  id: string,
-): Promise<Notification | null> {
-  return notificationStore.find((n) => n.id === id) ?? null
-}
-
-export async function getUnreadCount(userId: string): Promise<number> {
-  return notificationStore.filter(
-    (n) => n.user_id === userId && !n.read,
-  ).length
-}
-
-// ---------------------------------------------------------------------------
-// UPDATE — mark as read
-// ---------------------------------------------------------------------------
-
-export async function markAsRead(id: string): Promise<Notification | null> {
-  const notification = notificationStore.find((n) => n.id === id)
-  if (!notification) return null
-  notification.read = true
-  return notification
-}
-
-export async function markAllAsRead(userId: string): Promise<number> {
-  let count = 0
-  for (const n of notificationStore) {
-    if (n.user_id === userId && !n.read) {
-      n.read = true
-      count += 1
-    }
+  const qs = new URLSearchParams({
+    limit: String(options.limit ?? 20),
+    offset: String(options.offset ?? 0),
+  })
+  const res = await fetch(`/api/notifications?${qs}`)
+  if (!res.ok) {
+    throw new Error(`Failed to fetch notifications (${res.status})`)
   }
-  return count
+  const data = await res.json()
+  return data.notifications ?? []
 }
 
-// ---------------------------------------------------------------------------
-// DELETE
-// ---------------------------------------------------------------------------
-
-export async function deleteNotification(id: string): Promise<boolean> {
-  const index = notificationStore.findIndex((n) => n.id === id)
-  if (index === -1) return false
-  notificationStore.splice(index, 1)
-  return true
+/**
+ * Get unread notification count for the current user.
+ */
+export async function getUnreadCount(): Promise<number> {
+  const res = await fetch('/api/notifications/unread-count')
+  if (!res.ok) return 0
+  const data = await res.json()
+  return data.count ?? 0
 }
 
-// ---------------------------------------------------------------------------
-// Helpers (for testing / reset)
-// ---------------------------------------------------------------------------
+/**
+ * Mark a single notification as read.
+ */
+export async function markAsRead(notificationId: string): Promise<void> {
+  const res = await fetch(`/api/notifications/${notificationId}/read`, {
+    method: 'POST',
+  })
+  if (!res.ok) {
+    throw new Error(`Failed to mark notification as read (${res.status})`)
+  }
+}
 
-export function _resetStore(): void {
-  notificationStore = []
-  idCounter = 0
+/**
+ * Mark all notifications as read for the current user.
+ */
+export async function markAllAsRead(): Promise<number> {
+  const res = await fetch('/api/notifications/read-all', {
+    method: 'POST',
+  })
+  if (!res.ok) {
+    throw new Error(`Failed to mark all notifications as read (${res.status})`)
+  }
+  const data = await res.json()
+  return data.count ?? 0
+}
+
+/**
+ * Delete a notification.
+ */
+export async function deleteNotification(notificationId: string): Promise<void> {
+  const res = await fetch(`/api/notifications/${notificationId}`, {
+    method: 'DELETE',
+  })
+  if (!res.ok) {
+    throw new Error(`Failed to delete notification (${res.status})`)
+  }
 }

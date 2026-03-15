@@ -1,6 +1,6 @@
 /**
- * Message Service — send/receive messages, pagination, attachments.
- * Firestore calls are stubbed; interface is fully defined.
+ * Message Service — client-side API wrappers for message operations.
+ * Server-side Firestore logic lives in message-database.service.ts.
  */
 
 import type { Message, MessageAttachment } from '@/types/conversations'
@@ -32,49 +32,35 @@ export interface MessageListResult {
  * Send a new message to a conversation.
  */
 export async function sendMessage(params: SendMessageParams): Promise<Message> {
-  const now = new Date().toISOString()
-  const message: Message = {
-    id: crypto.randomUUID(),
-    conversation_id: params.conversation_id,
-    sender_id: params.sender_id,
-    sender_name: params.sender_name,
-    sender_photo_url: params.sender_photo_url,
-    content: params.content,
-    created_at: now,
-    updated_at: null,
-    attachments: params.attachments ?? [],
-    visible_to_user_ids: params.visible_to_user_ids ?? null,
-    role: params.role ?? 'user',
-    saved_memory_id: null,
+  const res = await fetch(`/api/conversations/${params.conversation_id}/messages`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(body.error ?? `Failed to send message (${res.status})`)
   }
-
-  // Stub: Firestore write
-  // const docRef = doc(db, 'conversations', params.conversation_id, 'messages', message.id)
-  // await setDoc(docRef, message)
-
-  return message
+  return res.json()
 }
 
 /**
  * Fetch messages for a conversation with cursor-based pagination.
- * Returns messages in reverse chronological order (newest first).
  */
 export async function listMessages(
-  params: MessageListParams
+  params: MessageListParams,
 ): Promise<MessageListResult> {
-  const { limit = 50 } = params
-
-  // Stub: Firestore query
-  // const q = query(
-  //   collection(db, 'conversations', params.conversation_id, 'messages'),
-  //   orderBy('created_at', 'desc'),
-  //   limit(limit),
-  //   ...(params.before_cursor ? [startAfter(params.before_cursor)] : [])
-  // )
-  // const snap = await getDocs(q)
-
-  void limit
-  return { messages: [], next_cursor: null, has_more: false }
+  const qs = new URLSearchParams({
+    limit: String(params.limit ?? 50),
+    ...(params.before_cursor ? { before_cursor: params.before_cursor } : {}),
+  })
+  const res = await fetch(
+    `/api/conversations/${params.conversation_id}/messages?${qs}`,
+  )
+  if (!res.ok) {
+    throw new Error(`Failed to fetch messages (${res.status})`)
+  }
+  return res.json()
 }
 
 /**
@@ -82,16 +68,16 @@ export async function listMessages(
  */
 export async function getMessage(
   conversationId: string,
-  messageId: string
+  messageId: string,
 ): Promise<Message | null> {
-  // Stub: Firestore read
-  // const docSnap = await getDoc(
-  //   doc(db, 'conversations', conversationId, 'messages', messageId)
-  // )
-  // return docSnap.exists() ? (docSnap.data() as Message) : null
-  void conversationId
-  void messageId
-  return null
+  const res = await fetch(
+    `/api/conversations/${conversationId}/messages/${messageId}`,
+  )
+  if (!res.ok) {
+    if (res.status === 404) return null
+    throw new Error(`Failed to fetch message (${res.status})`)
+  }
+  return res.json()
 }
 
 /**
@@ -100,43 +86,48 @@ export async function getMessage(
 export async function updateMessage(
   conversationId: string,
   messageId: string,
-  content: string
+  content: string,
 ): Promise<void> {
-  // Stub: Firestore update
-  // await updateDoc(
-  //   doc(db, 'conversations', conversationId, 'messages', messageId),
-  //   { content, updated_at: new Date().toISOString() }
-  // )
-  void conversationId
-  void messageId
-  void content
+  const res = await fetch(
+    `/api/conversations/${conversationId}/messages/${messageId}`,
+    {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content }),
+    },
+  )
+  if (!res.ok) {
+    throw new Error(`Failed to update message (${res.status})`)
+  }
 }
 
 /**
- * Delete a message (soft-delete by clearing content, or hard delete).
+ * Delete a message.
  */
 export async function deleteMessage(
   conversationId: string,
-  messageId: string
+  messageId: string,
 ): Promise<void> {
-  // Stub: Firestore delete
-  // await deleteDoc(doc(db, 'conversations', conversationId, 'messages', messageId))
-  void conversationId
-  void messageId
+  const res = await fetch(
+    `/api/conversations/${conversationId}/messages/${messageId}`,
+    { method: 'DELETE' },
+  )
+  if (!res.ok) {
+    throw new Error(`Failed to delete message (${res.status})`)
+  }
 }
 
 /**
- * Mark all messages in a conversation as read for a user.
+ * Mark all messages in a conversation as read for the current user.
  */
 export async function markConversationRead(
   conversationId: string,
-  userId: string
 ): Promise<void> {
-  // Stub: Firestore update on user's read-receipt subcollection
-  // await setDoc(
-  //   doc(db, 'users', userId, 'read_receipts', conversationId),
-  //   { last_read_at: new Date().toISOString() }
-  // )
-  void conversationId
-  void userId
+  const res = await fetch(
+    `/api/conversations/${conversationId}/read`,
+    { method: 'POST' },
+  )
+  if (!res.ok) {
+    throw new Error(`Failed to mark conversation as read (${res.status})`)
+  }
 }
