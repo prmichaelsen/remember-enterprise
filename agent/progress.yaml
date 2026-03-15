@@ -1,6 +1,6 @@
 project:
   name: remember-enterprise
-  version: 0.1.0
+  version: 0.1.1
   started: 2026-03-15
   status: in_progress
   description: |
@@ -9,10 +9,10 @@ project:
 milestones:
   - id: M1
     name: Project Scaffolding & Infrastructure
-    status: in_progress
+    status: completed
     file: agent/milestones/milestone-1-project-scaffolding.md
     tasks_total: 5
-    tasks_completed: 4
+    tasks_completed: 5
     estimated_weeks: 2
 
   - id: M2
@@ -43,12 +43,12 @@ tasks:
   milestone_1:
     - id: task-1
       name: Extract @prmichaelsen/agentbase-core Package
-      status: not_started
-      started: null
+      status: completed
+      started: 2026-03-15T21:00:00Z
       file: agent/tasks/milestone-1-project-scaffolding/task-1-extract-agentbase-core-package.md
       estimated_hours: 8-12
-      actual_hours: null
-      completed_date: null
+      actual_hours: 0.5
+      completed_date: 2026-03-15T21:30:00Z
     - id: task-2
       name: TanStack Start + Cloudflare Setup
       status: completed
@@ -192,10 +192,12 @@ documentation:
 
 progress:
   planning: 100
-  implementation: 29
-  overall: 35
+  implementation: 35
+  overall: 41
 
 recent_work:
+  - date: 2026-03-15
+    description: "Migrated to @prmichaelsen/agentbase-core v0.1.1 — replaced firebase-client, firebase-admin, session stubs, AuthUser type with shared package imports. M1 complete."
   - date: 2026-03-15
     description: "Installed tanstack-cloudflare package (v1.3.0) — 43 patterns, 4 commands"
   - date: 2026-03-15
@@ -204,9 +206,8 @@ recent_work:
     description: "Completed M1 scaffolding (tasks 2-5) + types-first foundation. Launched parallel agents for M2/M3/M4."
 
 next_steps:
-  - Merge parallel worktree branches (M2, M3, M4) when agents complete
-  - Integration pass to resolve cross-milestone type errors
-  - Task 1 (agentbase-core extraction) remains deferred
+  - M1 complete — begin M2 Core Messaging (task 6: conversation sidebar)
+  - Integration pass to resolve cross-milestone type errors from parallel worktree branches
 
 notes: []
 

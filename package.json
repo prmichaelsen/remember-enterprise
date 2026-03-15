@@ -1,6 +1,6 @@
 {
   "name": "@prmichaelsen/remember-enterprise",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.23.1",
+    "@prmichaelsen/agentbase-core": "^0.1.1",
     "@prmichaelsen/firebase-admin-sdk-v8": "^2.8.0",
     "@prmichaelsen/pretty-toasts": "^3.0.6",
     "@tailwindcss/vite": "^4.0.6",
