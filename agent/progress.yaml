@@ -57,10 +57,10 @@ milestones:
 
   - id: milestone_7
     name: Memory Routes & Bug Fixes
-    status: not_started
+    status: completed
     file: agent/milestones/milestone-7-memory-routes-bugfixes.md
     tasks_total: 3
-    tasks_completed: 0
+    tasks_completed: 3
     estimated_weeks: 1
 
   - id: milestone_8
@@ -271,28 +271,28 @@ tasks:
   milestone_7:
     - id: task-25
       name: Memory CRUD API Routes
-      status: not_started
-      started: null
+      status: completed
+      started: 2026-03-15T22:00:00Z
       file: agent/tasks/milestone-7-memory-routes-bugfixes/task-25-memory-crud-routes.md
       estimated_hours: 2
       actual_hours: null
-      completed_date: null
+      completed_date: 2026-03-15T22:15:00Z
     - id: task-26
       name: Fix SSR Preload Bugs
-      status: not_started
-      started: null
+      status: completed
+      started: 2026-03-15T22:00:00Z
       file: agent/tasks/milestone-7-memory-routes-bugfixes/task-26-fix-ssr-preload-bugs.md
       estimated_hours: 1
       actual_hours: null
-      completed_date: null
+      completed_date: 2026-03-15T22:10:00Z
     - id: task-27
       name: Missing Endpoint Wiring
-      status: not_started
-      started: null
+      status: completed
+      started: 2026-03-15T22:10:00Z
       file: agent/tasks/milestone-7-memory-routes-bugfixes/task-27-missing-endpoint-wiring.md
       estimated_hours: 1
       actual_hours: null
-      completed_date: null
+      completed_date: 2026-03-15T22:15:00Z
 
   milestone_8:
     - id: task-28
@@ -328,8 +328,8 @@ documentation:
 
 progress:
   planning: 100
-  implementation: 85
-  overall: 88
+  implementation: 90
+  overall: 92
 
 recent_work:
   - date: 2026-03-15
@@ -348,12 +348,10 @@ recent_work:
     description: "Audit #1: requirements vs implementation — 14/14 P0 features, 100% color system compliance"
 
 next_steps:
-  - Start M7 Task 25 (Memory CRUD API Routes)
-  - Fix SSR preload bugs (Task 26)
-  - Wire missing endpoints (Task 27)
   - Start M8 Task 28 (Install Anthropic SDK & Create ChatEngine)
   - Wire ghost streaming endpoint (Task 29)
   - Memory-augmented system prompts (Task 30)
+  - Deploy and test end-to-end with ANTHROPIC_API_KEY secret
 
 notes: []
 
