@@ -39,6 +39,14 @@ milestones:
     tasks_completed: 3
     estimated_weeks: 1
 
+  - id: milestone_5
+    name: Pattern Migration
+    status: not_started
+    file: agent/milestones/milestone-5-pattern-migration.md
+    tasks_total: 4
+    tasks_completed: 0
+    estimated_weeks: 1
+
 tasks:
   milestone_1:
     - id: task-2
@@ -176,16 +184,50 @@ tasks:
       actual_hours: null
       completed_date: 2026-03-15T21:00:00Z
 
+  milestone_5:
+    - id: task-18
+      name: Create Missing DatabaseServices
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-5-pattern-migration/task-18-create-database-services.md
+      estimated_hours: 3-4
+      actual_hours: null
+      completed_date: null
+    - id: task-19
+      name: Add SSR Preload to Routes
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-5-pattern-migration/task-19-ssr-preload-routes.md
+      estimated_hours: 2-3
+      actual_hours: null
+      completed_date: null
+    - id: task-20
+      name: Extract NotificationClientService
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-5-pattern-migration/task-20-notification-client-service.md
+      estimated_hours: 1-2
+      actual_hours: null
+      completed_date: null
+    - id: task-21
+      name: WebSocket Auth & Root Preload
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-5-pattern-migration/task-21-websocket-auth-root-preload.md
+      estimated_hours: 1-2
+      actual_hours: null
+      completed_date: null
+
 documentation:
   design_documents: 2
-  milestone_documents: 4
+  milestone_documents: 5
   pattern_documents: 43
-  task_documents: 17
+  task_documents: 21
 
 progress:
   planning: 100
-  implementation: 100
-  overall: 100
+  implementation: 80
+  overall: 85
 
 recent_work:
   - date: 2026-03-15
@@ -204,10 +246,8 @@ recent_work:
     description: "Audit #1: requirements vs implementation — 14/14 P0 features, 100% color system compliance"
 
 next_steps:
-  - Wire Firebase Admin SDK for server-side auth (session verification)
-  - Integrate @prmichaelsen/remember-core SDK for real memory operations
-  - Connect Firestore for conversation/message persistence
-  - E2E testing of core flows
+  - Start M5 Pattern Migration with Task 18 (Create DatabaseServices)
+  - Run @acp.proceed to begin implementation
 
 notes: []
 
