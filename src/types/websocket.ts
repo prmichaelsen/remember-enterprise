@@ -12,6 +12,9 @@ export type WebSocketMessageType =
   | 'notification'
   | 'agent_response'
   | 'agent_response_chunk'
+  | 'tool_call_start'
+  | 'tool_call_complete'
+  | 'agent_response_complete'
 
 export type WebSocketMessage =
   | NewMessageEvent
@@ -20,6 +23,9 @@ export type WebSocketMessage =
   | NotificationEvent
   | AgentResponseEvent
   | AgentResponseChunkEvent
+  | ToolCallStartEvent
+  | ToolCallCompleteEvent
+  | AgentResponseCompleteEvent
 
 export interface NewMessageEvent {
   type: 'message_new'
@@ -75,6 +81,35 @@ export interface AgentResponseChunkEvent {
   conversation_id: string
   message_id: string
   chunk: string
+}
+
+export interface ToolCallStartEvent {
+  type: 'tool_call_start'
+  conversation_id: string
+  message_id: string
+  tool_call_id: string
+  tool_name: string
+}
+
+export interface ToolCallCompleteEvent {
+  type: 'tool_call_complete'
+  conversation_id: string
+  message_id: string
+  tool_call_id: string
+  tool_name: string
+  status: 'complete' | 'error'
+  result?: string
+}
+
+export interface AgentResponseCompleteEvent {
+  type: 'agent_response_complete'
+  conversation_id: string
+  message: {
+    id: string
+    content: string
+    tool_name: string | null
+    visible_to_user_ids: string[]
+  }
 }
 
 export interface WebSocketConfig {

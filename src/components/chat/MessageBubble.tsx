@@ -9,6 +9,7 @@ import { useAuth } from '@/components/auth/AuthContext'
 import type { Message, MessageAttachment } from '@/types/conversations'
 import { isImageType, formatFileSize } from '@/services/upload.service'
 import { Download, Maximize2, Clock } from 'lucide-react'
+import { MarkdownContent } from './MarkdownContent'
 
 export interface MessageBubbleProps {
   message: Message
@@ -136,11 +137,10 @@ export function MessageBubble({
 
         <div className={`px-3 py-2 rounded-lg ${getMessageStyle()}`}>
           {/* Message content */}
-          <div
-            className={`text-sm whitespace-pre-wrap break-words ${t.textPrimary}`}
-          >
-            {message.content}
-          </div>
+          <MarkdownContent
+            content={message.content}
+            className={`text-sm break-words ${t.textPrimary}`}
+          />
 
           {/* Attachments */}
           {renderAttachments(message.attachments)}

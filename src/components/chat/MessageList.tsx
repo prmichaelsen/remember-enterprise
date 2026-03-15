@@ -7,9 +7,11 @@ import { useRef, useEffect, useCallback, useState } from 'react'
 import { useTheme } from '@/lib/theming'
 import { useAuth } from '@/components/auth/AuthContext'
 import type { Message, MessageAttachment } from '@/types/conversations'
+import type { StreamingBlock } from '@/types/streaming'
 import { isImageType, formatFileSize } from '@/services/upload.service'
 import { FileAttachment } from '@/components/chat/FileUpload'
 import { TypingIndicator } from '@/components/chat/TypingIndicator'
+import { StreamingBlocks } from '@/components/chat/StreamingBlocks'
 import { Modal } from '@/components/ui/Modal'
 import { Download, Maximize2 } from 'lucide-react'
 
@@ -19,6 +21,7 @@ interface MessageListProps {
   hasMore?: boolean
   onLoadMore?: () => void
   typingUsers?: Array<{ user_id: string; user_name: string }>
+  streamingBlocks?: StreamingBlock[]
 }
 
 export function MessageList({
@@ -27,6 +30,7 @@ export function MessageList({
   hasMore = false,
   onLoadMore,
   typingUsers = [],
+  streamingBlocks = [],
 }: MessageListProps) {
   const t = useTheme()
   const { user } = useAuth()
@@ -35,12 +39,12 @@ export function MessageList({
   const [autoScroll, setAutoScroll] = useState(true)
   const [expandedImage, setExpandedImage] = useState<string | null>(null)
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom when new messages arrive or streaming blocks update
   useEffect(() => {
     if (autoScroll && bottomRef.current) {
       bottomRef.current.scrollIntoView({ behavior: 'smooth' })
     }
-  }, [messages.length, autoScroll])
+  }, [messages.length, streamingBlocks.length, autoScroll])
 
   // Detect if user has scrolled up (disable auto-scroll)
   const handleScroll = useCallback(() => {
@@ -239,6 +243,11 @@ export function MessageList({
             </div>
           )
         })}
+
+        {/* Streaming blocks (active agent generation) */}
+        {streamingBlocks.length > 0 && (
+          <StreamingBlocks blocks={streamingBlocks} />
+        )}
 
         {/* Typing indicators */}
         <TypingIndicator typingUsers={typingUsers} />

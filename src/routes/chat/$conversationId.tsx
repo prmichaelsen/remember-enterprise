@@ -15,7 +15,22 @@ import { getConversation, updateLastMessage } from '@/services/conversation.serv
 import { listMessages, sendMessage, markConversationRead } from '@/services/message.service'
 import { checkPermission } from '@/services/group.service'
 import type { Conversation, Message, MessageAttachment } from '@/types/conversations'
-import type { WebSocketMessage, NewMessageEvent, TypingEvent } from '@/types/websocket'
+import type {
+  WebSocketMessage,
+  NewMessageEvent,
+  TypingEvent,
+  AgentResponseChunkEvent,
+  ToolCallStartEvent,
+  ToolCallCompleteEvent,
+  AgentResponseCompleteEvent,
+} from '@/types/websocket'
+import type { StreamingBlock } from '@/types/streaming'
+import {
+  appendTextChunk,
+  insertToolUseBlock,
+  completeToolUseBlock,
+  assembleContent,
+} from '@/types/streaming'
 import { Users, Info, ChevronLeft, Wifi, WifiOff } from 'lucide-react'
 import { getAuthSession } from '@/lib/auth/server-fn'
 import { ConversationDatabaseService } from '@/services/conversation-database.service'
@@ -24,6 +39,7 @@ import { MessageDatabaseService } from '@/services/message-database.service'
 export const Route = createFileRoute('/chat/$conversationId')({
   component: ConversationView,
   beforeLoad: async ({ params }) => {
+    if (typeof window !== 'undefined') return { initialConversation: null, initialMessages: [] }
     try {
       const user = await getAuthSession()
       if (!user) return { initialConversation: null, initialMessages: [] }
@@ -61,6 +77,10 @@ function ConversationView() {
     can_kick: boolean
   }>({ can_manage_members: false, can_kick: false })
 
+  // Streaming blocks state for real-time agent generation
+  const [streamingBlocks, setStreamingBlocks] = useState<StreamingBlock[]>([])
+  const streamingMessageIdRef = useRef<string | null>(null)
+
   // WebSocket for real-time
   const { status: wsStatus, lastMessage: wsMessage, send: wsSend } = useWebSocket(conversationId)
 
@@ -77,6 +97,8 @@ function ConversationView() {
       setLoading(true)
       setMessages([])
       setHasMore(false)
+      setStreamingBlocks([])
+      streamingMessageIdRef.current = null
 
       try {
         const [conv, msgResult] = await Promise.all([
@@ -207,6 +229,82 @@ function ConversationView() {
           clearTimeout(timeout)
           typingTimeoutsRef.current.delete(event.user_id)
         }
+        break
+      }
+
+      case 'agent_response_chunk': {
+        const event = wsMessage as AgentResponseChunkEvent
+        if (event.conversation_id !== conversationId) return
+
+        // Track which message we're streaming
+        if (streamingMessageIdRef.current !== event.message_id) {
+          streamingMessageIdRef.current = event.message_id
+          setStreamingBlocks([])
+        }
+
+        setStreamingBlocks((prev) => appendTextChunk(prev, event.chunk))
+        break
+      }
+
+      case 'tool_call_start': {
+        const event = wsMessage as ToolCallStartEvent
+        if (event.conversation_id !== conversationId) return
+
+        // Ensure we're tracking this message
+        if (streamingMessageIdRef.current !== event.message_id) {
+          streamingMessageIdRef.current = event.message_id
+          setStreamingBlocks([])
+        }
+
+        setStreamingBlocks((prev) =>
+          insertToolUseBlock(prev, event.tool_call_id, event.tool_name)
+        )
+        break
+      }
+
+      case 'tool_call_complete': {
+        const event = wsMessage as ToolCallCompleteEvent
+        if (event.conversation_id !== conversationId) return
+
+        setStreamingBlocks((prev) =>
+          completeToolUseBlock(prev, event.tool_call_id, event.status, event.result)
+        )
+        break
+      }
+
+      case 'agent_response_complete': {
+        const event = wsMessage as AgentResponseCompleteEvent
+        if (event.conversation_id !== conversationId) return
+
+        // Add the final assembled message to the messages array
+        const finalMsg: Message = {
+          id: event.message.id,
+          conversation_id: event.conversation_id,
+          sender_id: 'agent',
+          sender_name: 'Agent',
+          sender_photo_url: null,
+          content: event.message.content,
+          created_at: new Date().toISOString(),
+          updated_at: null,
+          attachments: [],
+          visible_to_user_ids: event.message.visible_to_user_ids,
+          role: 'assistant',
+          saved_memory_id: null,
+        }
+
+        setMessages((prev) => [...prev, finalMsg])
+
+        // Clear streaming state
+        setStreamingBlocks([])
+        streamingMessageIdRef.current = null
+
+        // Update sidebar preview
+        updateLastMessage(conversationId, {
+          content: finalMsg.content,
+          sender_id: finalMsg.sender_id,
+          sender_name: finalMsg.sender_name,
+          timestamp: finalMsg.created_at,
+        })
         break
       }
     }
@@ -343,10 +441,9 @@ function ConversationView() {
 
   const conversationName =
     conversation.name ??
-    conversation.participant_ids
+    ((conversation.participant_ids ?? [])
       .filter((id) => id !== user?.uid)
-      .join(', ') ??
-    'Conversation'
+      .join(', ') || 'Conversation')
 
   const isGroup = conversation.type === 'group'
 
@@ -407,6 +504,7 @@ function ConversationView() {
           hasMore={hasMore}
           onLoadMore={loadMore}
           typingUsers={typingUsers}
+          streamingBlocks={streamingBlocks}
         />
 
         {/* Compose */}
