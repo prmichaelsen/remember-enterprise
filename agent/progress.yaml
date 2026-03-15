@@ -8,13 +8,24 @@ project:
 
 milestones: []
 
-tasks: {}
+tasks:
+  unassigned:
+    - id: task-1
+      name: Extract @prmichaelsen/agentbase-core Package
+      status: not_started
+      started: null
+      file: agent/tasks/unassigned/task-1-extract-agentbase-core-package.md
+      estimated_hours: 8-12
+      actual_hours: null
+      completed_date: null
+      notes: |
+        Factor out reusable service infrastructure from agentbase.me into shared npm package
 
 documentation:
   design_documents: 0
   milestone_documents: 0
   pattern_documents: 43
-  task_documents: 0
+  task_documents: 1
 
 progress:
   planning: 0

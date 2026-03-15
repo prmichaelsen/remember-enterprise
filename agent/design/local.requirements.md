@@ -264,7 +264,7 @@ This is a greenfield project — no migration required. Users with existing agen
 - Public channels (P3) mapped to agentbase.me public spaces
 - Multiple workspaces (P10) — Slack-like org switching
 - OAuth integration for third-party auth providers
-- Mobile-native app (React Native or PWA)
+- Mobile-native app (capacitator, see ~/.acp/projects/agentbase-mobile`
 - Admin dashboard for workspace management
 - Audit logging for enterprise compliance
 - Similar/related memory carousels in chat sidebar (P1)
