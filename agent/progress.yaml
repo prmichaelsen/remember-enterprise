@@ -87,6 +87,14 @@ milestones:
     tasks_completed: 0
     estimated_weeks: 1
 
+  - id: milestone_11
+    name: Streaming & Tool Blocks
+    status: not_started
+    file: agent/milestones/milestone-11-streaming-tool-blocks.md
+    tasks_total: 3
+    tasks_completed: 0
+    estimated_weeks: 1
+
 tasks:
   milestone_1:
     - id: task-2
@@ -369,6 +377,32 @@ tasks:
       started: null
       file: agent/tasks/milestone-10-groups-mcp-api/task-34-mcp-tool-api-routes.md
       estimated_hours: 2-3
+      actual_hours: null
+      completed_date: null
+
+  milestone_11:
+    - id: task-35
+      name: Streaming Blocks Architecture
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-11-streaming-tool-blocks/task-35-streaming-blocks.md
+      estimated_hours: 2
+      actual_hours: null
+      completed_date: null
+    - id: task-36
+      name: ToolCallBadge & Inline Tool Rendering
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-11-streaming-tool-blocks/task-36-tool-call-badge.md
+      estimated_hours: 1.5
+      actual_hours: null
+      completed_date: null
+    - id: task-37
+      name: MarkdownContent Component
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-11-streaming-tool-blocks/task-37-markdown-content.md
+      estimated_hours: 1.5
       actual_hours: null
       completed_date: null
 
