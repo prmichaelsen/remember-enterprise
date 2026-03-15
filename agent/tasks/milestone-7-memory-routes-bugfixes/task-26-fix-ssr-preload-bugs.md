@@ -1,6 +1,6 @@
 # Task 26: Fix SSR Preload Bugs
 
-**Milestone**: [M5 - Memory Routes & Bug Fixes](../../milestones/milestone-5-memory-routes-bugfixes.md)
+**Milestone**: [M7 - Memory Routes & Bug Fixes](../../milestones/milestone-7-memory-routes-bugfixes.md)
 **Design Reference**: [SSR Preload Pattern](../../patterns/tanstack-cloudflare.ssr-preload.md)
 **Estimated Time**: 1 hour
 **Dependencies**: None

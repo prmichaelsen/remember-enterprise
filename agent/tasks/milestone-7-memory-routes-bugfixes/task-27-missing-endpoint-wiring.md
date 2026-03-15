@@ -1,6 +1,6 @@
 # Task 27: Missing Endpoint Wiring
 
-**Milestone**: [M5 - Memory Routes & Bug Fixes](../../milestones/milestone-5-memory-routes-bugfixes.md)
+**Milestone**: [M7 - Memory Routes & Bug Fixes](../../milestones/milestone-7-memory-routes-bugfixes.md)
 **Design Reference**: [API Server Handlers Pattern](../../patterns/tanstack-cloudflare.api-server-handlers.md)
 **Estimated Time**: 1 hour
 **Dependencies**: Task 25

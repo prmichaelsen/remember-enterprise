@@ -1,6 +1,6 @@
 # Task 25: Memory CRUD API Routes
 
-**Milestone**: [M5 - Memory Routes & Bug Fixes](../../milestones/milestone-5-memory-routes-bugfixes.md)
+**Milestone**: [M7 - Memory Routes & Bug Fixes](../../milestones/milestone-7-memory-routes-bugfixes.md)
 **Design Reference**: [Requirements](../../design/local.requirements.md)
 **Estimated Time**: 2 hours
 **Dependencies**: None

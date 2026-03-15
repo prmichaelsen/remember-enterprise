@@ -51,11 +51,10 @@ This milestone creates the technical foundation for remember-enterprise. It sets
 
 ## Tasks
 
-1. [Task 1: Extract @prmichaelsen/agentbase-core Package](../tasks/milestone-1-project-scaffolding/task-1-extract-agentbase-core-package.md) - Factor out shared service infrastructure
-2. [Task 2: TanStack Start + Cloudflare Setup](../tasks/milestone-1-project-scaffolding/task-2-tanstack-cloudflare-setup.md) - Project init, wrangler config, Tailwind
-3. [Task 3: Color System & ThemingProvider](../tasks/milestone-1-project-scaffolding/task-3-color-system-theming.md) - CSS tokens + ThemingProvider implementation
-4. [Task 4: Firebase Auth Integration](../tasks/milestone-1-project-scaffolding/task-4-firebase-auth.md) - Shared auth with agentbase.me
-5. [Task 5: WebSocket Durable Objects](../tasks/milestone-1-project-scaffolding/task-5-websocket-durable-objects.md) - Real-time messaging infrastructure
+1. [Task 2: TanStack Start + Cloudflare Setup](../tasks/milestone-1-project-scaffolding/task-2-tanstack-cloudflare-setup.md) - Project init, wrangler config, Tailwind
+2. [Task 3: Color System & ThemingProvider](../tasks/milestone-1-project-scaffolding/task-3-color-system-theming.md) - CSS tokens + ThemingProvider implementation
+3. [Task 4: Firebase Auth Integration](../tasks/milestone-1-project-scaffolding/task-4-firebase-auth.md) - Shared auth with agentbase.me
+4. [Task 5: WebSocket Durable Objects](../tasks/milestone-1-project-scaffolding/task-5-websocket-durable-objects.md) - Real-time messaging infrastructure
 
 ---
 

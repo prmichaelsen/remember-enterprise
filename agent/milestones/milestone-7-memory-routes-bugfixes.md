@@ -1,4 +1,4 @@
-# Milestone 5: Memory Routes & Bug Fixes
+# Milestone 7: Memory Routes & Bug Fixes
 
 **Goal**: Wire missing memory API routes through SvcClient and fix SSR preload / notification service layer bugs identified in audit-2
 **Duration**: 1 week
@@ -43,9 +43,9 @@ Audit #2 identified ~20% of code that would fail at runtime due to missing API r
 
 ## Tasks
 
-1. [Task 25: Memory CRUD API Routes](../tasks/milestone-5-memory-routes-bugfixes/task-25-memory-crud-routes.md)
-2. [Task 26: Fix SSR Preload Bugs](../tasks/milestone-5-memory-routes-bugfixes/task-26-fix-ssr-preload-bugs.md)
-3. [Task 27: Missing Endpoint Wiring](../tasks/milestone-5-memory-routes-bugfixes/task-27-missing-endpoint-wiring.md)
+1. [Task 25: Memory CRUD API Routes](../tasks/milestone-7-memory-routes-bugfixes/task-25-memory-crud-routes.md)
+2. [Task 26: Fix SSR Preload Bugs](../tasks/milestone-7-memory-routes-bugfixes/task-26-fix-ssr-preload-bugs.md)
+3. [Task 27: Missing Endpoint Wiring](../tasks/milestone-7-memory-routes-bugfixes/task-27-missing-endpoint-wiring.md)
 
 ---
 
