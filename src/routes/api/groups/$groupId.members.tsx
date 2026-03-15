@@ -59,7 +59,7 @@ export const Route = createFileRoute('/api/groups/$groupId/members')({
             return Response.json({ error: 'Forbidden: you do not have permission to invite members' }, { status: 403 })
           }
 
-          const body = await request.json()
+          const body = await request.json() as any
           const { user_id } = body
 
           if (!user_id || typeof user_id !== 'string') {

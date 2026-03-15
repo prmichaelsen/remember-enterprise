@@ -60,7 +60,7 @@ export const Route = createFileRoute('/api/groups/$groupId')({
             return Response.json({ error: 'Forbidden: admin access required' }, { status: 403 })
           }
 
-          const body = await request.json()
+          const body = await request.json() as any
           const { name, description, is_discoverable } = body
 
           await GroupDatabaseService.updateGroup(groupId, {
