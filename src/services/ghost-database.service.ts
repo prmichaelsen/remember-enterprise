@@ -1,6 +1,8 @@
 /**
  * GhostDatabaseService — server-side Firestore CRUD for ghost persona conversations.
  * Collection path: users/{userId}/ghost_conversations
+ *
+ * Integrates with remember-core SvcClient for memory-augmented ghost responses.
  */
 
 import {
@@ -11,6 +13,7 @@ import {
 } from '@prmichaelsen/firebase-admin-sdk-v8'
 import type { QueryOptions } from '@prmichaelsen/firebase-admin-sdk-v8'
 import { initFirebaseAdmin } from '@/lib/firebase-admin'
+import { getRememberSvcClient } from '@/lib/remember-sdk'
 import type {
   GhostPersona,
   GhostConversation,
@@ -107,13 +110,14 @@ export class GhostDatabaseService {
 
   /**
    * Send a message in a ghost conversation.
-   * Stores the user message and returns it; assistant response is handled separately.
+   * Persists the message, then queries relevant memories via SvcClient for context.
+   * Returns the stored message along with memory context for the ghost to reference.
    */
   static async sendMessage(
     userId: string,
     conversationId: string,
     message: { role: 'user' | 'assistant'; content: string },
-  ): Promise<GhostMessage> {
+  ): Promise<{ message: GhostMessage; memoryContext: unknown[] }> {
     initFirebaseAdmin()
     const collection = ghostMessagesCollection(userId, conversationId)
     const now = new Date().toISOString()
@@ -137,7 +141,26 @@ export class GhostDatabaseService {
       { merge: true },
     )
 
-    return ghostMessage
+    // Query relevant memories for context when the message is from the user
+    let memoryContext: unknown[] = []
+    if (message.role === 'user') {
+      try {
+        const svc = await getRememberSvcClient()
+        const result = await svc.memories.search(userId, {
+          query: message.content,
+          limit: 5,
+        })
+        if (result.ok && result.data) {
+          memoryContext = Array.isArray(result.data)
+            ? result.data
+            : (result.data as any).memories ?? []
+        }
+      } catch (error) {
+        console.warn('[GhostDatabaseService] memory search failed, proceeding without context:', error)
+      }
+    }
+
+    return { message: ghostMessage, memoryContext }
   }
 
   /**
