@@ -10,7 +10,8 @@ import { useTheme } from '@/lib/theming'
 import { useAuth } from '@/components/auth/AuthContext'
 import { FriendLinkShare } from '@/components/friends/FriendLinkShare'
 import { RelationshipRow } from '@/components/friends/RelationshipRow'
-import type { Relationship } from '@/services/relationship-database.service'
+import type { RelationshipIndexEntry } from '@/services/relationship-database.service'
+import type { ProfileSummary } from '@/lib/profile-map'
 
 export const Route = createFileRoute('/friends')({
   component: FriendsPage,
@@ -22,7 +23,8 @@ function FriendsPage() {
   const t = useTheme()
   const { user } = useAuth()
   const [activeTab, setActiveTab] = useState<Tab>('friends')
-  const [relationships, setRelationships] = useState<Relationship[]>([])
+  const [relationships, setRelationships] = useState<RelationshipIndexEntry[]>([])
+  const [profiles, setProfiles] = useState<Record<string, ProfileSummary>>({})
   const [loading, setLoading] = useState(true)
 
   const fetchRelationships = useCallback(async () => {
@@ -30,19 +32,23 @@ function FriendsPage() {
     setLoading(true)
 
     try {
-      let url = '/api/relationships?limit=100'
+      let url = '/api/relationships?'
       if (activeTab === 'friends') {
-        url += '&flag=friend&value=true'
+        url += 'friend=true'
       } else if (activeTab === 'requests') {
-        url += '&flag=pending_friend&value=true'
+        url += 'pending_friend=true'
       } else if (activeTab === 'blocked') {
-        url += '&flag=blocked&value=true'
+        url += 'blocked=true'
       }
 
       const res = await fetch(url)
       if (res.ok) {
-        const data = await res.json() as { relationships: Relationship[] }
+        const data = await res.json() as {
+          relationships: RelationshipIndexEntry[]
+          maps?: { profiles: Record<string, ProfileSummary> }
+        }
         setRelationships(data.relationships)
+        setProfiles(data.maps?.profiles ?? {})
       }
     } catch (error) {
       console.error('[FriendsPage] fetch error:', error)
@@ -105,8 +111,9 @@ function FriendsPage() {
         ) : (
           relationships.map((r) => (
             <RelationshipRow
-              key={r.id}
+              key={r.relationship_id}
               relationship={r}
+              profile={profiles[r.related_user_id]}
               currentUserId={user?.uid ?? ''}
               onUpdate={fetchRelationships}
             />

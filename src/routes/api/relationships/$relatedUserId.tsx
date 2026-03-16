@@ -3,6 +3,7 @@ import { initFirebaseAdmin } from '@/lib/firebase-admin'
 import { getServerSession } from '@/lib/auth/session'
 import { RelationshipDatabaseService } from '@/services/relationship-database.service'
 import type { RelationshipFlags } from '@/services/relationship-database.service'
+import { buildProfileMap } from '@/lib/profile-map'
 
 export const Route = createFileRoute('/api/relationships/$relatedUserId')({
   server: {
@@ -22,19 +23,23 @@ export const Route = createFileRoute('/api/relationships/$relatedUserId')({
 
         try {
           const { relatedUserId } = params
-          const body = await request.json() as Partial<RelationshipFlags>
+          const body = await request.json() as { flags?: Partial<RelationshipFlags> } & Partial<RelationshipFlags>
+
+          // Accept both { flags: { friend: true } } and flat { friend: true }
+          const flagUpdates = body.flags ?? body
 
           const updated = await RelationshipDatabaseService.updateRelationship(
             session.uid,
             relatedUserId,
-            body,
+            flagUpdates,
           )
 
           if (!updated) {
             return Response.json({ error: 'Relationship not found' }, { status: 404 })
           }
 
-          return Response.json({ relationship: updated })
+          const profiles = await buildProfileMap([session.uid, relatedUserId])
+          return Response.json({ relationship: updated, maps: { profiles } })
         } catch (error) {
           console.error('[api/relationships/$relatedUserId] PATCH error:', error)
           return Response.json({ error: 'Internal server error' }, { status: 500 })

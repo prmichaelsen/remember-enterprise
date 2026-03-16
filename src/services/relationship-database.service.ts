@@ -1,6 +1,8 @@
 /**
  * RelationshipDatabaseService — server-side Firestore operations for relationships.
- * Shared collection with agentbase.me: agentbase.relationships/{id}
+ * Matches agentbase.me's schema and query patterns exactly.
+ *
+ * Global collection: agentbase.relationships/{id}
  * Per-user index: agentbase.users/{userId}/relationship_index/{relatedUserId}
  */
 
@@ -15,30 +17,42 @@ import { initFirebaseAdmin } from '@/lib/firebase-admin'
 const BASE = 'agentbase'
 const RELATIONSHIPS = `${BASE}.relationships`
 
-function userRelationshipIndex(userId: string): string {
+function getUserRelationshipIndexCollection(userId: string): string {
   return `${BASE}.users/${userId}/relationship_index`
+}
+
+export interface RelationshipFlags {
+  friend?: boolean
+  pending_friend?: boolean
+  blocked?: boolean
+  muted?: boolean
+  restricted?: boolean
+  follower?: boolean
+  following?: boolean
 }
 
 export interface Relationship {
   id: string
   user_id_1: string
   user_id_2: string
-  friend?: boolean
-  pending_friend?: boolean
-  blocked?: boolean
-  muted?: boolean
-  initiated_by?: string
+  initiated_by_user_id: string
+  flags: RelationshipFlags
+  friend_data?: { became_friends_at: string }
+  blocked_data?: { blocked_by_user_id: string; blocked_at: string }
+  notes: Record<string, string>
   created_at: string
   updated_at: string
 }
 
-export type RelationshipFlags = Pick<
-  Relationship,
-  'friend' | 'pending_friend' | 'blocked' | 'muted'
->
+export interface RelationshipIndexEntry {
+  related_user_id: string
+  relationship_id: string
+  flags: RelationshipFlags
+  updated_at: string
+}
 
-function makeRelationshipId(userId1: string, userId2: string): string {
-  return [userId1, userId2].sort().join('-')
+function generateRelationshipId(userId1: string, userId2: string): string {
+  return userId1 < userId2 ? `${userId1}-${userId2}` : `${userId2}-${userId1}`
 }
 
 export class RelationshipDatabaseService {
@@ -47,12 +61,12 @@ export class RelationshipDatabaseService {
     userId2: string,
   ): Promise<Relationship | null> {
     initFirebaseAdmin()
-    const id = makeRelationshipId(userId1, userId2)
+    const id = generateRelationshipId(userId1, userId2)
 
     try {
       const doc = await getDocument(RELATIONSHIPS, id)
       if (!doc) return null
-      return { id, ...(doc as any) } as Relationship
+      return doc as Relationship
     } catch (error) {
       console.error('[RelationshipDatabaseService] getRelationship failed:', error)
       return null
@@ -60,62 +74,69 @@ export class RelationshipDatabaseService {
   }
 
   static async createRelationship(
-    userId1: string,
-    userId2: string,
-    flags: RelationshipFlags & { initiated_by?: string },
+    currentUserId: string,
+    relatedUserId: string,
+    flags: RelationshipFlags,
   ): Promise<Relationship> {
     initFirebaseAdmin()
-    const id = makeRelationshipId(userId1, userId2)
+    const id = generateRelationshipId(currentUserId, relatedUserId)
+    const [user1, user2] = currentUserId < relatedUserId
+      ? [currentUserId, relatedUserId]
+      : [relatedUserId, currentUserId]
     const now = new Date().toISOString()
 
     const relationship: Relationship = {
       id,
-      user_id_1: userId1,
-      user_id_2: userId2,
-      ...flags,
+      user_id_1: user1,
+      user_id_2: user2,
+      initiated_by_user_id: currentUserId,
+      flags,
+      notes: {},
       created_at: now,
       updated_at: now,
     }
 
     await setDocument(RELATIONSHIPS, id, relationship)
 
-    // Write per-user indices for fast queries
-    const indexData1 = { related_user_id: userId2, ...flags, updated_at: now }
-    const indexData2 = { related_user_id: userId1, ...flags, updated_at: now }
-    await Promise.all([
-      setDocument(userRelationshipIndex(userId1), userId2, indexData1),
-      setDocument(userRelationshipIndex(userId2), userId1, indexData2),
-    ])
+    // Write per-user index entries (matches agentbase.me writeIndexEntries)
+    await this.writeIndexEntries(currentUserId, relatedUserId, id, flags, now)
 
     return relationship
   }
 
   static async updateRelationship(
-    userId1: string,
-    userId2: string,
-    flags: Partial<RelationshipFlags>,
+    currentUserId: string,
+    relatedUserId: string,
+    flagUpdates: Partial<RelationshipFlags>,
   ): Promise<Relationship | null> {
     initFirebaseAdmin()
-    const id = makeRelationshipId(userId1, userId2)
+    const existing = await this.getRelationship(currentUserId, relatedUserId)
+    if (!existing) return null
+
     const now = new Date().toISOString()
 
-    const existing = await this.getRelationship(userId1, userId2)
-    if (!existing) return null
+    // Merge flags additively (matches agentbase.me)
+    const mergedFlags: RelationshipFlags = {
+      ...existing.flags,
+      ...flagUpdates,
+    }
 
     const updated: Relationship = {
       ...existing,
-      ...flags,
+      flags: mergedFlags,
       updated_at: now,
     }
 
-    await setDocument(RELATIONSHIPS, id, updated)
+    await setDocument(RELATIONSHIPS, existing.id, updated)
 
-    // Update per-user indices
-    const indexFlags = { ...flags, updated_at: now }
-    await Promise.all([
-      setDocument(userRelationshipIndex(userId1), userId2, indexFlags, { merge: true }),
-      setDocument(userRelationshipIndex(userId2), userId1, indexFlags, { merge: true }),
-    ])
+    // Update both index entries
+    await this.writeIndexEntries(
+      existing.user_id_1,
+      existing.user_id_2,
+      existing.id,
+      mergedFlags,
+      now,
+    )
 
     return updated
   }
@@ -125,14 +146,16 @@ export class RelationshipDatabaseService {
     userId2: string,
   ): Promise<boolean> {
     initFirebaseAdmin()
-    const id = makeRelationshipId(userId1, userId2)
+    const id = generateRelationshipId(userId1, userId2)
 
     try {
       await deleteDocument(RELATIONSHIPS, id)
-      await Promise.all([
-        deleteDocument(userRelationshipIndex(userId1), userId2),
-        deleteDocument(userRelationshipIndex(userId2), userId1),
-      ])
+
+      const index1 = getUserRelationshipIndexCollection(userId1)
+      const index2 = getUserRelationshipIndexCollection(userId2)
+      await deleteDocument(index1, userId2)
+      await deleteDocument(index2, userId1)
+
       return true
     } catch (error) {
       console.error('[RelationshipDatabaseService] deleteRelationship failed:', error)
@@ -141,49 +164,73 @@ export class RelationshipDatabaseService {
   }
 
   /**
-   * List relationships for a user, optionally filtered by flag.
+   * List relationships for a user, optionally filtered by flags.
+   * Matches agentbase.me: fetch all index docs, filter in-memory.
    */
   static async listRelationships(
     userId: string,
-    filter?: { flag: keyof RelationshipFlags; value: boolean },
-    limit = 50,
-  ): Promise<Relationship[]> {
+    filters?: Partial<RelationshipFlags>,
+  ): Promise<RelationshipIndexEntry[]> {
     initFirebaseAdmin()
 
     try {
-      const where: any[] = [
-        // Query global collection for relationships involving this user
-      ]
+      const collection = getUserRelationshipIndexCollection(userId)
+      const docs = await queryDocuments(collection)
+      if (!docs || !Array.isArray(docs)) return []
 
-      // Query by user_id_1 OR user_id_2 — Firestore doesn't support OR,
-      // so query the per-user index instead
-      const indexPath = userRelationshipIndex(userId)
-      const queryOpts: any = {
-        orderBy: [{ field: 'updated_at', direction: 'DESCENDING' }],
-        limit,
+      const entries: RelationshipIndexEntry[] = []
+      for (const entry of docs) {
+        // queryDocuments returns { id, data } objects
+        const doc = (entry as any).data ?? entry
+        const parsed = doc as RelationshipIndexEntry
+        if (!parsed.related_user_id && !parsed.flags) continue
+
+        // Apply flag filters
+        if (filters) {
+          const flagMatch = Object.entries(filters).every(
+            ([key, value]) => parsed.flags?.[key as keyof RelationshipFlags] === value,
+          )
+          if (!flagMatch) continue
+        }
+
+        entries.push(parsed)
       }
 
-      if (filter) {
-        queryOpts.where = [
-          { field: filter.flag, op: '==', value: filter.value },
-        ]
-      }
-
-      const docs = await queryDocuments(indexPath, queryOpts)
-      if (!docs || docs.length === 0) return []
-
-      // Fetch full relationship docs
-      const relationships: Relationship[] = []
-      for (const doc of docs) {
-        const relatedUserId = (doc as any).related_user_id ?? doc.id
-        const full = await this.getRelationship(userId, relatedUserId)
-        if (full) relationships.push(full)
-      }
-
-      return relationships
+      return entries
     } catch (error) {
       console.error('[RelationshipDatabaseService] listRelationships failed:', error)
       return []
     }
+  }
+
+  /**
+   * Write index entries for both users in a relationship.
+   */
+  private static async writeIndexEntries(
+    userId1: string,
+    userId2: string,
+    relationshipId: string,
+    flags: RelationshipFlags,
+    updatedAt: string,
+  ): Promise<void> {
+    const index1 = getUserRelationshipIndexCollection(userId1)
+    const index2 = getUserRelationshipIndexCollection(userId2)
+
+    const entry1: RelationshipIndexEntry = {
+      related_user_id: userId2,
+      relationship_id: relationshipId,
+      flags,
+      updated_at: updatedAt,
+    }
+
+    const entry2: RelationshipIndexEntry = {
+      related_user_id: userId1,
+      relationship_id: relationshipId,
+      flags,
+      updated_at: updatedAt,
+    }
+
+    await setDocument(index1, userId2, entry1)
+    await setDocument(index2, userId1, entry2)
   }
 }

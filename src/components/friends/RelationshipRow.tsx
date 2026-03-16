@@ -6,16 +6,14 @@
 import { useState } from 'react'
 import { UserCheck, UserX, ShieldOff, Loader2 } from 'lucide-react'
 import { useTheme } from '@/lib/theming'
-import type { Relationship } from '@/services/relationship-database.service'
+import type { RelationshipIndexEntry } from '@/services/relationship-database.service'
+import type { ProfileSummary } from '@/lib/profile-map'
 
 interface RelationshipRowProps {
-  relationship: Relationship
+  relationship: RelationshipIndexEntry
+  profile?: ProfileSummary
   currentUserId: string
   onUpdate?: () => void
-}
-
-function getOtherUserId(r: Relationship, currentUserId: string): string {
-  return r.user_id_1 === currentUserId ? r.user_id_2 : r.user_id_1
 }
 
 function formatRelativeTime(dateStr: string): string {
@@ -29,15 +27,17 @@ function formatRelativeTime(dateStr: string): string {
   return `${days}d ago`
 }
 
-export function RelationshipRow({ relationship, currentUserId, onUpdate }: RelationshipRowProps) {
+export function RelationshipRow({ relationship, profile, currentUserId, onUpdate }: RelationshipRowProps) {
   const t = useTheme()
   const [loading, setLoading] = useState<string | null>(null)
-  const otherUserId = getOtherUserId(relationship, currentUserId)
-  const initial = otherUserId.charAt(0).toUpperCase()
+  const otherUserId = relationship.related_user_id
 
-  const isPending = relationship.pending_friend && !relationship.friend
-  const isIncoming = isPending && relationship.initiated_by !== currentUserId
-  const isBlocked = relationship.blocked
+  const displayName = profile?.display_name ?? otherUserId.slice(0, 12) + '...'
+  const username = profile?.username
+  const initial = (profile?.display_name ?? otherUserId).charAt(0).toUpperCase()
+
+  const isPending = relationship.flags.pending_friend && !relationship.flags.friend
+  const isBlocked = relationship.flags.blocked
 
   async function patchRelationship(flags: Record<string, boolean>) {
     setLoading(Object.keys(flags)[0])
@@ -45,7 +45,7 @@ export function RelationshipRow({ relationship, currentUserId, onUpdate }: Relat
       const res = await fetch(`/api/relationships/${otherUserId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(flags),
+        body: JSON.stringify({ flags }),
       })
       if (res.ok) onUpdate?.()
     } catch (error) {
@@ -77,16 +77,16 @@ export function RelationshipRow({ relationship, currentUserId, onUpdate }: Relat
       {/* Info */}
       <div className="flex-1 min-w-0">
         <div className={`text-sm font-medium ${t.textPrimary} truncate`}>
-          {otherUserId.slice(0, 12)}...
+          {displayName}
         </div>
-        <div className={`text-xs ${t.textMuted}`}>
-          {formatRelativeTime(relationship.updated_at)}
+        <div className={`text-xs ${t.textMuted} truncate`}>
+          {username ? `@${username}` : formatRelativeTime(relationship.updated_at)}
         </div>
       </div>
 
       {/* Actions */}
       <div className="flex items-center gap-1.5">
-        {isIncoming && (
+        {isPending && (
           <>
             <button
               type="button"

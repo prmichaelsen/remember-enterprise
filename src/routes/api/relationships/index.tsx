@@ -3,13 +3,15 @@ import { initFirebaseAdmin } from '@/lib/firebase-admin'
 import { getServerSession } from '@/lib/auth/session'
 import { RelationshipDatabaseService } from '@/services/relationship-database.service'
 import type { RelationshipFlags } from '@/services/relationship-database.service'
+import { buildProfileMap } from '@/lib/profile-map'
 
 export const Route = createFileRoute('/api/relationships/')({
   server: {
     handlers: {
       /**
-       * GET /api/relationships?flag=friend&value=true&limit=50
-       * List relationships for the current user, optionally filtered by flag.
+       * GET /api/relationships?friend=true&pending_friend=false
+       * List relationships for the current user, optionally filtered by flags.
+       * Matches agentbase.me query param convention.
        */
       GET: async ({ request }: { request: Request }) => {
         initFirebaseAdmin()
@@ -21,21 +23,23 @@ export const Route = createFileRoute('/api/relationships/')({
 
         try {
           const url = new URL(request.url)
-          const flag = url.searchParams.get('flag') as keyof RelationshipFlags | null
-          const value = url.searchParams.get('value')
-          const limit = parseInt(url.searchParams.get('limit') ?? '50', 10)
-
-          const filter = flag && value !== null
-            ? { flag, value: value === 'true' }
-            : undefined
+          const filters: Record<string, boolean> = {}
+          for (const key of ['friend', 'pending_friend', 'blocked', 'muted', 'restricted', 'follower', 'following']) {
+            const val = url.searchParams.get(key)
+            if (val === 'true') filters[key] = true
+            if (val === 'false') filters[key] = false
+          }
 
           const relationships = await RelationshipDatabaseService.listRelationships(
             session.uid,
-            filter,
-            limit,
+            Object.keys(filters).length > 0 ? filters : undefined,
           )
 
-          return Response.json({ relationships })
+          // Enrich with profile data
+          const userIds = relationships.map((r) => r.related_user_id)
+          const profiles = await buildProfileMap(userIds)
+
+          return Response.json({ relationships, maps: { profiles } })
         } catch (error) {
           console.error('[api/relationships] GET error:', error)
           return Response.json({ error: 'Internal server error' }, { status: 500 })
@@ -45,7 +49,7 @@ export const Route = createFileRoute('/api/relationships/')({
       /**
        * POST /api/relationships
        * Create a new relationship (send friend request).
-       * Body: { related_user_id: string }
+       * Body: { related_user_id: string, flags?: RelationshipFlags }
        */
       POST: async ({ request }: { request: Request }) => {
         initFirebaseAdmin()
@@ -56,8 +60,8 @@ export const Route = createFileRoute('/api/relationships/')({
         }
 
         try {
-          const body = await request.json() as { related_user_id?: string }
-          const { related_user_id } = body
+          const body = await request.json() as { related_user_id?: string; flags?: RelationshipFlags }
+          const { related_user_id, flags } = body
 
           if (!related_user_id) {
             return Response.json({ error: 'related_user_id is required' }, { status: 400 })
@@ -78,10 +82,12 @@ export const Route = createFileRoute('/api/relationships/')({
           const relationship = await RelationshipDatabaseService.createRelationship(
             session.uid,
             related_user_id,
-            { pending_friend: true, initiated_by: session.uid },
+            flags ?? { pending_friend: true },
           )
 
-          return Response.json({ relationship }, { status: 201 })
+          const profiles = await buildProfileMap([session.uid, related_user_id])
+
+          return Response.json({ relationship, maps: { profiles } }, { status: 201 })
         } catch (error) {
           console.error('[api/relationships] POST error:', error)
           return Response.json({ error: 'Internal server error' }, { status: 500 })
