@@ -18,6 +18,7 @@ import { MobileBottomNav } from './MobileBottomNav'
 // import { PushPermissionPrompt } from '@/components/notifications/PushPermissionPrompt'
 // import { initializeFCM } from '@/lib/fcm'
 import type { Notification } from '@/types/notifications'
+import { CommandPalette } from '@/components/search/CommandPalette'
 
 interface AppShellProps {
   currentTheme: ThemeName
@@ -30,6 +31,7 @@ export function AppShell({ currentTheme, onThemeToggle }: AppShellProps) {
   const router = useRouter()
   const matches = useMatches()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
 
   // Derive current view title from route matches
   const currentTitle = (() => {
@@ -71,6 +73,18 @@ export function AppShell({ currentTheme, onThemeToggle }: AppShellProps) {
   //     initializeFCM().catch(() => {})
   //   }
   // }, [user])
+
+  // Cmd+K / Ctrl+K to toggle command palette
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        setCommandPaletteOpen((prev) => !prev)
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
 
   // Close sidebar when route changes (mobile)
   useEffect(() => {
@@ -119,6 +133,12 @@ export function AppShell({ currentTheme, onThemeToggle }: AppShellProps) {
 
       {/* Mobile Bottom Nav */}
       <MobileBottomNav />
+
+      {/* Command Palette */}
+      <CommandPalette
+        isOpen={commandPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+      />
 
       {/* FCM disabled until Firebase appId is configured */}
       {/* {user && <PushPermissionPrompt />} */}
