@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { initFirebaseAdmin } from '@/lib/firebase-admin'
 import { getServerSession } from '@/lib/auth/session'
 import { ConversationDatabaseService } from '@/services/conversation-database.service'
+import { syncConversationToAlgolia } from '@/lib/algolia-sync'
 
 export const Route = createFileRoute('/api/conversations/')({
   server: {
@@ -104,6 +105,10 @@ export const Route = createFileRoute('/api/conversations/')({
             created_by: created_by ?? session.uid,
           })
           console.log('[api/conversations] created conversation:', conversation.id)
+
+          // Fire-and-forget Algolia sync
+          syncConversationToAlgolia(conversation)
+
           return Response.json(conversation, { status: 201 })
         } catch (err) {
           console.error('[api/conversations] create failed:', err)

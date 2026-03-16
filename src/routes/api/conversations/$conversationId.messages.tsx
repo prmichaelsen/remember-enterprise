@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { initFirebaseAdmin } from '@/lib/firebase-admin'
 import { getServerSession } from '@/lib/auth/session'
 import { MessageDatabaseService } from '@/services/message-database.service'
+import { syncMessageToAlgolia, getParticipantIds } from '@/lib/algolia-sync'
 
 export const Route = createFileRoute('/api/conversations/$conversationId/messages')({
   server: {
@@ -62,6 +63,12 @@ export const Route = createFileRoute('/api/conversations/$conversationId/message
             visible_to_user_ids,
             role,
           })
+
+          // Fire-and-forget Algolia sync
+          getParticipantIds(params.conversationId, session.uid).then((pIds) => {
+            syncMessageToAlgolia(message, pIds)
+          })
+
           return Response.json(message, { status: 201 })
         } catch (err) {
           console.error('[api/conversations/messages] POST failed:', err)
