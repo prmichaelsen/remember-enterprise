@@ -148,10 +148,10 @@ export function MessageList({
   }
 
   return (
-    <div className="flex-1 min-h-0">
+    <div className="relative flex-1 flex flex-col min-h-0 h-0">
       <Virtuoso
         ref={virtuosoRef}
-        style={{ height: '100%' }}
+        className="flex-grow h-0"
         data={messages}
         firstItemIndex={firstItemIndex}
         initialTopMostItemIndex={messages.length > 0 ? messages.length - 1 : 0}
