@@ -21,11 +21,18 @@ import { getTextContent } from '@/lib/message-content'
 interface MessageListProps {
   messages: MessageType[]
   conversationId: string
+  currentUserId?: string
+  canModerate?: boolean
   loading?: boolean
   hasMore?: boolean
   onLoadMore?: () => void
   typingUsers?: Array<{ user_id: string; user_name: string }>
   streamingBlocks?: StreamingBlock[]
+  onReply?: (messageId: string, quotedContent: string) => void
+  onEdit?: (messageId: string) => void
+  onDelete?: (messageId: string) => void
+  onTogglePin?: (messageId: string) => void
+  onReport?: (messageId: string) => void
 }
 
 const START_INDEX = 100_000
@@ -33,11 +40,18 @@ const START_INDEX = 100_000
 export function MessageList({
   messages,
   conversationId,
+  currentUserId,
+  canModerate = false,
   loading = false,
   hasMore = false,
   onLoadMore,
   typingUsers = [],
   streamingBlocks = [],
+  onReply,
+  onEdit,
+  onDelete,
+  onTogglePin,
+  onReport,
 }: MessageListProps) {
   const t = useTheme()
   const { user } = useAuth()
@@ -151,8 +165,14 @@ export function MessageList({
               <div className="relative">
                 <Message
                   message={message}
-                  currentUserId={user?.uid}
+                  currentUserId={currentUserId ?? user?.uid}
                   conversationId={conversationId}
+                  canModerate={canModerate}
+                  onReply={onReply}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                  onTogglePin={onTogglePin}
+                  onReport={onReport}
                 />
 
                 {/* Save as memory button */}

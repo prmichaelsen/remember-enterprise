@@ -21,6 +21,7 @@ import { MobileBottomNav } from './MobileBottomNav'
 import type { Notification } from '@/types/notifications'
 import { CommandPalette } from '@/components/search/CommandPalette'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { ToastProvider } from '@/components/ui/ToastProvider'
 
 interface AppShellProps {
   currentTheme: ThemeName
@@ -101,6 +102,7 @@ export function AppShell({ currentTheme, onThemeToggle }: AppShellProps) {
   }, [])
 
   return (
+    <ToastProvider>
     <div className={`min-h-screen ${t.page}`}>
       {/* Fixed Header */}
       <UnifiedHeader
@@ -143,5 +145,6 @@ export function AppShell({ currentTheme, onThemeToggle }: AppShellProps) {
       {/* FCM disabled until Firebase appId is configured */}
       {/* {user && <PushPermissionPrompt />} */}
     </div>
+    </ToastProvider>
   )
 }

@@ -100,7 +100,7 @@ milestones:
     status: not_started
     file: agent/milestones/milestone-12-message-action-bar.md
     tasks_total: 7
-    tasks_completed: 0
+    tasks_completed: 6
     estimated_weeks: 2
 
 tasks:
@@ -425,58 +425,52 @@ tasks:
       completed_date: null
     - id: task-39
       name: ActionBarItem Infrastructure
-      status: not_started
-      started: null
+      status: completed
+      started: 2026-03-16T12:00:00Z
       file: agent/tasks/milestone-12-message-action-bar/task-39-action-bar-infrastructure.md
       estimated_hours: 4
-      actual_hours: null
-      completed_date: null
+      actual_hours: 0.1
+      completed_date: 2026-03-16T12:05:00Z
     - id: task-40
       name: Toast System
-      status: not_started
-      started: null
+      status: completed
+      started: 2026-03-16T12:00:00Z
       file: agent/tasks/milestone-12-message-action-bar/task-40-toast-system.md
       estimated_hours: 2
-      actual_hours: null
-      completed_date: null
+      actual_hours: 0.1
+      completed_date: 2026-03-16T12:05:00Z
     - id: task-41
       name: Core Action Hooks
-      status: not_started
-      started: null
+      status: completed
+      started: 2026-03-16T12:05:00Z
       file: agent/tasks/milestone-12-message-action-bar/task-41-core-action-hooks.md
       estimated_hours: 4
-      actual_hours: null
-      completed_date: null
-      notes: |
-        Copy, Reply, Edit, SaveMemory hooks
+      actual_hours: 0.1
+      completed_date: 2026-03-16T12:10:00Z
     - id: task-42
       name: Emoji Reactions
-      status: not_started
-      started: null
+      status: completed
+      started: 2026-03-16T12:05:00Z
       file: agent/tasks/milestone-12-message-action-bar/task-42-emoji-reactions.md
       estimated_hours: 5
-      actual_hours: null
-      completed_date: null
+      actual_hours: 0.2
+      completed_date: 2026-03-16T12:15:00Z
     - id: task-43
       name: Overflow Menu & Remaining Hooks
-      status: not_started
-      started: null
+      status: completed
+      started: 2026-03-16T12:05:00Z
       file: agent/tasks/milestone-12-message-action-bar/task-43-overflow-menu-hooks.md
       estimated_hours: 4
-      actual_hours: null
-      completed_date: null
-      notes: |
-        Delete, Forward, Pin, Report hooks + OverflowMenu
+      actual_hours: 0.1
+      completed_date: 2026-03-16T12:10:00Z
     - id: task-44
       name: Message Integration
-      status: not_started
-      started: null
+      status: completed
+      started: 2026-03-16T12:10:00Z
       file: agent/tasks/milestone-12-message-action-bar/task-44-message-integration.md
       estimated_hours: 3
-      actual_hours: null
-      completed_date: null
-      notes: |
-        Wire ActionBar into Message.tsx, remove old hover bar
+      actual_hours: 0.2
+      completed_date: 2026-03-16T12:20:00Z
 
 documentation:
   design_documents: 2
@@ -490,6 +484,8 @@ progress:
   overall: 100
 
 recent_work:
+  - date: 2026-03-16
+    description: "M12: Implemented message action bar — ActionBarItem infrastructure, toast system, 9 action hooks, emoji reactions, overflow menu, wired into Message.tsx (tasks 39-44)"
   - date: 2026-03-15
     description: "Installed tanstack-cloudflare package (v1.3.0) — 43 patterns, 4 commands"
   - date: 2026-03-15

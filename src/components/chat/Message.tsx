@@ -1,8 +1,12 @@
-import { useState, memo } from 'react'
+import { memo, useCallback } from 'react'
 import { FileText } from 'lucide-react'
 import { MarkdownContent } from './MarkdownContent'
 import { ToolCallBadge } from './ToolCallBadge'
-import { copyToClipboard } from '@/lib/clipboard'
+import { ReactionDisplay } from './ReactionDisplay'
+import { ActionBar } from '@/components/action-bar/ActionBar'
+import { useMessageActionBarItems } from '@/hooks/action-bar/useMessageActionBarItems'
+import { useMessageOverflowItems } from '@/hooks/action-bar/useMessageOverflowItems'
+import { useReactActionBarItem } from '@/hooks/action-bar/useReactActionBarItem'
 import { getTextContent } from '@/lib/message-content'
 import type { Message as MessageType, MessageContent, ContentBlock } from '@/types/conversations'
 import type { ProfileSummary } from '@/lib/profile-map'
@@ -11,23 +15,29 @@ interface MessageProps {
   message: MessageType
   currentUserId?: string
   conversationId?: string
+  canModerate?: boolean
   senderProfile?: ProfileSummary | null
   ghostOwner?: string
-  onCopy?: (content: string) => void
-  onRegenerate?: (messageId: string) => void
+  onReply?: (messageId: string, quotedContent: string) => void
   onEdit?: (messageId: string) => void
   onDelete?: (messageId: string) => void
+  onTogglePin?: (messageId: string) => void
+  onReport?: (messageId: string) => void
 }
 
-export const Message = memo(function Message({ message, currentUserId, conversationId, senderProfile, ghostOwner, onCopy, onRegenerate, onEdit, onDelete }: MessageProps) {
-  const [showActions, setShowActions] = useState(false)
-
-  const handleCopy = () => {
-    const textContent = getTextContent(message.content)
-    copyToClipboard(textContent)
-    onCopy?.(textContent)
-  }
-
+export const Message = memo(function Message({
+  message,
+  currentUserId,
+  conversationId,
+  canModerate = false,
+  senderProfile,
+  ghostOwner,
+  onReply,
+  onEdit,
+  onDelete,
+  onTogglePin,
+  onReport,
+}: MessageProps) {
   const isUser = message.sender_user_id ? message.sender_user_id === currentUserId : message.role === 'user'
   const isAssistant = message.role === 'assistant' && !message.sender_user_id
   const displayName = isUser
@@ -36,8 +46,49 @@ export const Message = memo(function Message({ message, currentUserId, conversat
     ? 'Agent'
     : senderProfile?.display_name || senderProfile?.username || 'User'
 
+  const handleReactionToggle = useCallback(
+    async (emoji: string) => {
+      if (!conversationId) return
+      try {
+        await fetch(`/api/messages/${message.id}/reactions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ emoji, conversation_id: conversationId }),
+        })
+      } catch {
+        // silent fail — reactions are non-critical
+      }
+    },
+    [message.id, conversationId],
+  )
+
   const isSystem = message.role === 'system'
   const isGhostMessage = !!ghostOwner && message.role === 'assistant'
+
+  // Action bar hooks — called unconditionally (React rules of hooks)
+  const noopReply = useCallback((_id: string, _content: string) => {}, [])
+  const noopEdit = useCallback((_id: string) => {}, [])
+  const noopDelete = useCallback((_id: string) => {}, [])
+  const noopTogglePin = useCallback((_id: string) => {}, [])
+  const noopReport = useCallback((_id: string) => {}, [])
+
+  const primaryItems = useMessageActionBarItems({
+    message,
+    currentUserId: currentUserId ?? '',
+    conversationId: conversationId ?? '',
+    onReply: onReply ?? noopReply,
+    onEdit: onEdit ?? noopEdit,
+  })
+  const reactItem = useReactActionBarItem(message.id, conversationId ?? '')
+  const overflowItem = useMessageOverflowItems({
+    message,
+    conversationId: conversationId ?? '',
+    currentUserId: currentUserId ?? '',
+    canModerate,
+    onDelete: onDelete ?? noopDelete,
+    onTogglePin: onTogglePin ?? noopTogglePin,
+    onReport: onReport ?? noopReport,
+  })
 
   if (isSystem) {
     const textContent = getTextContent(message.content)
@@ -52,9 +103,7 @@ export const Message = memo(function Message({ message, currentUserId, conversat
 
   return (
     <div
-      className={`group relative px-4 py-3 ${isGhostMessage ? 'bg-purple-900/30 border-l-2 border-purple-500/20' : isUser ? 'bg-blue-900/20' : 'bg-slate-800/30'} hover:bg-gray-800/60 transition-colors`}
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
+      className={`relative px-4 py-3 ${isGhostMessage ? 'bg-purple-900/30 border-l-2 border-purple-500/20' : isUser ? 'bg-blue-900/20' : 'bg-slate-800/30'} hover:bg-gray-800/60 transition-colors`}
     >
       {/* Header row with avatar, name, timestamp */}
       <div className="flex items-center gap-3 mb-3 relative">
@@ -110,63 +159,6 @@ export const Message = memo(function Message({ message, currentUserId, conversat
           )}
           {message.visible_to_user_ids && message.visible_to_user_ids.length > 0 && (
             <span className="text-xs text-purple-400">Visible only to you</span>
-          )}
-        </div>
-
-        {/* Actions */}
-        <div
-          className={`absolute right-0 top-0 flex items-center gap-1 bg-gray-800/95 px-2 py-1 rounded transition-opacity ${
-            showActions ? 'opacity-100' : 'opacity-0 pointer-events-none'
-          }`}
-        >
-          <button
-            onClick={handleCopy}
-            className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700 rounded transition-colors"
-            title="Copy message"
-            aria-label="Copy message"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-            </svg>
-          </button>
-
-          {!isUser && onRegenerate && (
-            <button
-              onClick={() => onRegenerate(message.id)}
-              className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700 rounded transition-colors"
-              title="Regenerate response"
-              aria-label="Regenerate response"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            </button>
-          )}
-
-          {isUser && onEdit && (
-            <button
-              onClick={() => onEdit(message.id)}
-              className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700 rounded transition-colors"
-              title="Edit message"
-              aria-label="Edit message"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-            </button>
-          )}
-
-          {onDelete && (
-            <button
-              onClick={() => onDelete(message.id)}
-              className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-gray-700 rounded transition-colors"
-              title="Delete message"
-              aria-label="Delete message"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
           )}
         </div>
       </div>
@@ -233,6 +225,20 @@ export const Message = memo(function Message({ message, currentUserId, conversat
             <div>{message.metadata.error}</div>
           </div>
         )}
+
+        {/* Reactions */}
+        {message.metadata?.reactions && currentUserId && (
+          <ReactionDisplay
+            reactions={message.metadata.reactions}
+            currentUserId={currentUserId}
+            onToggle={handleReactionToggle}
+          />
+        )}
+      </div>
+
+      {/* Action Bar */}
+      <div className="mt-1">
+        <ActionBar items={[...primaryItems, reactItem, overflowItem]} layout="compact" />
       </div>
     </div>
   )

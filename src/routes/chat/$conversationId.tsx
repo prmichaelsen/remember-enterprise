@@ -3,7 +3,7 @@
  * compose input, real-time updates via WebSocket, and group member panel.
  */
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router'
 import { useTheme } from '@/lib/theming'
 import { useAuth } from '@/components/auth/AuthContext'
@@ -373,6 +373,32 @@ function ConversationView() {
     })
   }
 
+  // Action bar callback handlers
+  const handleReply = useCallback((messageId: string, quotedContent: string) => {
+    // TODO: populate compose input with quoted content
+    console.log('[ActionBar] Reply to', messageId, quotedContent.slice(0, 50))
+  }, [])
+
+  const handleEdit = useCallback((messageId: string) => {
+    // TODO: enable inline editing
+    console.log('[ActionBar] Edit', messageId)
+  }, [])
+
+  const handleDelete = useCallback((messageId: string) => {
+    // Optimistic removal from state
+    setMessages((prev) => prev.filter((m) => m.id !== messageId))
+  }, [])
+
+  const handleTogglePin = useCallback((messageId: string) => {
+    // TODO: implement pin toggling
+    console.log('[ActionBar] Toggle pin', messageId)
+  }, [])
+
+  const handleReport = useCallback((messageId: string) => {
+    // TODO: implement report flow
+    console.log('[ActionBar] Report', messageId)
+  }, [])
+
   // Loading state
   if (loading) {
     return (
@@ -492,11 +518,18 @@ function ConversationView() {
               <MessageList
                 messages={messages}
                 conversationId={conversationId}
+                currentUserId={user?.uid}
+                canModerate={currentUserPermissions.can_moderate}
                 loading={loadingMore}
                 hasMore={hasMore}
                 onLoadMore={loadMore}
                 typingUsers={typingUsers}
                 streamingBlocks={streamingBlocks}
+                onReply={handleReply}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onTogglePin={handleTogglePin}
+                onReport={handleReport}
               />
             </ErrorBoundary>
 

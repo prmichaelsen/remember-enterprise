@@ -148,6 +148,7 @@ export interface Message {
     edited?: boolean
     import_job?: { jobId: string; filename?: string }
     ingest_job?: { jobId: string; rootUrl: string }
+    reactions?: Record<string, string[]>
   } | null
   sender_user_id?: string
   visible_to_user_ids?: string[] | null
