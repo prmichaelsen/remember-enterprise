@@ -1,7 +1,7 @@
-import { useRef, useCallback, useState } from 'react'
-import { createElement } from 'react'
+import { useRef, useCallback } from 'react'
 import { BrandIcon } from '@/components/BrandIcon'
-import { SaveMemoryModal } from '@/components/chat/SaveMemoryModal'
+import { MemoryService } from '@/services/memory.service'
+import { useActionToast } from '@/hooks/useActionToast'
 import type { ActionBarItem } from '@/types/action-bar'
 
 export function useSaveMemoryActionBarItem(
@@ -9,31 +9,24 @@ export function useSaveMemoryActionBarItem(
   conversationId: string,
 ): ActionBarItem {
   const triggerRef = useRef<HTMLButtonElement>(null)
-  const [isOpen, setIsOpen] = useState(false)
+  const { withToast } = useActionToast()
 
   const onTrigger = useCallback(() => {
-    setIsOpen(true)
-  }, [])
-
-  const onClose = useCallback(() => {
-    setIsOpen(false)
-  }, [])
-
-  const onSaved = useCallback(() => {
-    setIsOpen(false)
-  }, [])
-
-  const renderModals = useCallback(
-    () =>
-      createElement(SaveMemoryModal, {
-        isOpen,
-        onClose,
-        messageContent: content,
-        sourceMessageId: conversationId,
-        onSaved,
+    withToast(
+      () => MemoryService.save({
+        content,
+        title: null,
+        tags: [],
+        scope: 'private',
+        group_id: null,
+        source_message_id: conversationId,
       }),
-    [isOpen, onClose, content, conversationId, onSaved],
-  )
+      {
+        success: { title: 'Saved to memory' },
+        error: { title: 'Failed to save memory' },
+      },
+    )
+  }, [content, conversationId, withToast])
 
   return {
     key: 'save-memory',
@@ -41,6 +34,5 @@ export function useSaveMemoryActionBarItem(
     label: 'Save to memory',
     onTrigger,
     triggerRef,
-    renderModals,
   }
 }
