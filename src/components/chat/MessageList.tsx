@@ -228,7 +228,7 @@ export const MessageList = forwardRef<MessageListRef, MessageListProps>(function
 
           if (item.type === 'streaming') {
             return (
-              <div className={`group px-4 py-3 ${t.messageAgent} hover:opacity-90 transition-colors`}>
+              <div className="group px-4 py-3">
                 {/* Header: agent avatar + name + timestamp */}
                 <div className="flex items-center gap-3 mb-3">
                   <div className="shrink-0">
