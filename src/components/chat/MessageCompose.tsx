@@ -252,28 +252,6 @@ export function MessageCompose({
 
       {/* Input area */}
       <div className="flex items-end gap-2 p-3">
-        {/* File attach button */}
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={disabled}
-          className={`p-2 rounded-lg shrink-0 ${t.buttonGhost} disabled:opacity-50`}
-          title="Attach file"
-        >
-          <Paperclip className="w-5 h-5" />
-        </button>
-
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          className="hidden"
-          onChange={(e) => {
-            if (e.target.files) handleFiles(e.target.files)
-            e.target.value = ''
-          }}
-        />
-
         {/* Textarea */}
         <textarea
           ref={textareaRef}
