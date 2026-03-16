@@ -16,6 +16,7 @@ import {
   deleteDocument,
 } from '@prmichaelsen/firebase-admin-sdk-v8'
 import { initFirebaseAdmin } from '@/lib/firebase-admin'
+import type { Conversation, ConversationType } from '@/types/conversations'
 
 const BASE = 'agentbase'
 
@@ -52,19 +53,51 @@ export interface ConversationDoc {
 
 export class ConversationDatabaseService {
   /**
+   * Map a raw Firestore doc to the app-level Conversation type.
+   */
+  private static toConversation(doc: ConversationDoc): Conversation {
+    const type: ConversationType =
+      doc.type === 'group' ? 'group' : 'dm'
+
+    const lastMessage =
+      doc.last_message_preview && doc.last_message_at
+        ? {
+            content: doc.last_message_preview,
+            sender_id: '',
+            sender_name: '',
+            timestamp: doc.last_message_at,
+          }
+        : null
+
+    return {
+      id: doc.id,
+      type,
+      name: doc.name ?? doc.title ?? null,
+      description: doc.description ?? null,
+      participant_ids: doc.participant_user_ids ?? [],
+      created_by: doc.owner_user_id ?? '',
+      created_at: doc.created_at ?? new Date().toISOString(),
+      updated_at: doc.updated_at ?? new Date().toISOString(),
+      last_message: lastMessage,
+      unread_count: 0,
+      is_discoverable: false,
+    }
+  }
+
+  /**
    * Get all conversations for a user — solo chats from user-scoped collection.
    */
   static async getUserConversations(
     userId: string,
     limit = 50,
-  ): Promise<ConversationDoc[]> {
+  ): Promise<Conversation[]> {
     try {
       const path = getUserConversations(userId)
       const results = await queryDocuments(path, {
         orderBy: [{ field: 'updated_at', direction: 'DESCENDING' }],
         limit,
       })
-      return (results ?? []).map((doc: any) => ({
+      return (results ?? []).map((doc: any) => this.toConversation({
         id: doc.id ?? doc._id,
         type: doc.type ?? 'chat',
         title: doc.title ?? 'Untitled',
@@ -84,7 +117,7 @@ export class ConversationDatabaseService {
   /**
    * Get DM conversations where user is a participant.
    */
-  static async getUserDMs(userId: string, limit = 50): Promise<ConversationDoc[]> {
+  static async getUserDMs(userId: string, limit = 50): Promise<Conversation[]> {
     try {
       const path = getSharedConversations()
       const results = await queryDocuments(path, {
@@ -95,9 +128,9 @@ export class ConversationDatabaseService {
         orderBy: [{ field: 'last_message_at', direction: 'DESCENDING' }],
         limit,
       })
-      return (results ?? []).map((doc: any) => ({
+      return (results ?? []).map((doc: any) => this.toConversation({
         id: doc.id ?? doc._id,
-        type: 'dm' as const,
+        type: 'dm',
         is_dm: true,
         participant_user_ids: doc.participant_user_ids ?? [],
         last_message_at: doc.last_message_at ?? null,
@@ -114,7 +147,7 @@ export class ConversationDatabaseService {
   /**
    * Get group conversations where user is a participant.
    */
-  static async getUserGroups(userId: string, limit = 50): Promise<ConversationDoc[]> {
+  static async getUserGroups(userId: string, limit = 50): Promise<Conversation[]> {
     try {
       const path = getSharedConversations()
       const results = await queryDocuments(path, {
@@ -125,9 +158,9 @@ export class ConversationDatabaseService {
         orderBy: [{ field: 'last_message_at', direction: 'DESCENDING' }],
         limit,
       })
-      return (results ?? []).map((doc: any) => ({
+      return (results ?? []).map((doc: any) => this.toConversation({
         id: doc.id ?? doc._id,
-        type: 'group' as const,
+        type: 'group',
         name: doc.name ?? 'Unnamed Group',
         description: doc.description ?? null,
         owner_user_id: doc.owner_user_id,
@@ -149,7 +182,7 @@ export class ConversationDatabaseService {
   static async getAllConversations(
     userId: string,
     limit = 50,
-  ): Promise<ConversationDoc[]> {
+  ): Promise<Conversation[]> {
     const [solo, dms, groups] = await Promise.all([
       this.getUserConversations(userId, limit),
       this.getUserDMs(userId, limit),
@@ -160,8 +193,8 @@ export class ConversationDatabaseService {
 
     // Sort by most recent activity
     all.sort((a, b) => {
-      const aTime = a.last_message_at ?? a.updated_at ?? a.created_at ?? ''
-      const bTime = b.last_message_at ?? b.updated_at ?? b.created_at ?? ''
+      const aTime = a.last_message?.timestamp ?? a.updated_at ?? a.created_at ?? ''
+      const bTime = b.last_message?.timestamp ?? b.updated_at ?? b.created_at ?? ''
       return bTime.localeCompare(aTime)
     })
 
@@ -174,7 +207,7 @@ export class ConversationDatabaseService {
    */
   static async listConversations(
     params: { user_id: string; limit?: number },
-  ): Promise<{ conversations: ConversationDoc[] }> {
+  ): Promise<{ conversations: Conversation[] }> {
     const conversations = await this.getAllConversations(params.user_id, params.limit ?? 50)
     return { conversations }
   }

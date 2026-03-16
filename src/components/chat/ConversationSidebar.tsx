@@ -83,26 +83,17 @@ export function ConversationSidebar({ onNewDm, onNewGroup, initialConversations 
   }
 
   function getConversationName(conv: Conversation): string {
-    // Try name, title, then fall back to participant IDs
-    const name = conv.name ?? (conv as any).title
-    if (name) return name
-    const ids = conv.participant_ids ?? (conv as any).participant_user_ids ?? []
-    const otherIds = ids.filter((id: string) => id !== user?.uid)
+    if (conv.name) return conv.name
+    const otherIds = conv.participant_ids.filter((id) => id !== user?.uid)
     return otherIds.length > 0 ? otherIds.join(', ') : 'Chat'
   }
 
   function getLastMessagePreview(conv: Conversation): string | null {
-    // Handle both nested last_message object and flat last_message_preview string
-    if (conv.last_message?.content) return conv.last_message.content
-    if ((conv as any).last_message_preview) return (conv as any).last_message_preview
-    return null
+    return conv.last_message?.content ?? null
   }
 
   function getLastMessageTimestamp(conv: Conversation): string | null {
-    if (conv.last_message?.timestamp) return conv.last_message.timestamp
-    if ((conv as any).last_message_at) return (conv as any).last_message_at
-    if ((conv as any).updated_at) return (conv as any).updated_at
-    return null
+    return conv.last_message?.timestamp ?? conv.updated_at ?? null
   }
 
   function getAvatar(conv: Conversation) {
