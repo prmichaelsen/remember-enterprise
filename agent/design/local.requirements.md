@@ -2,7 +2,8 @@
 
 **Concept**: Slack-like enterprise memory platform that integrates with agentbase.me, giving users a familiar team chat UX for interacting with memories, MCP tools, and shared spaces
 **Created**: 2026-03-15
-**Status**: Design Specification
+**Last Updated**: 2026-03-16
+**Status**: Implemented (MVP Complete)
 
 ---
 
@@ -105,15 +106,25 @@ Remember Enterprise does not define its own data models. It reuses:
 ### MCP Tool Interaction
 
 - Users invoke tools via `@agent` or `/agent` in chat messages
-- Tool results render inline as simplified MessageCards (title + content preview + action buttons)
+- Tool results render inline via ToolCallBadge components and streaming blocks architecture (interleaved text + tool_use blocks)
+- AI responses use MarkdownContent rendering with syntax-highlighted code blocks
 - All agentbase.me MCP servers available for free by sharing the database
 
-### Navigation & Tabs
+### Navigation & Pages
 
-Ported from agentbase.me's tab pattern:
-- **Chat tab** — conversations (DMs, groups)
-- **Memories tab** — searchable feed with algorithm selection (smart, chronological, discovery, rating, significance)
-- **Ghost tab** — AI persona conversations
+Sidebar navigation with the following routes:
+- **Chat** (`/chat`) — conversations list (DMs, groups)
+- **Conversation** (`/chat/$conversationId`) — individual conversation view with header menus for member management; sub-tabs: Chat, Ghost
+- **Memories** (`/memories`) — searchable feed with algorithm selection (smart, chronological, discovery, rating, significance)
+- **Friends** (`/friends`) — relationships management (friend requests, friend list)
+- **Void** (`/void`) — anonymous posting feed (maps to `the_void` public space)
+- **Conversations** (`/conversations`) — conversation discovery/management
+- **Settings** (`/settings`) — searchable settings registry
+- **Auth** (`/auth`) — authentication (login, register)
+- **Invite Links** — shareable links for onboarding:
+  - `/dm-links/$linkId` — DM invite links
+  - `/friend-links/$linkId` — friend request links
+  - `/group-links/$linkId` — group invite links
 
 ---
 
@@ -133,6 +144,15 @@ Ported from agentbase.me's tab pattern:
 | `@agent` / `/agent` commands | MCP tool invocation with inline results |
 | Auth (shared with agentbase.me) | Firebase cookie-based sessions |
 | ACL (reused from agentbase.me) | Group-level + message-level permissions |
+| Algolia-powered global search | Command palette (Cmd+K) with cross-entity search |
+| Invite link system | DM links, friend links, group links for sharing/onboarding |
+| Friends/relationships page | Friend requests, friend list management |
+| The Void | Anonymous posting feed (public space) |
+| Settings page | Searchable settings registry |
+| Conversation header menus | Member management, group settings from conversation view |
+| Streaming blocks architecture | Interleaved text + tool_use blocks for AI responses |
+| MarkdownContent rendering | Syntax-highlighted code blocks, rich text rendering |
+| MCP tool UI | ToolCallBadge components for inline tool result display |
 
 ### P1
 
@@ -248,7 +268,7 @@ This is a greenfield project — no migration required. Users with existing agen
 | MCP tool invocation | `@agent` or `/agent` in chat | Familiar Slack slash-command and mention patterns |
 | Tool result rendering | Inline MessageCard (simplified) | Matches agentbase.me's MessageCard pattern, keeps chat flow unbroken |
 | Memory surfacing | Dedicated Memories tab + per-message save CTA | Ports agentbase.me's tab pattern; save CTA enables frictionless memory creation |
-| Navigation tabs | Chat, Memories, Ghost | Proven tab hierarchy from agentbase.me |
+| Navigation | Sidebar with Chat, Memories, Friends, Void, Conversations, Settings; Ghost as sub-tab within conversations | Extended beyond agentbase.me's tab pattern to cover full feature set |
 
 ### Design System
 
@@ -272,6 +292,6 @@ This is a greenfield project — no migration required. Users with existing agen
 
 ---
 
-**Status**: Design Specification
-**Recommendation**: Install `acp-tanstack-cloudflare` package, create `agent/design/color-system.md`, then plan milestones and begin MVP implementation
+**Status**: Implemented (MVP Complete)
+**Last Synced**: 2026-03-16
 **Related Documents**: agent/drafts/requirements.draft.md (source draft)

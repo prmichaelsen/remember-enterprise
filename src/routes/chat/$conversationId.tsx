@@ -4,13 +4,15 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router'
 import { useTheme } from '@/lib/theming'
 import { useAuth } from '@/components/auth/AuthContext'
 import { useWebSocket } from '@/hooks/useWebSocket'
 import { MessageList } from '@/components/chat/MessageList'
 import { MessageCompose } from '@/components/chat/MessageCompose'
 import { MemberList } from '@/components/chat/MemberList'
+import { SubHeaderTabs, type SubHeaderTab } from '@/components/SubHeaderTabs'
+import { GhostChatView } from '@/components/ghost/GhostChatView'
 import { getConversation, updateLastMessage } from '@/services/conversation.service'
 import { listMessages, sendMessage, markConversationRead } from '@/services/message.service'
 import { checkPermission } from '@/services/group.service'
@@ -31,15 +33,23 @@ import {
   completeToolUseBlock,
   assembleContent,
 } from '@/types/streaming'
-import { Users, Info, ChevronLeft, Wifi, WifiOff } from 'lucide-react'
+import { Users, Info, ChevronLeft, Wifi, WifiOff, Ghost } from 'lucide-react'
 import { ConversationHeaderMenu } from '@/components/chat/ConversationHeaderMenu'
 import { AddParticipantModal } from '@/components/chat/AddParticipantModal'
 import { getAuthSession } from '@/lib/auth/server-fn'
 import { ConversationDatabaseService } from '@/services/conversation-database.service'
 import { MessageDatabaseService } from '@/services/message-database.service'
 
+const CONVERSATION_TABS: SubHeaderTab[] = [
+  { id: 'chat', label: 'Chat' },
+  { id: 'ghost', label: 'Ghost', variant: 'ghost', icon: <Ghost className="w-4 h-4" /> },
+]
+
 export const Route = createFileRoute('/chat/$conversationId')({
   component: ConversationView,
+  validateSearch: (search: Record<string, unknown>): { tab?: string } => ({
+    tab: search.tab as string | undefined,
+  }),
   beforeLoad: async ({ params }) => {
     if (typeof window !== 'undefined') return { initialConversation: null, initialMessages: [] }
     try {
@@ -63,6 +73,19 @@ function ConversationView() {
   const t = useTheme()
   const { user } = useAuth()
   const { conversationId } = Route.useParams()
+  const { tab } = Route.useSearch()
+  const navigate = useNavigate()
+
+  const activeTab = tab || 'chat'
+
+  function handleTabChange(newTab: string) {
+    navigate({
+      to: '/chat/$conversationId',
+      params: { conversationId },
+      search: { tab: newTab },
+      replace: true,
+    })
+  }
 
   // State
   const [conversation, setConversation] = useState<Conversation | null>(null)
@@ -510,27 +533,49 @@ function ConversationView() {
           </div>
         </div>
 
-        {/* Messages */}
-        <MessageList
-          messages={messages}
-          conversationId={conversationId}
-          loading={loadingMore}
-          hasMore={hasMore}
-          onLoadMore={loadMore}
-          typingUsers={typingUsers}
-          streamingBlocks={streamingBlocks}
+        {/* Sub-header tabs */}
+        <SubHeaderTabs
+          tabs={CONVERSATION_TABS}
+          activeId={activeTab}
+          onSelect={handleTabChange}
         />
 
-        {/* Compose */}
-        <MessageCompose
-          conversationId={conversationId}
-          senderId={user?.uid ?? ''}
-          senderName={user?.displayName ?? 'Unknown'}
-          senderPhotoUrl={user?.photoURL ?? null}
-          onSend={handleSend}
-          onTypingStart={handleTypingStart}
-          onTypingStop={handleTypingStop}
-        />
+        {activeTab === 'ghost' ? (
+          /* Ghost chat view */
+          <div className="flex-1 min-h-0">
+            <GhostChatView
+              ghostOwnerId={
+                conversation?.type === 'group'
+                  ? `group:${conversationId}`
+                  : (conversation?.participant_ids ?? []).find((id) => id !== user?.uid) ?? conversationId
+              }
+            />
+          </div>
+        ) : (
+          <>
+            {/* Messages */}
+            <MessageList
+              messages={messages}
+              conversationId={conversationId}
+              loading={loadingMore}
+              hasMore={hasMore}
+              onLoadMore={loadMore}
+              typingUsers={typingUsers}
+              streamingBlocks={streamingBlocks}
+            />
+
+            {/* Compose */}
+            <MessageCompose
+              conversationId={conversationId}
+              senderId={user?.uid ?? ''}
+              senderName={user?.displayName ?? 'Unknown'}
+              senderPhotoUrl={user?.photoURL ?? null}
+              onSend={handleSend}
+              onTypingStart={handleTypingStart}
+              onTypingStop={handleTypingStop}
+            />
+          </>
+        )}
       </div>
 
       {/* Members panel (groups only) */}

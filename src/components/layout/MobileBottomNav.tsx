@@ -5,7 +5,7 @@
  */
 
 import { Link } from '@tanstack/react-router'
-import { MessageSquare, Brain, Ghost } from 'lucide-react'
+import { MessageSquare, Brain } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useTheme } from '@/lib/theming'
 
@@ -19,7 +19,6 @@ export interface MobileNavItem {
 export const DEFAULT_MOBILE_NAV_ITEMS: MobileNavItem[] = [
   { label: 'Chat', to: '/chat', icon: MessageSquare },
   { label: 'Memories', to: '/memories', icon: Brain },
-  { label: 'Ghost', to: '/ghost', icon: Ghost },
 ]
 
 interface MobileBottomNavProps {
@@ -74,7 +73,7 @@ export function MobileBottomNav({
           }}
           activeOptions={{ exact: item.exact }}
         >
-          {({ isActive }) => (
+          {({ isActive }: { isActive: boolean }) => (
             <>
               {/* Active indicator bar */}
               {isActive && (
