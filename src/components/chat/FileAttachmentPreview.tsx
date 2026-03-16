@@ -11,14 +11,21 @@ import {
   formatFileSize,
   getFileCategory,
 } from '@/services/upload.service'
-import type { MessageAttachment } from '@/types/conversations'
+interface FileAttachmentData {
+  id: string
+  name: string
+  size: number
+  type: string
+  url: string
+  thumbnail_url: string | null
+}
 
 /* ------------------------------------------------------------------ */
 /*  FileAttachmentPreview                                              */
 /* ------------------------------------------------------------------ */
 
 interface FileAttachmentPreviewProps {
-  attachment: MessageAttachment
+  attachment: FileAttachmentData
   /** Called when the user clicks an image to expand it. */
   onImageClick?: (url: string) => void
 }
@@ -83,7 +90,7 @@ export function FileAttachmentPreview({
 /* ------------------------------------------------------------------ */
 
 interface AttachmentListProps {
-  attachments: MessageAttachment[]
+  attachments: FileAttachmentData[]
   onImageClick?: (url: string) => void
 }
 
@@ -111,7 +118,7 @@ export function AttachmentList({ attachments, onImageClick }: AttachmentListProp
 /* ------------------------------------------------------------------ */
 
 interface PendingAttachmentPreviewProps {
-  attachment: MessageAttachment
+  attachment: FileAttachmentData
   onRemove: () => void
 }
 

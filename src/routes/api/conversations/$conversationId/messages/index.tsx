@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { env } from 'cloudflare:workers'
 import { initFirebaseAdmin } from '@/lib/firebase-admin'
 import { getServerSession } from '@/lib/auth/session'
 import { MessageDatabaseService } from '@/services/message-database.service'
@@ -65,11 +66,11 @@ export const Route = createFileRoute(
 
         try {
           const body = await (request.json() as Promise<any>)
-          const { content, role, attachments, sender_name, sender_photo_url, visible_to_user_ids } = body
+          const { content, role, visible_to_user_ids, metadata, is_tool_interaction } = body
 
-          if (!content || typeof content !== 'string') {
+          if (!content) {
             return Response.json(
-              { error: 'content is required and must be a string' },
+              { error: 'content is required' },
               { status: 400 },
             )
           }
@@ -77,18 +78,44 @@ export const Route = createFileRoute(
           const message = await MessageDatabaseService.sendMessage(
             params.conversationId,
             {
-              sender_id: session.uid,
-              sender_name: sender_name ?? session.displayName ?? 'Unknown',
-              sender_photo_url: sender_photo_url ?? session.photoURL ?? null,
+              sender_user_id: session.uid,
               content,
               role: role ?? 'user',
-              attachments: attachments ?? [],
               visible_to_user_ids: visible_to_user_ids ?? null,
+              ...(metadata && { metadata }),
+              ...(is_tool_interaction != null && { is_tool_interaction }),
             },
           )
 
           const pIds = await getParticipantIds(params.conversationId, session.uid)
-          await syncMessageToAlgolia(message, pIds)
+          const senderName = session.displayName ?? session.email ?? 'Unknown'
+          await syncMessageToAlgolia(message, pIds, senderName)
+
+          // Broadcast to WebSocket clients via ChatRoom DO
+          try {
+            const chatRoomBinding = (env as any).CHAT_ROOM as DurableObjectNamespace
+            const doId = chatRoomBinding.idFromName(params.conversationId)
+            const stub = chatRoomBinding.get(doId)
+
+            await stub.fetch(new Request('https://do/broadcast', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                type: 'message_new',
+                conversation_id: params.conversationId,
+                message: {
+                  id: message.id,
+                  sender_user_id: message.sender_user_id,
+                  content: message.content,
+                  timestamp: message.timestamp,
+                  visible_to_user_ids: message.visible_to_user_ids ?? null,
+                  role: message.role,
+                },
+              }),
+            }))
+          } catch (broadcastErr) {
+            log.error({ err: broadcastErr }, 'WebSocket broadcast failed')
+          }
 
           return Response.json(message, { status: 201 })
         } catch (error) {

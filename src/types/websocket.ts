@@ -32,11 +32,9 @@ export interface NewMessageEvent {
   conversation_id: string
   message: {
     id: string
-    sender_id: string
-    sender_name: string
-    content: string
-    created_at: string
-    attachments: Array<{ id: string; name: string; url: string; type: string }>
+    sender_user_id?: string
+    content: import('@/types/conversations').MessageContent
+    timestamp: string
     visible_to_user_ids: string[] | null
     role: 'user' | 'assistant' | 'system'
   }

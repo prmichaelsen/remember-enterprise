@@ -6,21 +6,17 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { Send, Paperclip, X } from 'lucide-react'
 import { useTheme } from '@/lib/theming'
-import type { MessageAttachment } from '@/types/conversations'
 import {
   validateFile,
   getSignedUploadUrl,
   uploadFile,
-  createAttachmentFromFile,
   type UploadProgress,
 } from '@/services/upload.service'
 
 interface MessageComposeProps {
   conversationId: string
   senderId: string
-  senderName: string
-  senderPhotoUrl: string | null
-  onSend: (content: string, attachments: MessageAttachment[]) => void
+  onSend: (content: string) => void
   onTypingStart: () => void
   onTypingStop: () => void
   disabled?: boolean
@@ -29,8 +25,6 @@ interface MessageComposeProps {
 export function MessageCompose({
   conversationId,
   senderId,
-  senderName,
-  senderPhotoUrl,
   onSend,
   onTypingStart,
   onTypingStop,
@@ -39,7 +33,6 @@ export function MessageCompose({
   const t = useTheme()
   const [content, setContent] = useState('')
   const [uploads, setUploads] = useState<UploadProgress[]>([])
-  const [completedAttachments, setCompletedAttachments] = useState<MessageAttachment[]>([])
   const [dragOver, setDragOver] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -98,7 +91,7 @@ export function MessageCompose({
 
   function handleSend() {
     const trimmed = content.trim()
-    if (!trimmed && completedAttachments.length === 0) return
+    if (!trimmed) return
 
     // Stop typing indicator
     if (isTypingRef.current) {
@@ -107,9 +100,8 @@ export function MessageCompose({
       if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
     }
 
-    onSend(trimmed, completedAttachments)
+    onSend(trimmed)
     setContent('')
-    setCompletedAttachments([])
     setUploads([])
 
     // Refocus textarea
@@ -122,7 +114,6 @@ export function MessageCompose({
     for (const file of fileArray) {
       const validation = validateFile(file)
       if (!validation.valid) {
-        // Show error for invalid file
         setUploads((prev) => [
           ...prev,
           {
@@ -151,7 +142,7 @@ export function MessageCompose({
           sender_id: senderId,
         })
 
-        const uploadedUrl = await uploadFile(
+        await uploadFile(
           file,
           signedUrl.upload_url,
           (progress) => {
@@ -163,14 +154,11 @@ export function MessageCompose({
           }
         )
 
-        const attachment = createAttachmentFromFile(file, uploadedUrl)
-
         setUploads((prev) =>
           prev.map((u) =>
             u.file_key === fileKey ? { ...u, progress: 100, status: 'complete' } : u
           )
         )
-        setCompletedAttachments((prev) => [...prev, attachment])
       } catch (err) {
         setUploads((prev) =>
           prev.map((u) =>
@@ -185,10 +173,6 @@ export function MessageCompose({
 
   function removeUpload(fileKey: string) {
     setUploads((prev) => prev.filter((u) => u.file_key !== fileKey))
-    // Also remove from completed attachments if it was completed
-    setCompletedAttachments((prev) =>
-      prev.filter((a) => !uploads.find((u) => u.file_key === fileKey && a.name === u.file_name))
-    )
   }
 
   function handleDragOver(e: React.DragEvent) {
@@ -209,7 +193,7 @@ export function MessageCompose({
     }
   }
 
-  const hasContent = content.trim().length > 0 || completedAttachments.length > 0
+  const hasContent = content.trim().length > 0
   const hasActiveUploads = uploads.some((u) => u.status === 'uploading')
 
   return (

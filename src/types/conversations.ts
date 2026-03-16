@@ -1,9 +1,9 @@
 /**
  * Conversation & messaging types.
- * Mirrors agentbase.me conversation schema in Firestore.
+ * Message schema synced to agentbase.me canonical MessageSchema.
  */
 
-export type ConversationType = 'dm' | 'group'
+export type ConversationType = 'dm' | 'group' | 'ghost'
 
 export interface Conversation {
   id: string
@@ -21,37 +21,134 @@ export interface Conversation {
 
 export interface MessagePreview {
   content: string
-  sender_id: string
-  sender_name: string
+  sender_user_id: string
   timestamp: string
 }
+
+// ── Content block types (matching agentbase.me schemas.ts) ──────────
+
+export interface TextContentBlock {
+  type: 'text'
+  text: string
+}
+
+export interface ImageContentBlock {
+  type: 'image'
+  source: {
+    type: 'base64'
+    media_type: 'image/png' | 'image/jpeg' | 'image/gif' | 'image/webp'
+    data: string
+  }
+}
+
+export interface StorageImageContentBlock {
+  type: 'storage_image'
+  source: {
+    type: 'storage'
+    mediaId: string
+    signedUrl: string
+    expiresAt: string
+    storagePath: string
+    media_type: 'image/png' | 'image/jpeg' | 'image/gif' | 'image/webp'
+    previewSignedUrl?: string
+    previewStoragePath?: string
+  }
+}
+
+export interface StorageFileContentBlock {
+  type: 'storage_file'
+  source: {
+    type: 'storage'
+    mediaId: string
+    signedUrl: string
+    expiresAt: string
+    storagePath: string
+    media_type: string
+    fileName: string
+    fileSize: number
+  }
+}
+
+export interface ToolUseContentBlock {
+  type: 'tool_use'
+  id: string
+  name: string
+  input: Record<string, any>
+}
+
+export interface ToolResultContentBlock {
+  type: 'tool_result'
+  tool_use_id: string
+  content: string
+  is_error?: boolean
+}
+
+export interface MemoryCarouselContentBlock {
+  type: 'memory_carousel'
+  memoryIds: string[]
+  toolName: string
+  scores?: Record<string, number>
+}
+
+export type ContentBlock =
+  | TextContentBlock
+  | ImageContentBlock
+  | StorageImageContentBlock
+  | StorageFileContentBlock
+  | ToolUseContentBlock
+  | ToolResultContentBlock
+  | MemoryCarouselContentBlock
+
+export type MessageContent = string | ContentBlock[]
+
+// ── ToolCall & ProgressStream for metadata ──────────────────────────
+
+export interface ToolCall {
+  id: string
+  name: string
+  status: 'pending' | 'executing' | 'completed' | 'failed'
+  input?: Record<string, any>
+  output?: any
+  error?: string
+}
+
+export interface ProgressStream {
+  command: string
+  status: 'running' | 'complete' | 'failed'
+  output: string
+  progress?: number
+  elapsedMs: number
+  exitCode?: number
+  error?: string
+}
+
+// ── Message — synced to agentbase.me MessageSchema ──────────────────
 
 export interface Message {
   id: string
   conversation_id: string
-  sender_id: string
-  sender_name: string
-  sender_photo_url: string | null
-  content: string
-  created_at: string // ISO 8601
-  updated_at: string | null
-  attachments: MessageAttachment[]
-  /** null = visible to all; array = visible only to listed user IDs */
-  visible_to_user_ids: string[] | null
-  /** For @agent responses */
   role: 'user' | 'assistant' | 'system'
-  /** Reference to saved memory (if message was saved) */
-  saved_memory_id: string | null
+  content: MessageContent
+  timestamp: string
+  location?: { lat: number; lng: number } | null
+  toolCallId?: string
+  progressStream?: ProgressStream
+  metadata?: {
+    tool_calls?: ToolCall[]
+    error?: string
+    regenerated?: boolean
+    edited?: boolean
+    import_job?: { jobId: string; filename?: string }
+    ingest_job?: { jobId: string; rootUrl: string }
+  } | null
+  sender_user_id?: string
+  visible_to_user_ids?: string[] | null
+  created_for_user_id?: string
+  is_tool_interaction?: boolean
+  cancelled?: boolean
 }
 
-export interface MessageAttachment {
-  id: string
-  name: string
-  size: number
-  type: string // MIME type
-  url: string
-  thumbnail_url: string | null
-}
+// ── Group types ─────────────────────────────────────────────────────
 
 export interface GroupMember {
   user_id: string

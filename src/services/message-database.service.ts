@@ -11,7 +11,10 @@ import {
 } from '@prmichaelsen/firebase-admin-sdk-v8'
 import type { QueryOptions } from '@prmichaelsen/firebase-admin-sdk-v8'
 import { initFirebaseAdmin } from '@/lib/firebase-admin'
-import type { Message, MessageAttachment } from '@/types/conversations'
+import { createLogger } from '@/lib/logger'
+import type { Message, MessageContent } from '@/types/conversations'
+
+const log = createLogger('MessageDatabaseService')
 
 function messagesCollection(conversationId: string): string {
   return `conversations/${conversationId}/messages`
@@ -22,19 +25,42 @@ function readReceiptsCollection(userId: string): string {
 }
 
 export interface SendMessageInput {
-  sender_id: string
-  sender_name: string
-  sender_photo_url: string | null
-  content: string
-  attachments?: MessageAttachment[]
+  sender_user_id?: string
+  content: MessageContent
   visible_to_user_ids?: string[] | null
   role?: 'user' | 'assistant' | 'system'
+  metadata?: Message['metadata']
+  is_tool_interaction?: boolean
+  created_for_user_id?: string
 }
 
 export interface MessageListResult {
   messages: Message[]
   next_cursor: string | null
   has_more: boolean
+}
+
+/**
+ * Normalize a Firestore document into the canonical Message shape.
+ * Handles old documents that use `created_at`, `sender_id`, etc.
+ */
+function normalizeMessage(doc: any, id: string, conversationId: string): Message {
+  return {
+    id,
+    conversation_id: conversationId,
+    role: doc.role ?? 'user',
+    content: doc.content ?? '',
+    timestamp: doc.timestamp ?? doc.created_at ?? new Date().toISOString(),
+    sender_user_id: doc.sender_user_id ?? doc.sender_id,
+    visible_to_user_ids: doc.visible_to_user_ids ?? null,
+    ...(doc.location && { location: doc.location }),
+    ...(doc.toolCallId && { toolCallId: doc.toolCallId }),
+    ...(doc.progressStream && { progressStream: doc.progressStream }),
+    ...(doc.metadata && { metadata: doc.metadata }),
+    ...(doc.created_for_user_id && { created_for_user_id: doc.created_for_user_id }),
+    ...(doc.is_tool_interaction != null && { is_tool_interaction: doc.is_tool_interaction }),
+    ...(doc.cancelled != null && { cancelled: doc.cancelled }),
+  }
 }
 
 export class MessageDatabaseService {
@@ -52,7 +78,7 @@ export class MessageDatabaseService {
 
     try {
       const options: QueryOptions = {
-        orderBy: [{ field: 'created_at', direction: 'DESCENDING' }],
+        orderBy: [{ field: 'timestamp', direction: 'DESCENDING' }],
         limit: limit + 1,
       }
       if (cursor) {
@@ -63,20 +89,18 @@ export class MessageDatabaseService {
       const hasMore = docs.length > limit
       const slice = hasMore ? docs.slice(0, limit) : docs
 
-      const messages: Message[] = slice.map((doc) => ({
-        ...(doc.data as unknown as Message),
-        id: doc.id,
-        conversation_id: conversationId,
-      }))
+      const messages: Message[] = slice.map((doc) =>
+        normalizeMessage(doc.data, doc.id, conversationId),
+      )
 
       const nextCursor =
         hasMore && messages.length > 0
-          ? messages[messages.length - 1].created_at
+          ? messages[messages.length - 1].timestamp
           : null
 
       return { messages, next_cursor: nextCursor, has_more: hasMore }
     } catch (error) {
-      console.error('[MessageDatabaseService] listMessages failed:', error)
+      log.error({ err: error }, 'listMessages failed')
       return { messages: [], next_cursor: null, has_more: false }
     }
   }
@@ -96,16 +120,14 @@ export class MessageDatabaseService {
     const message: Message = {
       id,
       conversation_id: conversationId,
-      sender_id: input.sender_id,
-      sender_name: input.sender_name,
-      sender_photo_url: input.sender_photo_url,
-      content: input.content,
-      created_at: now,
-      updated_at: null,
-      attachments: input.attachments ?? [],
-      visible_to_user_ids: input.visible_to_user_ids ?? null,
       role: input.role ?? 'user',
-      saved_memory_id: null,
+      content: input.content,
+      timestamp: now,
+      sender_user_id: input.sender_user_id,
+      visible_to_user_ids: input.visible_to_user_ids ?? null,
+      ...(input.metadata && { metadata: input.metadata }),
+      ...(input.is_tool_interaction != null && { is_tool_interaction: input.is_tool_interaction }),
+      ...(input.created_for_user_id && { created_for_user_id: input.created_for_user_id }),
     }
 
     await setDocument(collection, id, message)
@@ -125,9 +147,9 @@ export class MessageDatabaseService {
     try {
       const doc = await getDocument(collection, messageId)
       if (!doc) return null
-      return { ...(doc as unknown as Message), id: messageId, conversation_id: conversationId }
+      return normalizeMessage(doc, messageId, conversationId)
     } catch (error) {
-      console.error('[MessageDatabaseService] getMessage failed:', error)
+      log.error({ err: error }, 'getMessage failed')
       return null
     }
   }
@@ -138,16 +160,15 @@ export class MessageDatabaseService {
   static async updateMessage(
     conversationId: string,
     messageId: string,
-    updates: Partial<Pick<Message, 'content' | 'saved_memory_id'>>,
+    updates: Partial<Pick<Message, 'content'>>,
   ): Promise<void> {
     initFirebaseAdmin()
     const collection = messagesCollection(conversationId)
-    const now = new Date().toISOString()
 
     await setDocument(
       collection,
       messageId,
-      { ...updates, updated_at: now },
+      { ...updates, metadata: { edited: true } },
       { merge: true },
     )
   }

@@ -3,7 +3,14 @@
  * Cloud Storage calls are stubbed; interface is fully defined.
  */
 
-import type { MessageAttachment } from '@/types/conversations'
+interface FileAttachmentRecord {
+  id: string
+  name: string
+  size: number
+  type: string
+  url: string
+  thumbnail_url: string | null
+}
 
 export interface UploadRequest {
   file_name: string
@@ -169,7 +176,7 @@ export function createAttachmentFromFile(
   file: File,
   uploadedUrl: string,
   thumbnailUrl?: string
-): MessageAttachment {
+): FileAttachmentRecord {
   return {
     id: crypto.randomUUID(),
     name: file.name,

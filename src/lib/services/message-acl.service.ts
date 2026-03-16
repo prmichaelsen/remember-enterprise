@@ -20,10 +20,10 @@ export function isMessageVisibleToUser(
   userId: string
 ): boolean {
   // Sender always sees their own messages
-  if (message.sender_id === userId) return true
+  if (message.sender_user_id === userId) return true
 
-  // null = visible to all members
-  if (message.visible_to_user_ids === null) return true
+  // null/undefined = visible to all members
+  if (!message.visible_to_user_ids) return true
 
   // Array = restricted visibility
   return message.visible_to_user_ids.includes(userId)
@@ -75,7 +75,7 @@ export function buildPrivateVisibility(
  * Check if a message is private (has restricted visibility).
  */
 export function isPrivateMessage(message: Message): boolean {
-  return message.visible_to_user_ids !== null
+  return message.visible_to_user_ids != null
 }
 
 /**
@@ -85,7 +85,7 @@ export function isPrivateMessage(message: Message): boolean {
 export function isAgentPrivateResponse(message: Message): boolean {
   return (
     message.role === 'assistant' &&
-    message.visible_to_user_ids !== null &&
+    message.visible_to_user_ids != null &&
     message.visible_to_user_ids.length === 1
   )
 }

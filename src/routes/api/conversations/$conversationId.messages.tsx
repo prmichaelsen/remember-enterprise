@@ -50,25 +50,25 @@ export const Route = createFileRoute('/api/conversations/$conversationId/message
           return Response.json({ error: 'Invalid JSON body' }, { status: 400 })
         }
 
-        const { content, sender_id, sender_name, sender_photo_url, attachments, visible_to_user_ids, role } = body
+        const { content, visible_to_user_ids, role, metadata, is_tool_interaction } = body
 
-        if (!content && (!attachments || attachments.length === 0)) {
-          return Response.json({ error: 'Message content or attachments required' }, { status: 400 })
+        if (!content) {
+          return Response.json({ error: 'Message content required' }, { status: 400 })
         }
 
         try {
           const message = await MessageDatabaseService.sendMessage(params.conversationId, {
-            sender_id: sender_id ?? session.uid,
-            sender_name: sender_name ?? session.email ?? 'Unknown',
-            sender_photo_url: sender_photo_url ?? null,
-            content: content ?? '',
-            attachments,
+            sender_user_id: session.uid,
+            content,
             visible_to_user_ids,
             role,
+            ...(metadata && { metadata }),
+            ...(is_tool_interaction != null && { is_tool_interaction }),
           })
 
           const pIds = await getParticipantIds(params.conversationId, session.uid)
-          await syncMessageToAlgolia(message, pIds)
+          const senderName = session.displayName ?? session.email ?? 'Unknown'
+          await syncMessageToAlgolia(message, pIds, senderName)
 
           return Response.json(message, { status: 201 })
         } catch (err) {

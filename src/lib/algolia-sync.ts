@@ -9,6 +9,7 @@ import { createLogger } from '@/lib/logger'
 import { ConversationDatabaseService } from '@/services/conversation-database.service'
 import type { Message } from '@/types/conversations'
 import type { ConversationDoc } from '@/services/conversation-database.service'
+import { getTextContent } from '@/lib/message-content'
 
 const log = createLogger('algolia-sync')
 
@@ -19,6 +20,7 @@ const log = createLogger('algolia-sync')
 export async function syncMessageToAlgolia(
   message: Message,
   participantIds: string[],
+  senderName: string,
 ): Promise<void> {
   try {
     const client = getAlgoliaClient()
@@ -26,11 +28,11 @@ export async function syncMessageToAlgolia(
       indexName: MESSAGES_INDEX,
       body: {
         objectID: message.id,
-        content: message.content,
+        content: getTextContent(message.content),
         conversation_id: message.conversation_id,
-        sender_display_name: message.sender_name,
+        sender_display_name: senderName,
         role: 'user',
-        timestamp: message.created_at,
+        timestamp: message.timestamp,
         searchable_by: participantIds.map((id) => `user:${id}`),
       },
     })
@@ -52,7 +54,7 @@ export async function syncConversationToAlgolia(conv: ConversationDoc): Promise<
         objectID: conv.id,
         title: conv.name,
         last_message_preview: '',
-        owner_id: conv.created_by,
+        owner_id: conv.owner_user_id,
         type: conv.type,
         is_archived: false,
         updated_at: conv.updated_at,

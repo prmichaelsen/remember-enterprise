@@ -16,9 +16,8 @@ import { GhostChatView } from '@/components/ghost/GhostChatView'
 import { getConversation, updateLastMessage } from '@/services/conversation.service'
 import { listMessages, sendMessage, markConversationRead } from '@/services/message.service'
 import { checkPermission } from '@/services/group.service'
-import type { Conversation, Message, MessageAttachment } from '@/types/conversations'
+import type { Conversation, Message, MessagePreview } from '@/types/conversations'
 import type {
-  WebSocketMessage,
   NewMessageEvent,
   TypingEvent,
   AgentResponseChunkEvent,
@@ -31,14 +30,14 @@ import {
   appendTextChunk,
   insertToolUseBlock,
   completeToolUseBlock,
-  assembleContent,
 } from '@/types/streaming'
-import { Users, Info, ChevronLeft, Wifi, WifiOff, Ghost } from 'lucide-react'
+import { Users, ChevronLeft, Wifi, WifiOff, Ghost } from 'lucide-react'
 import { ConversationHeaderMenu } from '@/components/chat/ConversationHeaderMenu'
 import { AddParticipantModal } from '@/components/chat/AddParticipantModal'
 import { getAuthSession } from '@/lib/auth/server-fn'
 import { ConversationDatabaseService } from '@/services/conversation-database.service'
 import { MessageDatabaseService } from '@/services/message-database.service'
+import { getTextContent } from '@/lib/message-content'
 
 const CONVERSATION_TABS: SubHeaderTab[] = [
   { id: 'chat', label: 'Chat' },
@@ -181,39 +180,31 @@ function ConversationView() {
         const newMsg: Message = {
           id: event.message.id,
           conversation_id: event.conversation_id,
-          sender_id: event.message.sender_id,
-          sender_name: event.message.sender_name,
-          sender_photo_url: null,
-          content: event.message.content,
-          created_at: event.message.created_at,
-          updated_at: null,
-          attachments: event.message.attachments.map((a) => ({
-            ...a,
-            size: 0,
-            thumbnail_url: null,
-          })),
-          visible_to_user_ids: event.message.visible_to_user_ids,
           role: event.message.role,
-          saved_memory_id: null,
+          content: event.message.content,
+          timestamp: event.message.timestamp,
+          sender_user_id: event.message.sender_user_id,
+          visible_to_user_ids: event.message.visible_to_user_ids,
         }
 
         setMessages((prev) => [...prev, newMsg])
 
         // Update sidebar last_message preview
         updateLastMessage(conversationId, {
-          content: newMsg.content,
-          sender_id: newMsg.sender_id,
-          sender_name: newMsg.sender_name,
-          timestamp: newMsg.created_at,
+          content: getTextContent(newMsg.content),
+          sender_user_id: newMsg.sender_user_id ?? '',
+          timestamp: newMsg.timestamp,
         })
 
         // Auto-mark as read if this is the active conversation
         markConversationRead(conversationId)
 
         // Clear typing indicator for this sender
-        setTypingUsers((prev) =>
-          prev.filter((tu) => tu.user_id !== event.message.sender_id)
-        )
+        if (event.message.sender_user_id) {
+          setTypingUsers((prev) =>
+            prev.filter((tu) => tu.user_id !== event.message.sender_user_id)
+          )
+        }
         break
       }
 
@@ -306,16 +297,11 @@ function ConversationView() {
         const finalMsg: Message = {
           id: event.message.id,
           conversation_id: event.conversation_id,
-          sender_id: 'agent',
-          sender_name: 'Agent',
-          sender_photo_url: null,
-          content: event.message.content,
-          created_at: new Date().toISOString(),
-          updated_at: null,
-          attachments: [],
-          visible_to_user_ids: event.message.visible_to_user_ids,
           role: 'assistant',
-          saved_memory_id: null,
+          content: event.message.content,
+          timestamp: new Date().toISOString(),
+          sender_user_id: 'agent',
+          visible_to_user_ids: event.message.visible_to_user_ids,
         }
 
         setMessages((prev) => [...prev, finalMsg])
@@ -326,10 +312,9 @@ function ConversationView() {
 
         // Update sidebar preview
         updateLastMessage(conversationId, {
-          content: finalMsg.content,
-          sender_id: finalMsg.sender_id,
-          sender_name: finalMsg.sender_name,
-          timestamp: finalMsg.created_at,
+          content: getTextContent(finalMsg.content),
+          sender_user_id: finalMsg.sender_user_id ?? '',
+          timestamp: finalMsg.timestamp,
         })
         break
       }
@@ -369,17 +354,14 @@ function ConversationView() {
   }, [conversationId, loadingMore, hasMore, messages])
 
   // Send message handler
-  async function handleSend(content: string, attachments: MessageAttachment[]) {
+  async function handleSend(content: string) {
     if (!user) return
 
     try {
       const message = await sendMessage({
         conversation_id: conversationId,
-        sender_id: user.uid,
-        sender_name: user.displayName ?? 'Unknown',
-        sender_photo_url: user.photoURL,
+        sender_user_id: user.uid,
         content,
-        attachments: attachments.length > 0 ? attachments : undefined,
       })
 
       // Optimistic: add to local state immediately
@@ -391,17 +373,10 @@ function ConversationView() {
         conversation_id: conversationId,
         message: {
           id: message.id,
-          sender_id: message.sender_id,
-          sender_name: message.sender_name,
+          sender_user_id: message.sender_user_id,
           content: message.content,
-          created_at: message.created_at,
-          attachments: message.attachments.map((a) => ({
-            id: a.id,
-            name: a.name,
-            url: a.url,
-            type: a.type,
-          })),
-          visible_to_user_ids: message.visible_to_user_ids,
+          timestamp: message.timestamp,
+          visible_to_user_ids: message.visible_to_user_ids ?? null,
           role: message.role,
         },
       }
@@ -409,10 +384,9 @@ function ConversationView() {
 
       // Update conversation preview
       updateLastMessage(conversationId, {
-        content: message.content,
-        sender_id: message.sender_id,
-        sender_name: message.sender_name,
-        timestamp: message.created_at,
+        content: getTextContent(message.content),
+        sender_user_id: message.sender_user_id ?? '',
+        timestamp: message.timestamp,
       })
     } catch {
       // Error sending message — in production, show toast and retry
@@ -476,7 +450,7 @@ function ConversationView() {
   return (
     <div className="flex flex-1 h-full min-h-0">
       {/* Main conversation panel */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 min-h-0">
         {/* Header */}
         <div
           className={`flex items-center gap-3 px-4 py-3 shrink-0 ${t.border} border-t-0 border-l-0 border-r-0`}
@@ -568,8 +542,6 @@ function ConversationView() {
             <MessageCompose
               conversationId={conversationId}
               senderId={user?.uid ?? ''}
-              senderName={user?.displayName ?? 'Unknown'}
-              senderPhotoUrl={user?.photoURL ?? null}
               onSend={handleSend}
               onTypingStart={handleTypingStart}
               onTypingStop={handleTypingStop}

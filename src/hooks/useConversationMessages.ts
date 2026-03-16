@@ -8,14 +8,13 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useWebSocket } from '@/hooks/useWebSocket'
 import { listMessages, sendMessage, markConversationRead } from '@/services/message.service'
 import { updateLastMessage } from '@/services/conversation.service'
-import type { Message, MessageAttachment, MessagePreview } from '@/types/conversations'
-import type { NewMessageEvent, TypingEvent, WebSocketMessage } from '@/types/websocket'
+import type { Message, MessagePreview } from '@/types/conversations'
+import type { NewMessageEvent, TypingEvent } from '@/types/websocket'
+import { getTextContent } from '@/lib/message-content'
 
 interface UseConversationMessagesParams {
   conversationId: string
   userId: string
-  userName: string
-  userPhotoUrl: string | null
 }
 
 interface TypingUser {
@@ -34,8 +33,8 @@ interface UseConversationMessagesReturn {
   /** Load older messages (scroll-up pagination). */
   loadMore: () => Promise<void>
 
-  /** Send a new message with optional attachments. */
-  send: (content: string, attachments?: MessageAttachment[]) => Promise<void>
+  /** Send a new message. */
+  send: (content: string) => Promise<void>
 
   /** Notify other participants that this user started typing. */
   sendTypingStart: () => void
@@ -51,8 +50,6 @@ interface UseConversationMessagesReturn {
 export function useConversationMessages({
   conversationId,
   userId,
-  userName,
-  userPhotoUrl,
 }: UseConversationMessagesParams): UseConversationMessagesReturn {
   // Message state
   const [messages, setMessages] = useState<Message[]>([])
@@ -124,20 +121,11 @@ export function useConversationMessages({
         const newMsg: Message = {
           id: event.message.id,
           conversation_id: event.conversation_id,
-          sender_id: event.message.sender_id,
-          sender_name: event.message.sender_name,
-          sender_photo_url: null,
-          content: event.message.content,
-          created_at: event.message.created_at,
-          updated_at: null,
-          attachments: event.message.attachments.map((a) => ({
-            ...a,
-            size: 0,
-            thumbnail_url: null,
-          })),
-          visible_to_user_ids: event.message.visible_to_user_ids,
           role: event.message.role,
-          saved_memory_id: null,
+          content: event.message.content,
+          timestamp: event.message.timestamp,
+          sender_user_id: event.message.sender_user_id,
+          visible_to_user_ids: event.message.visible_to_user_ids,
         }
 
         // Deduplicate — sender already added optimistically
@@ -148,10 +136,9 @@ export function useConversationMessages({
 
         // Update sidebar last-message preview
         const preview: MessagePreview = {
-          content: newMsg.content,
-          sender_id: newMsg.sender_id,
-          sender_name: newMsg.sender_name,
-          timestamp: newMsg.created_at,
+          content: getTextContent(newMsg.content),
+          sender_user_id: newMsg.sender_user_id ?? '',
+          timestamp: newMsg.timestamp,
         }
         updateLastMessage(conversationId, preview)
         onSidebarUpdate?.(preview, conversationId)
@@ -160,13 +147,15 @@ export function useConversationMessages({
         markConversationRead(conversationId)
 
         // Clear typing indicator for this sender
-        setTypingUsers((prev) =>
-          prev.filter((tu) => tu.user_id !== event.message.sender_id),
-        )
-        const senderTimeout = typingTimeoutsRef.current.get(event.message.sender_id)
-        if (senderTimeout) {
-          clearTimeout(senderTimeout)
-          typingTimeoutsRef.current.delete(event.message.sender_id)
+        if (event.message.sender_user_id) {
+          setTypingUsers((prev) =>
+            prev.filter((tu) => tu.user_id !== event.message.sender_user_id),
+          )
+          const senderTimeout = typingTimeoutsRef.current.get(event.message.sender_user_id)
+          if (senderTimeout) {
+            clearTimeout(senderTimeout)
+            typingTimeoutsRef.current.delete(event.message.sender_user_id)
+          }
         }
         break
       }
@@ -248,50 +237,24 @@ export function useConversationMessages({
 
   // ── Send message ───────────────────────────────────────────────────────
   const send = useCallback(
-    async (content: string, attachments: MessageAttachment[] = []) => {
+    async (content: string) => {
       if (!userId) return
 
       try {
         const message = await sendMessage({
           conversation_id: conversationId,
-          sender_id: userId,
-          sender_name: userName,
-          sender_photo_url: userPhotoUrl,
+          sender_user_id: userId,
           content,
-          attachments: attachments.length > 0 ? attachments : undefined,
         })
 
         // Optimistic: add to local state immediately
         setMessages((prev) => [...prev, message])
 
-        // Broadcast via WebSocket
-        const wsMsg: NewMessageEvent = {
-          type: 'message_new',
-          conversation_id: conversationId,
-          message: {
-            id: message.id,
-            sender_id: message.sender_id,
-            sender_name: message.sender_name,
-            content: message.content,
-            created_at: message.created_at,
-            attachments: message.attachments.map((a) => ({
-              id: a.id,
-              name: a.name,
-              url: a.url,
-              type: a.type,
-            })),
-            visible_to_user_ids: message.visible_to_user_ids,
-            role: message.role,
-          },
-        }
-        wsSend(wsMsg)
-
         // Update conversation preview
         const preview: MessagePreview = {
-          content: message.content,
-          sender_id: message.sender_id,
-          sender_name: message.sender_name,
-          timestamp: message.created_at,
+          content: getTextContent(message.content),
+          sender_user_id: message.sender_user_id ?? '',
+          timestamp: message.timestamp,
         }
         updateLastMessage(conversationId, preview)
         onSidebarUpdate?.(preview, conversationId)
@@ -299,7 +262,7 @@ export function useConversationMessages({
         // Error sending message — caller should handle with toast/retry
       }
     },
-    [conversationId, userId, userName, userPhotoUrl, wsSend, onSidebarUpdate],
+    [conversationId, userId, onSidebarUpdate],
   )
 
   // ── Typing indicator senders ───────────────────────────────────────────
@@ -309,9 +272,9 @@ export function useConversationMessages({
       type: 'typing_start',
       conversation_id: conversationId,
       user_id: userId,
-      user_name: userName,
+      user_name: userId,
     })
-  }, [conversationId, userId, userName, wsSend])
+  }, [conversationId, userId, wsSend])
 
   const sendTypingStop = useCallback(() => {
     if (!userId) return
@@ -319,9 +282,9 @@ export function useConversationMessages({
       type: 'typing_stop',
       conversation_id: conversationId,
       user_id: userId,
-      user_name: userName,
+      user_name: userId,
     })
-  }, [conversationId, userId, userName, wsSend])
+  }, [conversationId, userId, wsSend])
 
   return {
     messages,

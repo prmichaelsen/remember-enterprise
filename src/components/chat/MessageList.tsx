@@ -6,18 +6,14 @@
 import { useRef, useEffect, useCallback, useState } from 'react'
 import { useTheme } from '@/lib/theming'
 import { useAuth } from '@/components/auth/AuthContext'
-import type { Message, MessageAttachment } from '@/types/conversations'
+import type { Message } from '@/types/conversations'
 import type { StreamingBlock } from '@/types/streaming'
-import { isImageType, formatFileSize } from '@/services/upload.service'
-import { FileAttachment } from '@/components/chat/FileUpload'
 import { TypingIndicator } from '@/components/chat/TypingIndicator'
 import { StreamingBlocks } from '@/components/chat/StreamingBlocks'
 import { SaveMemoryButton } from '@/components/chat/SaveMemoryButton'
 import { MemoryService } from '@/services/memory.service'
-import { updateMessageSavedMemory } from '@/services/message.service'
 import { useActionToast } from '@/hooks/useActionToast'
-import { Modal } from '@/components/ui/Modal'
-import { Download, Maximize2 } from 'lucide-react'
+import { getTextContent } from '@/lib/message-content'
 
 interface MessageListProps {
   messages: Message[]
@@ -43,7 +39,6 @@ export function MessageList({
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const [autoScroll, setAutoScroll] = useState(true)
-  const [expandedImage, setExpandedImage] = useState<string | null>(null)
   const [savedMemoryIds, setSavedMemoryIds] = useState<Map<string, string>>(new Map())
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set())
   const { withToast } = useActionToast()
@@ -54,7 +49,7 @@ export function MessageList({
     try {
       const result = await withToast(
         () => MemoryService.save({
-          content: message.content,
+          content: getTextContent(message.content),
           title: null,
           tags: [],
           scope: 'personal',
@@ -69,7 +64,6 @@ export function MessageList({
       if (result) {
         const memoryId = result.memory.id
         setSavedMemoryIds((prev) => new Map(prev).set(message.id, memoryId))
-        await updateMessageSavedMemory(conversationId, message.id, memoryId)
       }
     } finally {
       setSavingIds((prev) => { const next = new Set(prev); next.delete(message.id); return next })
@@ -124,61 +118,16 @@ export function MessageList({
 
   function shouldShowDateDivider(index: number): boolean {
     if (index === 0) return true
-    const prev = new Date(messages[index - 1].created_at).toDateString()
-    const curr = new Date(messages[index].created_at).toDateString()
+    const prev = new Date(messages[index - 1].timestamp).toDateString()
+    const curr = new Date(messages[index].timestamp).toDateString()
     return prev !== curr
   }
 
   function getMessageStyle(message: Message): string {
     if (message.role === 'system') return t.messageSystem
     if (message.role === 'assistant') return t.messageAgent
-    if (message.sender_id === user?.uid) return t.messageSelf
+    if (message.sender_user_id === user?.uid) return t.messageSelf
     return t.messageOther
-  }
-
-  function renderAttachments(attachments: MessageAttachment[]) {
-    if (attachments.length === 0) return null
-
-    return (
-      <div className="mt-2 space-y-2">
-        {attachments.map((attachment) => {
-          if (isImageType(attachment.type)) {
-            return (
-              <div key={attachment.id} className="relative group">
-                <img
-                  src={attachment.thumbnail_url ?? attachment.url}
-                  alt={attachment.name}
-                  className="max-w-xs rounded-lg cursor-pointer"
-                  onClick={() => setExpandedImage(attachment.url)}
-                />
-                <button
-                  type="button"
-                  onClick={() => setExpandedImage(attachment.url)}
-                  className="absolute top-2 right-2 p-1 rounded-md bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <Maximize2 className="w-4 h-4" />
-                </button>
-              </div>
-            )
-          }
-
-          return (
-            <a
-              key={attachment.id}
-              href={attachment.url}
-              download={attachment.name}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg ${t.elevated} ${t.hover} transition-colors`}
-            >
-              <Download className="w-4 h-4 shrink-0" />
-              <div className="min-w-0">
-                <p className={`text-sm truncate ${t.textPrimary}`}>{attachment.name}</p>
-                <p className={`text-xs ${t.textMuted}`}>{formatFileSize(attachment.size)}</p>
-              </div>
-            </a>
-          )
-        })}
-      </div>
-    )
   }
 
   return (
@@ -197,8 +146,9 @@ export function MessageList({
 
         {/* Messages */}
         {messages.map((message, index) => {
-          const isSelf = message.sender_id === user?.uid
+          const isSelf = message.sender_user_id === user?.uid
           const showDate = shouldShowDateDivider(index)
+          const displayContent = getTextContent(message.content)
 
           return (
             <div key={message.id}>
@@ -207,7 +157,7 @@ export function MessageList({
                 <div className="flex items-center gap-3 py-3">
                   <div className={`flex-1 h-px ${t.borderSubtle}`} style={{ borderWidth: 0, height: '1px', background: 'currentColor', opacity: 0.15 }} />
                   <span className={`text-xs ${t.textMuted}`}>
-                    {formatMessageDate(message.created_at)}
+                    {formatMessageDate(message.timestamp)}
                   </span>
                   <div className={`flex-1 h-px ${t.borderSubtle}`} style={{ borderWidth: 0, height: '1px', background: 'currentColor', opacity: 0.15 }} />
                 </div>
@@ -222,30 +172,22 @@ export function MessageList({
                 {/* Avatar */}
                 {!isSelf && message.role !== 'system' && (
                   <div className="shrink-0">
-                    {message.sender_photo_url ? (
-                      <img
-                        src={message.sender_photo_url}
-                        alt={message.sender_name}
-                        className="w-8 h-8 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center ${t.elevated}`}
-                      >
-                        <span className={`text-xs font-medium ${t.textSecondary}`}>
-                          {message.sender_name.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                    )}
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center ${t.elevated}`}
+                    >
+                      <span className={`text-xs font-medium ${t.textSecondary}`}>
+                        {(message.sender_user_id ?? '?').charAt(0).toUpperCase()}
+                      </span>
+                    </div>
                   </div>
                 )}
 
                 {/* Content */}
                 <div className={`max-w-[70%] ${isSelf ? 'items-end' : 'items-start'}`}>
-                  {/* Sender name (for non-self, non-system messages) */}
+                  {/* Sender info (for non-self, non-system messages) */}
                   {!isSelf && message.role !== 'system' && (
                     <p className={`text-xs font-medium mb-0.5 ${t.textSecondary}`}>
-                      {message.sender_name}
+                      {message.sender_user_id ?? 'Unknown'}
                       {message.role === 'assistant' && (
                         <span className={`ml-1.5 ${t.badgeInfo} px-1.5 py-0.5 rounded text-[10px]`}>
                           Agent
@@ -257,13 +199,10 @@ export function MessageList({
                   <div
                     className={`px-3 py-2 rounded-lg ${getMessageStyle(message)}`}
                   >
-                    {/* Message content with basic markdown-like formatting */}
+                    {/* Message content */}
                     <div className={`text-sm whitespace-pre-wrap break-words ${t.textPrimary}`}>
-                      {message.content}
+                      {displayContent}
                     </div>
-
-                    {/* Attachments */}
-                    {renderAttachments(message.attachments)}
 
                     {/* Timestamp */}
                     <p
@@ -271,8 +210,8 @@ export function MessageList({
                         isSelf ? 'text-right' : 'text-left'
                       }`}
                     >
-                      {formatMessageTime(message.created_at)}
-                      {message.updated_at && ' (edited)'}
+                      {formatMessageTime(message.timestamp)}
+                      {message.metadata?.edited && ' (edited)'}
                     </p>
                   </div>
                 </div>
@@ -282,8 +221,8 @@ export function MessageList({
                   <div className="self-center shrink-0">
                     <SaveMemoryButton
                       messageId={message.id}
-                      messageContent={message.content}
-                      isSaved={!!message.saved_memory_id || savedMemoryIds.has(message.id)}
+                      messageContent={displayContent}
+                      isSaved={savedMemoryIds.has(message.id)}
                       onSave={() => handleSaveMemory(message)}
                     />
                   </div>
@@ -304,22 +243,6 @@ export function MessageList({
         {/* Scroll anchor */}
         <div ref={bottomRef} />
       </div>
-
-      {/* Image expand modal */}
-      <Modal
-        isOpen={expandedImage !== null}
-        onClose={() => setExpandedImage(null)}
-        maxWidth="2xl"
-      >
-        {expandedImage && (
-          <img
-            src={expandedImage}
-            alt="Expanded"
-            className="w-full h-auto rounded-lg"
-          />
-        )}
-      </Modal>
-
     </>
   )
 }

@@ -12,7 +12,7 @@ export const Route = createFileRoute('/api/conversations/$conversationId/last-me
         if (!session) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
         try {
-          const preview = await request.json() as { content: string; sender_id: string; sender_name: string; timestamp: string }
+          const preview = await request.json() as { content: string; sender_user_id: string; timestamp: string }
           await ConversationDatabaseService.updateLastMessage(params.conversationId, preview)
           return Response.json({ success: true })
         } catch {

@@ -16,7 +16,10 @@ import {
   deleteDocument,
 } from '@prmichaelsen/firebase-admin-sdk-v8'
 import { initFirebaseAdmin } from '@/lib/firebase-admin'
+import { createLogger } from '@/lib/logger'
 import type { Conversation, ConversationType } from '@/types/conversations'
+
+const log = createLogger('ConversationDatabaseService')
 
 const BASE = 'agentbase'
 
@@ -63,8 +66,7 @@ export class ConversationDatabaseService {
       doc.last_message_preview && doc.last_message_at
         ? {
             content: doc.last_message_preview,
-            sender_id: '',
-            sender_name: '',
+            sender_user_id: '',
             timestamp: doc.last_message_at,
           }
         : null
@@ -109,7 +111,7 @@ export class ConversationDatabaseService {
         ...doc,
       }))
     } catch (error) {
-      console.error('[ConversationDatabaseService] getUserConversations failed:', error)
+      log.error({ err: error }, 'getUserConversations failed')
       return []
     }
   }
@@ -139,7 +141,7 @@ export class ConversationDatabaseService {
         ...doc,
       }))
     } catch (error) {
-      console.error('[ConversationDatabaseService] getUserDMs failed:', error)
+      log.error({ err: error }, 'getUserDMs failed')
       return []
     }
   }
@@ -171,7 +173,7 @@ export class ConversationDatabaseService {
         ...doc,
       }))
     } catch (error) {
-      console.error('[ConversationDatabaseService] getUserGroups failed:', error)
+      log.error({ err: error }, 'getUserGroups failed')
       return []
     }
   }
@@ -238,7 +240,7 @@ export class ConversationDatabaseService {
 
       return null
     } catch (error) {
-      console.error('[ConversationDatabaseService] getConversation failed:', error)
+      log.error({ err: error }, 'getConversation failed')
       return null
     }
   }
@@ -282,7 +284,7 @@ export class ConversationDatabaseService {
    */
   static async updateLastMessage(
     conversationId: string,
-    preview: { content: string; sender_id: string; sender_name: string; timestamp: string },
+    preview: { content: string; sender_user_id: string; timestamp: string },
   ): Promise<void> {
     initFirebaseAdmin()
     const path = getSharedConversations()
@@ -309,7 +311,7 @@ export class ConversationDatabaseService {
       })
       return results ?? []
     } catch (error) {
-      console.error('[ConversationDatabaseService] getMessages failed:', error)
+      log.error({ err: error }, 'getMessages failed')
       return []
     }
   }

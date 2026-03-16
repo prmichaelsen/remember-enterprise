@@ -8,10 +8,8 @@ import {
   validateFile,
   getSignedUploadUrl,
   uploadFile as uploadFileToStorage,
-  createAttachmentFromFile,
   type UploadProgress,
 } from '@/services/upload.service'
-import type { MessageAttachment } from '@/types/conversations'
 
 export interface UseFileUploadOptions {
   conversationId: string
@@ -22,15 +20,13 @@ export interface UseFileUploadOptions {
 export interface UseFileUploadReturn {
   /** Current upload progress entries (pending, uploading, complete, error). */
   uploads: UploadProgress[]
-  /** Attachments that have finished uploading and are ready to attach to a message. */
-  completedAttachments: MessageAttachment[]
   /** Whether any uploads are currently in progress. */
   isUploading: boolean
   /** Kick off uploads for the given files. Validates and uploads each one. */
   addFiles: (files: FileList | File[]) => void
-  /** Remove an upload entry (and its completed attachment if any) by file_key. */
+  /** Remove an upload entry by file_key. */
   removeUpload: (fileKey: string) => void
-  /** Clear all uploads and completed attachments (e.g., after sending a message). */
+  /** Clear all uploads (e.g., after sending a message). */
   clearAll: () => void
   /** Retry a failed upload by file_key. */
   retryUpload: (fileKey: string) => void
@@ -47,7 +43,6 @@ export function useFileUpload({
   maxFiles = 10,
 }: UseFileUploadOptions): UseFileUploadReturn {
   const [uploads, setUploads] = useState<InternalUpload[]>([])
-  const [completedAttachments, setCompletedAttachments] = useState<MessageAttachment[]>([])
 
   // Keep a ref to abort controllers so we can cancel in-flight uploads
   const abortControllers = useRef<Map<string, XMLHttpRequest>>(new Map())
@@ -75,7 +70,7 @@ export function useFileUpload({
         })
 
         // Step 2: Upload file with XHR for progress events
-        const uploadedUrl = await uploadFileToStorage(
+        await uploadFileToStorage(
           file,
           signedUrl.upload_url,
           (progress) => {
@@ -87,9 +82,6 @@ export function useFileUpload({
           }
         )
 
-        // Step 3: Create attachment record
-        const attachment = createAttachmentFromFile(file, uploadedUrl)
-
         setUploads((prev) =>
           prev.map((u) =>
             u.file_key === fileKey
@@ -97,7 +89,6 @@ export function useFileUpload({
               : u
           )
         )
-        setCompletedAttachments((prev) => [...prev, attachment])
       } catch (err) {
         setUploads((prev) =>
           prev.map((u) =>
@@ -158,20 +149,10 @@ export function useFileUpload({
 
   const removeUpload = useCallback((fileKey: string) => {
     setUploads((prev) => prev.filter((u) => u.file_key !== fileKey))
-    setCompletedAttachments((prev) => {
-      // Find the upload to get its file_name for matching
-      return prev.filter((a) => {
-        // We can't perfectly match by fileKey on attachments, so we keep all
-        // unless the upload was completed and the names match.
-        // A better approach: store fileKey on the attachment. For now, remove by index correlation.
-        return true
-      })
-    })
   }, [])
 
   const clearAll = useCallback(() => {
     setUploads([])
-    setCompletedAttachments([])
     abortControllers.current.clear()
   }, [])
 
@@ -200,7 +181,6 @@ export function useFileUpload({
 
   return {
     uploads: publicUploads,
-    completedAttachments,
     isUploading,
     addFiles,
     removeUpload,

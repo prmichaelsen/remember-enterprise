@@ -5,7 +5,7 @@
  */
 
 // Re-export all domain types
-export type { Conversation, ConversationType, Message, MessageAttachment } from './conversations'
+export type { Conversation, ConversationType, Message, MessageContent, ContentBlock } from './conversations'
 export type { MemoryItem, MemoryScope, MemoryFeedAlgorithm, MemoryFeedParams } from './memories'
 export type { Notification, NotificationType, NotificationPreferences } from './notifications'
 export type { WebSocketMessage, WebSocketMessageType, WebSocketConfig } from './websocket'

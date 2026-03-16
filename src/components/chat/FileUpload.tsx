@@ -13,7 +13,14 @@ import {
   getFileCategory,
   type UploadProgress,
 } from '@/services/upload.service'
-import type { MessageAttachment } from '@/types/conversations'
+interface FileAttachmentData {
+  id: string
+  name: string
+  size: number
+  type: string
+  url: string
+  thumbnail_url: string | null
+}
 
 interface FileUploadProps {
   onFilesSelected: (files: File[]) => void
@@ -148,7 +155,7 @@ export function FileAttachment({
   attachment,
   onImageClick,
 }: {
-  attachment: MessageAttachment
+  attachment: FileAttachmentData
   onImageClick?: (url: string) => void
 }) {
   const t = useTheme()

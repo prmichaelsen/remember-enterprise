@@ -31,10 +31,10 @@ export const Route = createFileRoute(
           return Response.json({ error: 'Invalid JSON body' }, { status: 400 })
         }
 
-        const { saved_memory_id } = body
-        if (typeof saved_memory_id !== 'string') {
+        const { content } = body
+        if (content !== undefined && typeof content !== 'string') {
           return Response.json(
-            { error: 'saved_memory_id must be a string' },
+            { error: 'content must be a string' },
             { status: 400 },
           )
         }
@@ -43,7 +43,7 @@ export const Route = createFileRoute(
           await MessageDatabaseService.updateMessage(
             params.conversationId,
             params.messageId,
-            { saved_memory_id },
+            { ...(content !== undefined && { content }) },
           )
           return Response.json({ ok: true })
         } catch (error) {
