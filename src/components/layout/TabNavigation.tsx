@@ -46,7 +46,7 @@ export function TabNavigation({
           key={tab.to}
           to={tab.to}
           role="tab"
-          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg ${t.textSecondary} ${t.hover} transition-colors ${
+          className={`flex flex-col items-center gap-0.5 px-1 py-2 rounded-lg ${t.textSecondary} ${t.hover} transition-colors ${
             isVertical ? 'w-full' : ''
           }`}
           activeProps={{
@@ -56,7 +56,7 @@ export function TabNavigation({
           activeOptions={{ exact: tab.exact }}
         >
           <tab.icon className="w-5 h-5 shrink-0" />
-          <span className="text-sm">{tab.label}</span>
+          <span className="text-[11px] leading-tight">{tab.label}</span>
         </Link>
       ))}
     </nav>

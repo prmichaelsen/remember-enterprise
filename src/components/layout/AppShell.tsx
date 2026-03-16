@@ -124,7 +124,7 @@ export function AppShell({ currentTheme, onThemeToggle }: AppShellProps) {
 
       {/* Main Content Area */}
       <main
-        className={`${HEADER_HEIGHT_CLASS} lg:pl-44 pb-16 md:pb-0 min-h-screen`}
+        className={`${HEADER_HEIGHT_CLASS} lg:pl-[72px] pb-16 md:pb-0 min-h-screen`}
       >
         <ErrorBoundary name="PageContent">
           <Outlet />
