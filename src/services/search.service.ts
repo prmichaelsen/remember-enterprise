@@ -63,26 +63,20 @@ export async function search(
       {
         indexName: USERS_INDEX,
         query,
-        params: {
-          hitsPerPage,
-          filters: 'is_discoverable:true',
-        },
+        hitsPerPage,
+        filters: 'is_discoverable:true',
       },
       {
         indexName: CONVERSATIONS_INDEX,
         query,
-        params: {
-          hitsPerPage,
-          filters: `owner_id:${userId}`,
-        },
+        hitsPerPage,
+        filters: `owner_id:${userId}`,
       },
       {
         indexName: MESSAGES_INDEX,
         query,
-        params: {
-          hitsPerPage,
-          filters: `searchable_by:user:${userId}`,
-        },
+        hitsPerPage,
+        filters: `searchable_by:"user:${userId}"`,
       },
     ],
   }) as { results: Array<{ hits: unknown[]; processingTimeMS?: number }> }
