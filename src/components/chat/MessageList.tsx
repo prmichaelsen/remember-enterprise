@@ -175,7 +175,7 @@ export function MessageList({
               {showDate && (
                 <div className="flex items-center gap-3 py-3 px-4">
                   <div className={`flex-1 h-px ${t.borderSubtle}`} style={{ borderWidth: 0, height: '1px', background: 'currentColor', opacity: 0.15 }} />
-                  <span className={`text-xs ${t.textMuted}`}>
+                  <span className={`text-xs ${t.textMuted}`} style={{ background: 'transparent' }}>
                     {formatMessageDate(message.timestamp)}
                   </span>
                   <div className={`flex-1 h-px ${t.borderSubtle}`} style={{ borderWidth: 0, height: '1px', background: 'currentColor', opacity: 0.15 }} />
