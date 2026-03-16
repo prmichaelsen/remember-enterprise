@@ -34,7 +34,7 @@ function generateMCPToken(userId: string, serviceToken: string): string {
   return jwt.sign(
     {
       userId,
-      iss: 'remember-enterprise',
+      iss: 'memorycloud.chat',
       aud: 'mcp-server',
     },
     serviceToken,
