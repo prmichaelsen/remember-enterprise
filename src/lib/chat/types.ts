@@ -7,10 +7,21 @@
  * - IAIProvider: interface for AI provider implementations
  */
 
+/** A content block in a message (text or tool_use) */
+export type ContentBlock =
+  | { type: 'text'; text: string }
+  | { type: 'tool_use'; id: string; name: string; input: Record<string, unknown> }
+
 /** A single message in a conversation */
 export interface ChatMessage {
   role: 'user' | 'assistant'
-  content: string
+  content: string | ContentBlock[]
+}
+
+/** Result returned from processMessage */
+export interface ProcessMessageResult {
+  /** Final content: string if no tools used, content block array if tools were used */
+  content: string | ContentBlock[]
 }
 
 /** Events emitted during streaming chat responses */

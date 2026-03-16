@@ -16,7 +16,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type { MessageParam, ContentBlockParam, ToolResultBlockParam } from '@anthropic-ai/sdk/resources/messages'
 import { createAnthropicClient } from './create-client'
-import type { IAIProvider, ChatMessage, StreamEvent } from './types'
+import type { IAIProvider, ChatMessage, StreamEvent, ContentBlock, ProcessMessageResult } from './types'
 import type { IMCPProvider, Tool } from './interfaces/mcp-provider'
 
 const MODEL_ID = 'claude-sonnet-4-5-20250929'
@@ -54,21 +54,25 @@ export class ChatEngine {
 
   /**
    * Process a conversation through the AI provider and yield stream events
-   * via the onEvent callback.
+   * via the onEvent callback. Returns the final content for persistence.
    */
-  async processMessage(params: ProcessMessageParams): Promise<void> {
+  async processMessage(params: ProcessMessageParams): Promise<ProcessMessageResult> {
     const { messages, systemPrompt, onEvent, signal, userId } = params
 
     // If no MCP provider or no userId, use the simple path
     if (!this.mcpProvider || !userId) {
       this.debug(onEvent, 'No MCP provider or userId, using simple streaming path')
+      let fullText = ''
       await this.provider.streamChat({
         messages,
         systemPrompt,
-        onMessage: onEvent,
+        onMessage: (event) => {
+          if (event.type === 'chunk') fullText += event.content
+          onEvent(event)
+        },
         signal,
       })
-      return
+      return { content: fullText }
     }
 
     // MCP-enabled path: discover servers, connect, get tools, then call Anthropic with tools
@@ -99,18 +103,22 @@ export class ChatEngine {
 
     if (mcpTools.length === 0) {
       this.debug(onEvent, 'No tools available, using simple streaming')
+      let fullText = ''
       await this.provider.streamChat({
         messages,
         systemPrompt,
-        onMessage: onEvent,
+        onMessage: (event) => {
+          if (event.type === 'chunk') fullText += event.content
+          onEvent(event)
+        },
         signal,
       })
-      return
+      return { content: fullText }
     }
 
     // Tools available — use Anthropic SDK directly with tool support
     this.debug(onEvent, 'Starting tool-enabled streaming', { toolCount: mcpTools.length })
-    await this.streamWithTools({
+    return this.streamWithTools({
       messages,
       systemPrompt,
       tools: mcpTools,
@@ -122,6 +130,7 @@ export class ChatEngine {
   /**
    * Stream a conversation with tool support.
    * Handles the tool_use → executeTool → tool_result loop.
+   * Tracks all intermediate turn messages to build the final content block array.
    */
   private async streamWithTools(params: {
     messages: ChatMessage[]
@@ -129,8 +138,11 @@ export class ChatEngine {
     tools: Tool[]
     onEvent: (event: StreamEvent) => void
     signal?: AbortSignal
-  }): Promise<void> {
+  }): Promise<ProcessMessageResult> {
     const { messages, systemPrompt, tools, onEvent, signal } = params
+
+    // Track intermediate assistant messages (content blocks from each tool round)
+    const turnMessages: Array<{ role: 'assistant'; content: ContentBlock[] }> = []
 
     const client = createAnthropicClient(this.apiKey)
 
@@ -153,6 +165,7 @@ export class ChatEngine {
     // Tool execution loop: keep calling until we get a text-only response
     const MAX_TOOL_ROUNDS = 10
     let round = 0
+    let currentTextContent = ''
 
     while (round < MAX_TOOL_ROUNDS) {
       round++
@@ -160,7 +173,7 @@ export class ChatEngine {
 
       // Collect content blocks from the stream
       const contentBlocks: Array<{ type: string; [key: string]: unknown }> = []
-      let currentTextContent = ''
+      currentTextContent = ''
       let stopReason: string | null = null
 
       try {
@@ -269,14 +282,14 @@ export class ChatEngine {
         if (error instanceof Error && error.name === 'AbortError') {
           this.debug(onEvent, 'Stream aborted by client')
           onEvent({ type: 'complete' })
-          return
+          return { content: currentTextContent }
         }
         this.debug(onEvent, 'Stream error', { error: error instanceof Error ? error.message : String(error) })
         onEvent({
           type: 'error',
           error: error instanceof Error ? error.message : 'Unknown error',
         })
-        return
+        return { content: currentTextContent }
       }
 
       // Check if we need to execute tools
@@ -286,6 +299,12 @@ export class ChatEngine {
         this.debug(onEvent, 'No more tool calls, finishing', { stopReason, toolUseBlockCount: toolUseBlocks.length })
         break
       }
+
+      // Track this round's content blocks as an intermediate turn message
+      turnMessages.push({
+        role: 'assistant',
+        content: contentBlocks.filter(b => b.type === 'text' || b.type === 'tool_use') as ContentBlock[],
+      })
 
       // Execute tool calls and collect results
       // Add assistant message with all content blocks
@@ -352,8 +371,25 @@ export class ChatEngine {
         content: toolResults,
       })
 
-      // Reset text content for next round
-      currentTextContent = ''
+    }
+
+    // Build final content: if tool rounds occurred, create interleaved content block array
+    let finalContent: string | ContentBlock[]
+    if (turnMessages.length > 0) {
+      const blocks: ContentBlock[] = []
+      // Replay intermediate turn messages (text + tool_use blocks from each round)
+      for (const turn of turnMessages) {
+        for (const block of turn.content) {
+          blocks.push(block)
+        }
+      }
+      // Append any remaining text from the final round
+      if (currentTextContent) {
+        blocks.push({ type: 'text', text: currentTextContent })
+      }
+      finalContent = blocks
+    } else {
+      finalContent = currentTextContent
     }
 
     // Emit usage before complete
@@ -367,5 +403,6 @@ export class ChatEngine {
     }
 
     onEvent({ type: 'complete' })
+    return { content: finalContent }
   }
 }

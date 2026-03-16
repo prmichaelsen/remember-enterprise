@@ -158,20 +158,17 @@ export const Route = createFileRoute(
         const engine = new ChatEngine(aiProvider, { mcpProvider, apiKey })
 
         // Stream response as SSE
-        let fullAssistantContent = ''
-
         const stream = new ReadableStream({
           async start(controller) {
             const encoder = new TextEncoder()
 
             try {
-              await engine.processMessage({
+              const result = await engine.processMessage({
                 messages: chatMessages,
                 systemPrompt,
                 userId: session.uid,
                 onEvent(event) {
                   if (event.type === 'chunk') {
-                    fullAssistantContent += event.content
                     const sseData = `data: ${JSON.stringify({ chunk: event.content })}\n\n`
                     controller.enqueue(encoder.encode(sseData))
                   } else if (event.type === 'tool_call') {
@@ -193,12 +190,15 @@ export const Route = createFileRoute(
               // Stream complete — send done signal
               controller.enqueue(encoder.encode('data: [DONE]\n\n'))
 
-              // Persist assistant message
+              // Persist assistant message with full content (string or content block array)
+              const saveContent = typeof result.content === 'string'
+                ? result.content
+                : JSON.stringify(result.content)
               try {
                 await GhostDatabaseService.sendMessage(
                   session.uid,
                   conversationId,
-                  { role: 'assistant', content: fullAssistantContent },
+                  { role: 'assistant', content: saveContent },
                 )
               } catch (err) {
                 console.error(
