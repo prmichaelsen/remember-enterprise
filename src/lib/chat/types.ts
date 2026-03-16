@@ -18,6 +18,7 @@ export type StreamEvent =
   | { type: 'chunk'; content: string }
   | { type: 'complete' }
   | { type: 'error'; error: string }
+  | { type: 'debug'; message: string; data?: Record<string, unknown> }
   | { type: 'usage'; input_tokens: number; output_tokens: number }
   | { type: 'tool_call'; name: string; input: Record<string, unknown> }
   | { type: 'tool_result'; name: string; result: unknown }

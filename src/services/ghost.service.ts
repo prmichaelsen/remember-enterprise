@@ -141,7 +141,9 @@ export const GhostService = {
             }
             try {
               const parsed = JSON.parse(data)
-              if (parsed.chunk) {
+              if (parsed.debug) {
+                console.log('[ChatEngine]', parsed.debug.message, parsed.debug.data ?? '')
+              } else if (parsed.chunk) {
                 fullContent += parsed.chunk
                 callbacks.onChunk(parsed.chunk)
               }

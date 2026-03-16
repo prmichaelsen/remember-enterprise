@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { env } from 'cloudflare:workers'
 import { initFirebaseAdmin } from '@/lib/firebase-admin'
 import { getServerSession } from '@/lib/auth/session'
 import { GhostDatabaseService } from '@/services/ghost-database.service'
@@ -58,7 +59,7 @@ export const Route = createFileRoute(
         }
 
         // Load conversation to verify it exists and get ghostId
-        const convPath = `users/${session.uid}/ghost_conversations`
+        const convPath = `agentbase.users/${session.uid}/ghost_conversations`
         let conversationDoc: Record<string, unknown> | null
         try {
           conversationDoc = await getDocument(convPath, conversationId)
@@ -87,7 +88,7 @@ export const Route = createFileRoute(
         }
         let ghost: GhostPersona = defaultGhost
         try {
-          const ghostDoc = await getDocument('ghosts', ghostId)
+          const ghostDoc = await getDocument('agentbase.ghosts', ghostId)
           if (ghostDoc) {
             ghost = { ...(ghostDoc as unknown as GhostPersona), id: ghostId }
           }
@@ -96,7 +97,7 @@ export const Route = createFileRoute(
         }
 
         // Load conversation history (last 50 messages)
-        const messagesPath = `users/${session.uid}/ghost_conversations/${conversationId}/messages`
+        const messagesPath = `agentbase.users/${session.uid}/ghost_conversations/${conversationId}/messages`
         let history: GhostMessage[] = []
         try {
           const messageDocs = await queryDocuments(messagesPath, {
@@ -133,10 +134,7 @@ export const Route = createFileRoute(
         })
 
         // Check for API key
-        const apiKey =
-          (typeof process !== 'undefined'
-            ? process.env.ANTHROPIC_API_KEY
-            : undefined) ?? (globalThis as any).env?.ANTHROPIC_API_KEY
+        const apiKey = (env as any).ANTHROPIC_API_KEY as string | undefined
 
         if (!apiKey) {
           return Response.json(
@@ -179,6 +177,9 @@ export const Route = createFileRoute(
                     controller.enqueue(encoder.encode(sseData))
                   } else if (event.type === 'tool_result') {
                     const sseData = `data: ${JSON.stringify({ tool_result: { name: event.name, result: event.result } })}\n\n`
+                    controller.enqueue(encoder.encode(sseData))
+                  } else if (event.type === 'debug') {
+                    const sseData = `data: ${JSON.stringify({ debug: { message: event.message, data: event.data } })}\n\n`
                     controller.enqueue(encoder.encode(sseData))
                   } else if (event.type === 'error') {
                     const sseError = `data: ${JSON.stringify({ error: event.error })}\n\n`

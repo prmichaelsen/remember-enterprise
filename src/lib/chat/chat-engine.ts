@@ -48,20 +48,20 @@ export class ChatEngine {
     this.apiKey = options?.apiKey
   }
 
+  private debug(onEvent: (event: StreamEvent) => void, message: string, data?: Record<string, unknown>) {
+    onEvent({ type: 'debug', message, data })
+  }
+
   /**
    * Process a conversation through the AI provider and yield stream events
    * via the onEvent callback.
-   *
-   * When mcpProvider is present and userId is supplied, this method:
-   *   1. Fetches MCP tools and passes them to Anthropic
-   *   2. Handles tool_use blocks by calling mcpProvider.executeTool()
-   *   3. Feeds tool results back and re-streams until no more tool calls
    */
   async processMessage(params: ProcessMessageParams): Promise<void> {
     const { messages, systemPrompt, onEvent, signal, userId } = params
 
     // If no MCP provider or no userId, use the simple path
     if (!this.mcpProvider || !userId) {
+      this.debug(onEvent, 'No MCP provider or userId, using simple streaming path')
       await this.provider.streamChat({
         messages,
         systemPrompt,
@@ -76,22 +76,27 @@ export class ChatEngine {
     let mcpTools: Tool[] = []
 
     try {
+      this.debug(onEvent, 'Discovering MCP servers', { userId })
       const servers = await this.mcpProvider.getAvailableServers({ userId })
+      this.debug(onEvent, 'MCP servers discovered', { count: servers.length })
 
       if (servers.length > 0) {
+        this.debug(onEvent, 'Connecting to MCP servers')
         mcpConnections = await this.mcpProvider.connectToServers({
           servers,
           userId,
         })
         mcpTools = await this.mcpProvider.getTools(mcpConnections)
+        this.debug(onEvent, 'MCP tools loaded', { toolCount: mcpTools.length, tools: mcpTools.map(t => t.name) })
       }
     } catch (error) {
-      console.error('[ChatEngine] MCP setup failed, proceeding without tools:', error)
-      // Fall back to no-tools path
+      this.debug(onEvent, 'MCP setup failed, proceeding without tools', {
+        error: error instanceof Error ? error.message : String(error),
+      })
     }
 
     if (mcpTools.length === 0) {
-      // No tools available, use simple streaming
+      this.debug(onEvent, 'No tools available, using simple streaming')
       await this.provider.streamChat({
         messages,
         systemPrompt,
@@ -102,6 +107,7 @@ export class ChatEngine {
     }
 
     // Tools available — use Anthropic SDK directly with tool support
+    this.debug(onEvent, 'Starting tool-enabled streaming', { toolCount: mcpTools.length })
     await this.streamWithTools({
       messages,
       systemPrompt,
@@ -148,6 +154,7 @@ export class ChatEngine {
 
     while (round < MAX_TOOL_ROUNDS) {
       round++
+      this.debug(onEvent, 'Starting tool round', { round, maxRounds: MAX_TOOL_ROUNDS })
 
       // Collect content blocks from the stream
       const contentBlocks: Array<{ type: string; [key: string]: unknown }> = []
@@ -197,6 +204,7 @@ export class ChatEngine {
               currentToolName = block.name
               currentToolId = block.id
               currentToolInput = ''
+              this.debug(onEvent, 'Tool use block started', { toolName: block.name, toolId: block.id })
             }
           }
 
@@ -257,9 +265,11 @@ export class ChatEngine {
         }
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {
+          this.debug(onEvent, 'Stream aborted by client')
           onEvent({ type: 'complete' })
           return
         }
+        this.debug(onEvent, 'Stream error', { error: error instanceof Error ? error.message : String(error) })
         onEvent({
           type: 'error',
           error: error instanceof Error ? error.message : 'Unknown error',
@@ -271,7 +281,7 @@ export class ChatEngine {
       const toolUseBlocks = contentBlocks.filter((b) => b.type === 'tool_use')
 
       if (toolUseBlocks.length === 0 || stopReason !== 'tool_use') {
-        // No tool calls — we're done
+        this.debug(onEvent, 'No more tool calls, finishing', { stopReason, toolUseBlockCount: toolUseBlocks.length })
         break
       }
 
@@ -290,12 +300,16 @@ export class ChatEngine {
         const toolInput = block.input as Record<string, unknown>
         const toolUseId = block.id as string
 
+        this.debug(onEvent, 'Executing tool', { toolName, toolUseId })
+
         try {
           const result = await this.mcpProvider!.executeTool({
             toolName,
             toolInput,
             connections: [],
           })
+
+          this.debug(onEvent, 'Tool execution succeeded', { toolName })
 
           // Emit tool_result event
           onEvent({
@@ -312,6 +326,8 @@ export class ChatEngine {
         } catch (error) {
           const errorMsg =
             error instanceof Error ? error.message : String(error)
+
+          this.debug(onEvent, 'Tool execution failed', { toolName, error: errorMsg })
 
           onEvent({
             type: 'tool_result',
@@ -340,6 +356,7 @@ export class ChatEngine {
 
     // Emit usage before complete
     if (inputTokens > 0 || outputTokens > 0) {
+      this.debug(onEvent, 'Token usage', { inputTokens, outputTokens })
       onEvent({
         type: 'usage',
         input_tokens: inputTokens,
