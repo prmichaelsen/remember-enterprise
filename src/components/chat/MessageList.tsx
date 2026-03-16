@@ -13,8 +13,9 @@ import { FileAttachment } from '@/components/chat/FileUpload'
 import { TypingIndicator } from '@/components/chat/TypingIndicator'
 import { StreamingBlocks } from '@/components/chat/StreamingBlocks'
 import { SaveMemoryButton } from '@/components/chat/SaveMemoryButton'
-import { SaveMemoryModal } from '@/components/chat/SaveMemoryModal'
+import { MemoryService } from '@/services/memory.service'
 import { updateMessageSavedMemory } from '@/services/message.service'
+import { useActionToast } from '@/hooks/useActionToast'
 import { Modal } from '@/components/ui/Modal'
 import { Download, Maximize2 } from 'lucide-react'
 
@@ -43,19 +44,37 @@ export function MessageList({
   const bottomRef = useRef<HTMLDivElement>(null)
   const [autoScroll, setAutoScroll] = useState(true)
   const [expandedImage, setExpandedImage] = useState<string | null>(null)
-  const [savingMessage, setSavingMessage] = useState<Message | null>(null)
   const [savedMemoryIds, setSavedMemoryIds] = useState<Map<string, string>>(new Map())
+  const [savingIds, setSavingIds] = useState<Set<string>>(new Set())
+  const { withToast } = useActionToast()
 
-  const handleMemorySaved = useCallback(async (memoryId: string) => {
-    if (!savingMessage) return
-    const messageId = savingMessage.id
-    setSavedMemoryIds((prev) => new Map(prev).set(messageId, memoryId))
+  const handleSaveMemory = useCallback(async (message: Message) => {
+    if (savingIds.has(message.id)) return
+    setSavingIds((prev) => new Set(prev).add(message.id))
     try {
-      await updateMessageSavedMemory(conversationId, messageId, memoryId)
-    } catch (err) {
-      console.error('[MessageList] Failed to update message saved_memory_id:', err)
+      const result = await withToast(
+        () => MemoryService.save({
+          content: message.content,
+          title: null,
+          tags: [],
+          scope: 'personal',
+          group_id: null,
+          source_message_id: message.id,
+        }),
+        {
+          success: { title: 'Memory saved' },
+          error: { title: 'Save failed', message: 'Could not save memory.' },
+        },
+      )
+      if (result) {
+        const memoryId = result.memory.id
+        setSavedMemoryIds((prev) => new Map(prev).set(message.id, memoryId))
+        await updateMessageSavedMemory(conversationId, message.id, memoryId)
+      }
+    } finally {
+      setSavingIds((prev) => { const next = new Set(prev); next.delete(message.id); return next })
     }
-  }, [savingMessage, conversationId])
+  }, [conversationId, savingIds, withToast])
 
   // Auto-scroll to bottom when new messages arrive or streaming blocks update
   useEffect(() => {
@@ -265,7 +284,7 @@ export function MessageList({
                       messageId={message.id}
                       messageContent={message.content}
                       isSaved={!!message.saved_memory_id || savedMemoryIds.has(message.id)}
-                      onSave={() => setSavingMessage(message)}
+                      onSave={() => handleSaveMemory(message)}
                     />
                   </div>
                 )}
@@ -301,14 +320,6 @@ export function MessageList({
         )}
       </Modal>
 
-      {/* Save as memory modal */}
-      <SaveMemoryModal
-        isOpen={savingMessage !== null}
-        onClose={() => setSavingMessage(null)}
-        messageContent={savingMessage?.content ?? ''}
-        sourceMessageId={savingMessage?.id ?? ''}
-        onSaved={handleMemorySaved}
-      />
     </>
   )
 }
