@@ -285,7 +285,7 @@ function ThemeEditorPage() {
 
       {/* Right column: Live Preview (desktop only) */}
       <div className="hidden lg:block lg:w-80 lg:shrink-0">
-        <div className="sticky top-6">
+        <div className="sticky top-16">
           <ThemeLivePreview />
         </div>
       </div>
