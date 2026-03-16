@@ -209,14 +209,12 @@ function ConversationView() {
 
       case 'chunk': {
         const event = wsMessage as ServerChunkEvent
-        console.log('[Stream] chunk:', event.content?.slice(0, 80))
         setStreamingBlocks((prev) => appendTextChunk(prev, event.content))
         break
       }
 
       case 'tool_call': {
         const event = wsMessage as any
-        console.log('[Stream] tool_call:', event.toolCall?.name)
         if (event.toolCall) {
           setStreamingBlocks((prev) =>
             insertToolUseBlock(prev, event.toolCall.id, event.toolCall.name)
@@ -227,7 +225,6 @@ function ConversationView() {
 
       case 'tool_result': {
         const event = wsMessage as any
-        console.log('[Stream] tool_result:', event.toolResult?.id)
         if (event.toolResult) {
           setStreamingBlocks((prev) =>
             completeToolUseBlock(prev, event.toolResult.id, 'complete', JSON.stringify(event.toolResult.output))
@@ -237,7 +234,6 @@ function ConversationView() {
       }
 
       case 'complete': {
-        console.log('[Stream] complete')
         setStreamingBlocks([])
         streamingMessageIdRef.current = null
         break
