@@ -76,15 +76,17 @@ export class ChatEngine {
     let mcpTools: Tool[] = []
 
     try {
+      const mcpDebug = (message: string, data: any) => this.debug(onEvent, `[MCP] ${message}`, data)
       this.debug(onEvent, 'Discovering MCP servers', { userId })
-      const servers = await this.mcpProvider.getAvailableServers({ userId })
-      this.debug(onEvent, 'MCP servers discovered', { count: servers.length })
+      const servers = await this.mcpProvider.getAvailableServers({ userId, onDebug: mcpDebug })
+      this.debug(onEvent, 'MCP servers discovered', { count: servers.length, servers: servers.map(s => ({ id: s.id, name: s.name, provider: s.provider })) })
 
       if (servers.length > 0) {
         this.debug(onEvent, 'Connecting to MCP servers')
         mcpConnections = await this.mcpProvider.connectToServers({
           servers,
           userId,
+          onDebug: mcpDebug,
         })
         mcpTools = await this.mcpProvider.getTools(mcpConnections)
         this.debug(onEvent, 'MCP tools loaded', { toolCount: mcpTools.length, tools: mcpTools.map(t => t.name) })

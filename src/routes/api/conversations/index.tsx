@@ -64,8 +64,8 @@ export const Route = createFileRoute('/api/conversations/')({
           return Response.json({ error: 'Database error', detail: String(err) }, { status: 500 })
         }
 
-        console.log('[api/conversations] conversations loaded', JSON.stringify({ conversationCount: conversations.length, sample: conversations.slice(0, 2).map(c => ({ id: c.id, type: c.type, name: c.name, participant_ids: c.participant_ids })) }))
-        const allParticipantIds = [...new Set(conversations.flatMap((c) => c.participant_ids))]
+        console.log('[api/conversations] conversations loaded', JSON.stringify({ conversationCount: conversations.length, sample: conversations.slice(0, 2).map(c => ({ id: c.id, type: c.type, title: c.title, participant_user_ids: c.participant_user_ids })) }))
+        const allParticipantIds = [...new Set(conversations.flatMap((c) => c.participant_user_ids ?? []))]
         console.log('[api/conversations] resolving profiles', JSON.stringify({ allParticipantIds, count: allParticipantIds.length }))
         const profiles = await buildProfileMap(allParticipantIds)
         console.log('[api/conversations] profiles resolved', JSON.stringify({ profileCount: Object.keys(profiles).length, profiles }))
@@ -97,7 +97,7 @@ export const Route = createFileRoute('/api/conversations/')({
           return Response.json({ error: 'Invalid JSON body' }, { status: 400 })
         }
 
-        const { type, participant_ids, name, description, created_by } = body
+        const { type, participant_ids, title, created_by } = body
 
         if (!type || !participant_ids || !Array.isArray(participant_ids)) {
           return Response.json(
@@ -121,8 +121,7 @@ export const Route = createFileRoute('/api/conversations/')({
           const conversation = await ConversationDatabaseService.createConversation({
             type,
             participant_user_ids: participant_ids,
-            name,
-            description,
+            title,
             created_by: created_by ?? session.uid,
           })
           log.debug({ conversationId: conversation.id }, 'created conversation')

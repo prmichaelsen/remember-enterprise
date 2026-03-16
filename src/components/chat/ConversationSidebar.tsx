@@ -88,18 +88,18 @@ export function ConversationSidebar({ onNewDm, onNewGroup, initialConversations,
   }
 
   function getConversationName(conv: Conversation): string {
-    if (conv.name && conv.name !== 'Untitled') return conv.name
-    const otherIds = conv.participant_ids.filter((id) => id !== user?.uid)
+    if (conv.title && conv.title !== 'Untitled' && conv.title !== 'Untitled Conversation') return conv.title
+    const otherIds = (conv.participant_user_ids ?? []).filter((id) => id !== user?.uid)
     if (otherIds.length === 0) return 'Chat'
     return otherIds.map((id) => profiles[id]?.display_name ?? id).join(', ')
   }
 
   function getLastMessagePreview(conv: Conversation): string | null {
-    return conv.last_message?.content ?? null
+    return conv.last_message_preview ?? null
   }
 
   function getLastMessageTimestamp(conv: Conversation): string | null {
-    return conv.last_message?.timestamp ?? conv.updated_at ?? null
+    return conv.last_message_at ?? conv.updated_at ?? null
   }
 
   function getAvatar(conv: Conversation) {

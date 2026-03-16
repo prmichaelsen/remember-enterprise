@@ -8,8 +8,10 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useWebSocket } from '@/hooks/useWebSocket'
 import { listMessages, sendMessage, markConversationRead } from '@/services/message.service'
 import { updateLastMessage } from '@/services/conversation.service'
-import type { Message, MessagePreview } from '@/types/conversations'
-import type { NewMessageEvent, TypingEvent } from '@/types/websocket'
+import type { Message } from '@/types/conversations'
+
+type LastMessagePreview = { content: string; sender_user_id: string; timestamp: string }
+import type { ServerMessageEvent, TypingEvent } from '@/types/websocket'
 import { getTextContent } from '@/lib/message-content'
 
 interface UseConversationMessagesParams {
@@ -43,8 +45,8 @@ interface UseConversationMessagesReturn {
   sendTypingStop: () => void
 
   /** Callback for sidebar: invoked when a new message should update sidebar state. */
-  onSidebarUpdate: ((preview: MessagePreview, conversationId: string) => void) | null
-  setOnSidebarUpdate: (cb: ((preview: MessagePreview, conversationId: string) => void) | null) => void
+  onSidebarUpdate: ((preview: LastMessagePreview, conversationId: string) => void) | null
+  setOnSidebarUpdate: (cb: ((preview: LastMessagePreview, conversationId: string) => void) | null) => void
 }
 
 export function useConversationMessages({
@@ -63,7 +65,7 @@ export function useConversationMessages({
 
   // Sidebar update callback
   const [onSidebarUpdate, setOnSidebarUpdate] = useState<
-    ((preview: MessagePreview, conversationId: string) => void) | null
+    ((preview: LastMessagePreview, conversationId: string) => void) | null
   >(null)
 
   // WebSocket
@@ -113,20 +115,10 @@ export function useConversationMessages({
     if (!wsMessage || !userId) return
 
     switch (wsMessage.type) {
-      case 'message_new': {
-        const event = wsMessage as NewMessageEvent
-        if (event.conversation_id !== conversationId) return
-
-        // Build Message from WebSocket event
-        const newMsg: Message = {
-          id: event.message.id,
-          conversation_id: event.conversation_id,
-          role: event.message.role,
-          content: event.message.content,
-          timestamp: event.message.timestamp,
-          sender_user_id: event.message.sender_user_id,
-          visible_to_user_ids: event.message.visible_to_user_ids,
-        }
+      case 'message': {
+        const event = wsMessage as ServerMessageEvent
+        const newMsg = event.message
+        if (newMsg.conversation_id !== conversationId) return
 
         // Deduplicate — sender already added optimistically
         setMessages((prev) => {
@@ -135,7 +127,7 @@ export function useConversationMessages({
         })
 
         // Update sidebar last-message preview
-        const preview: MessagePreview = {
+        const preview: LastMessagePreview = {
           content: getTextContent(newMsg.content),
           sender_user_id: newMsg.sender_user_id ?? '',
           timestamp: newMsg.timestamp,
@@ -147,14 +139,14 @@ export function useConversationMessages({
         markConversationRead(conversationId)
 
         // Clear typing indicator for this sender
-        if (event.message.sender_user_id) {
+        if (newMsg.sender_user_id) {
           setTypingUsers((prev) =>
-            prev.filter((tu) => tu.user_id !== event.message.sender_user_id),
+            prev.filter((tu) => tu.user_id !== newMsg.sender_user_id),
           )
-          const senderTimeout = typingTimeoutsRef.current.get(event.message.sender_user_id)
+          const senderTimeout = typingTimeoutsRef.current.get(newMsg.sender_user_id!)
           if (senderTimeout) {
             clearTimeout(senderTimeout)
-            typingTimeoutsRef.current.delete(event.message.sender_user_id)
+            typingTimeoutsRef.current.delete(newMsg.sender_user_id!)
           }
         }
         break
@@ -251,7 +243,7 @@ export function useConversationMessages({
         setMessages((prev) => [...prev, message])
 
         // Update conversation preview
-        const preview: MessagePreview = {
+        const preview: LastMessagePreview = {
           content: getTextContent(message.content),
           sender_user_id: message.sender_user_id ?? '',
           timestamp: message.timestamp,

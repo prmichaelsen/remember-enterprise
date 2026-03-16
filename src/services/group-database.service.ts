@@ -184,6 +184,84 @@ export class GroupDatabaseService {
   }
 
   /**
+   * Update a member's role and permissions.
+   */
+  static async updateMemberRole(
+    groupId: string,
+    userId: string,
+    authLevel: GroupAuthLevel,
+    permissions: GroupPermissions,
+  ): Promise<void> {
+    initFirebaseAdmin()
+    const collection = membersCollection(groupId)
+    await setDocument(
+      collection,
+      userId,
+      { auth_level: authLevel, permissions },
+      { merge: true },
+    )
+  }
+
+  /**
+   * Mute a member in a group.
+   */
+  static async muteMember(groupId: string, userId: string): Promise<void> {
+    initFirebaseAdmin()
+    const collection = membersCollection(groupId)
+    await setDocument(collection, userId, { is_muted: true }, { merge: true })
+  }
+
+  /**
+   * Unmute a member in a group.
+   */
+  static async unmuteMember(groupId: string, userId: string): Promise<void> {
+    initFirebaseAdmin()
+    const collection = membersCollection(groupId)
+    await setDocument(collection, userId, { is_muted: false }, { merge: true })
+  }
+
+  /**
+   * Ban a member from a group — sets is_banned and removes from conversation participants.
+   */
+  static async banMember(groupId: string, userId: string): Promise<void> {
+    initFirebaseAdmin()
+    const collection = membersCollection(groupId)
+    await setDocument(collection, userId, { is_banned: true }, { merge: true })
+  }
+
+  /**
+   * Unban a member in a group.
+   */
+  static async unbanMember(groupId: string, userId: string): Promise<void> {
+    initFirebaseAdmin()
+    const collection = membersCollection(groupId)
+    await setDocument(collection, userId, { is_banned: false }, { merge: true })
+  }
+
+  /**
+   * Get a single member by userId.
+   */
+  static async getMember(groupId: string, userId: string): Promise<GroupMember | null> {
+    initFirebaseAdmin()
+    const collection = membersCollection(groupId)
+    try {
+      const doc = await getDocument(collection, userId)
+      if (!doc) return null
+      return { ...(doc as unknown as GroupMember), user_id: userId }
+    } catch {
+      return null
+    }
+  }
+
+  /**
+   * Delete a group document.
+   */
+  static async deleteGroup(groupId: string): Promise<void> {
+    initFirebaseAdmin()
+    await deleteDocument(GROUPS_COLLECTION, groupId)
+  }
+
+  /**
    * Check if a user has a specific permission in a group.
    */
   static async checkPermission(

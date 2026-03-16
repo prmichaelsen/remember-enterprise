@@ -3,14 +3,13 @@
  * Follows library-services pattern: components call this, never fetch() directly.
  */
 
-import type { Conversation, ConversationEnvelope, ConversationType, MessagePreview } from '@/types/conversations'
+import type { Conversation, ConversationEnvelope, ConversationType } from '@/types/conversations'
 import type { ProfileSummary } from '@/lib/profile-map'
 
 export interface CreateConversationParams {
   type: ConversationType
   participant_ids: string[]
-  name?: string
-  description?: string
+  title?: string
   created_by: string
 }
 
@@ -68,7 +67,7 @@ export async function getConversation(conversationId: string): Promise<Conversat
  */
 export async function updateLastMessage(
   conversationId: string,
-  preview: MessagePreview
+  preview: { content: string; sender_user_id: string; timestamp: string }
 ): Promise<void> {
   await fetch(`/api/conversations/${conversationId}/last-message`, {
     method: 'PUT',

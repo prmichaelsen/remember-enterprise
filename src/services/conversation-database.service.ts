@@ -17,7 +17,7 @@ import {
 } from '@prmichaelsen/firebase-admin-sdk-v8'
 import { initFirebaseAdmin } from '@/lib/firebase-admin'
 import { createLogger } from '@/lib/logger'
-import type { Conversation, ConversationType } from '@/types/conversations'
+import type { ConversationType } from '@/types/conversations'
 
 const log = createLogger('ConversationDatabaseService')
 
@@ -50,40 +50,16 @@ export interface ConversationDoc {
   last_message_at?: string | null
   last_message_preview?: string | null
   message_count?: number
+  archived?: boolean
+  metadata?: Record<string, unknown> | null
   created_at?: string
   updated_at?: string
 }
 
 export class ConversationDatabaseService {
-  /**
-   * Map a raw Firestore doc to the app-level Conversation type.
-   */
-  private static toConversation(doc: ConversationDoc): Conversation {
-    const type: ConversationType =
-      doc.type === 'group' ? 'group' : 'dm'
-
-    const lastMessage =
-      doc.last_message_preview && doc.last_message_at
-        ? {
-            content: doc.last_message_preview,
-            sender_user_id: '',
-            timestamp: doc.last_message_at,
-          }
-        : null
-
-    return {
-      id: doc.id,
-      type,
-      name: (type === 'dm' ? null : (doc.name ?? doc.title ?? null)),
-      description: doc.description ?? null,
-      participant_ids: doc.participant_user_ids ?? [],
-      created_by: doc.owner_user_id ?? '',
-      created_at: doc.created_at ?? new Date().toISOString(),
-      updated_at: doc.updated_at ?? new Date().toISOString(),
-      last_message: lastMessage,
-      unread_count: 0,
-      is_discoverable: false,
-    }
+  /** Safely extract a plain ConversationDoc from a queryDocuments result. */
+  private static docToConversation(doc: any): ConversationDoc {
+    return JSON.parse(JSON.stringify({ ...(doc.data ?? {}), id: doc.id }))
   }
 
   /**
@@ -92,24 +68,14 @@ export class ConversationDatabaseService {
   static async getUserConversations(
     userId: string,
     limit = 50,
-  ): Promise<Conversation[]> {
+  ): Promise<ConversationDoc[]> {
     try {
       const path = getUserConversations(userId)
       const results = await queryDocuments(path, {
         orderBy: [{ field: 'updated_at', direction: 'DESCENDING' }],
         limit,
       })
-      return (results ?? []).map((doc: any) => this.toConversation({
-        id: doc.id ?? doc._id,
-        type: doc.type ?? 'chat',
-        title: doc.title ?? 'Untitled',
-        last_message_at: doc.last_message_at ?? doc.updated_at ?? null,
-        last_message_preview: doc.last_message_preview ?? null,
-        message_count: doc.message_count ?? 0,
-        created_at: doc.created_at,
-        updated_at: doc.updated_at,
-        ...doc,
-      }))
+      return (results ?? []).map(this.docToConversation)
     } catch (error) {
       log.error({ err: error }, 'getUserConversations failed')
       return []
@@ -119,7 +85,7 @@ export class ConversationDatabaseService {
   /**
    * Get DM conversations where user is a participant.
    */
-  static async getUserDMs(userId: string, limit = 50): Promise<Conversation[]> {
+  static async getUserDMs(userId: string, limit = 50): Promise<ConversationDoc[]> {
     try {
       const path = getSharedConversations()
       const results = await queryDocuments(path, {
@@ -130,16 +96,7 @@ export class ConversationDatabaseService {
         orderBy: [{ field: 'last_message_at', direction: 'DESCENDING' }],
         limit,
       })
-      return (results ?? []).map((doc: any) => this.toConversation({
-        id: doc.id ?? doc._id,
-        type: 'dm',
-        is_dm: true,
-        participant_user_ids: doc.participant_user_ids ?? [],
-        last_message_at: doc.last_message_at ?? null,
-        created_at: doc.created_at,
-        updated_at: doc.updated_at,
-        ...doc,
-      }))
+      return (results ?? []).map(this.docToConversation)
     } catch (error) {
       log.error({ err: error }, 'getUserDMs failed')
       return []
@@ -149,7 +106,7 @@ export class ConversationDatabaseService {
   /**
    * Get group conversations where user is a participant.
    */
-  static async getUserGroups(userId: string, limit = 50): Promise<Conversation[]> {
+  static async getUserGroups(userId: string, limit = 50): Promise<ConversationDoc[]> {
     try {
       const path = getSharedConversations()
       const results = await queryDocuments(path, {
@@ -160,18 +117,7 @@ export class ConversationDatabaseService {
         orderBy: [{ field: 'last_message_at', direction: 'DESCENDING' }],
         limit,
       })
-      return (results ?? []).map((doc: any) => this.toConversation({
-        id: doc.id ?? doc._id,
-        type: 'group',
-        name: doc.name ?? 'Unnamed Group',
-        description: doc.description ?? null,
-        owner_user_id: doc.owner_user_id,
-        participant_user_ids: doc.participant_user_ids ?? [],
-        last_message_at: doc.last_message_at ?? null,
-        created_at: doc.created_at,
-        updated_at: doc.updated_at,
-        ...doc,
-      }))
+      return (results ?? []).map(this.docToConversation)
     } catch (error) {
       log.error({ err: error }, 'getUserGroups failed')
       return []
@@ -184,7 +130,7 @@ export class ConversationDatabaseService {
   static async getAllConversations(
     userId: string,
     limit = 50,
-  ): Promise<Conversation[]> {
+  ): Promise<ConversationDoc[]> {
     const [solo, dms, groups] = await Promise.all([
       this.getUserConversations(userId, limit),
       this.getUserDMs(userId, limit),
@@ -195,8 +141,8 @@ export class ConversationDatabaseService {
 
     // Sort by most recent activity
     all.sort((a, b) => {
-      const aTime = a.last_message?.timestamp ?? a.updated_at ?? a.created_at ?? ''
-      const bTime = b.last_message?.timestamp ?? b.updated_at ?? b.created_at ?? ''
+      const aTime = a.last_message_at ?? a.updated_at ?? a.created_at ?? ''
+      const bTime = b.last_message_at ?? b.updated_at ?? b.created_at ?? ''
       return bTime.localeCompare(aTime)
     })
 
@@ -204,12 +150,11 @@ export class ConversationDatabaseService {
   }
 
   /**
-   * List conversations — convenience wrapper matching client service interface.
-   * Returns { conversations: [...] } for consistency with ConversationListResult.
+   * List conversations — convenience wrapper.
    */
   static async listConversations(
     params: { user_id: string; limit?: number },
-  ): Promise<{ conversations: Conversation[] }> {
+  ): Promise<{ conversations: ConversationDoc[] }> {
     const conversations = await this.getAllConversations(params.user_id, params.limit ?? 50)
     return { conversations }
   }
@@ -227,9 +172,9 @@ export class ConversationDatabaseService {
         ],
         limit: 50,
       })
-      const match = results?.find((doc: any) => doc.participant_user_ids?.includes(userB))
+      const match = results?.find((doc: any) => doc.data?.participant_user_ids?.includes(userB))
       if (!match) return null
-      return { id: match.id ?? match._id, ...match } as ConversationDoc
+      return this.docToConversation(match)
     } catch (error) {
       log.error({ err: error }, 'findDmByParticipants failed')
       return null
@@ -273,8 +218,7 @@ export class ConversationDatabaseService {
   static async createConversation(input: {
     type: ConversationDoc['type']
     participant_user_ids: string[]
-    name?: string
-    description?: string
+    title?: string
     created_by: string
   }): Promise<ConversationDoc> {
     initFirebaseAdmin()
@@ -285,8 +229,7 @@ export class ConversationDatabaseService {
     const doc: ConversationDoc = {
       id,
       type: input.type,
-      name: input.name,
-      description: input.description ?? null,
+      title: input.title,
       participant_user_ids: input.participant_user_ids,
       owner_user_id: input.created_by,
       is_dm: input.type === 'dm',

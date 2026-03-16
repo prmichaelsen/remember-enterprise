@@ -66,10 +66,13 @@ export const Route = createFileRoute('/api/groups/$groupId/members')({
             return Response.json({ error: 'user_id is required' }, { status: 400 })
           }
 
-          // Check if user is already a member
+          // Check if user is already a member or banned
           const existingMembers = await GroupDatabaseService.listMembers(groupId)
-          const alreadyMember = existingMembers.some((m) => m.user_id === user_id)
-          if (alreadyMember) {
+          const existing = existingMembers.find((m) => m.user_id === user_id)
+          if (existing?.is_banned) {
+            return Response.json({ error: 'User is banned from this group' }, { status: 403 })
+          }
+          if (existing) {
             return Response.json({ error: 'User is already a member of this group' }, { status: 409 })
           }
 

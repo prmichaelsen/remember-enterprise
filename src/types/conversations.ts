@@ -1,33 +1,36 @@
 /**
  * Conversation & messaging types.
- * Message schema synced to agentbase.me canonical MessageSchema.
+ * Synced to agentbase.me canonical schemas.
  */
 
-export type ConversationType = 'dm' | 'group' | 'ghost'
+export type ConversationType = 'chat' | 'dm' | 'group' | 'ghost'
 
+/** Matches agentbase.me ConversationSchema exactly. */
 export interface Conversation {
   id: string
-  type: ConversationType
-  name: string | null // null for DMs (derived from participants)
-  description: string | null
-  participant_ids: string[]
-  created_by: string
-  created_at: string // ISO 8601
-  updated_at: string
-  last_message: MessagePreview | null
-  unread_count: number // client-computed, not stored
-  is_discoverable: boolean // false for private groups
+  user_id?: string
+  type?: ConversationType
+  title?: string
+  created_at?: string
+  updated_at?: string
+  last_message_at?: string | null
+  last_message_preview?: string | null
+  message_count?: number
+  archived?: boolean
+  participant_user_ids?: string[]
+  metadata?: {
+    model?: string
+    system_prompt?: string
+    memory_id?: string
+    memory_author_id?: string
+    memory_space_ids?: string[]
+    memory_group_ids?: string[]
+  } | null
 }
 
 export interface ConversationEnvelope {
   conversation: Conversation
   profiles: Record<string, { user_id: string; display_name: string; username: string | null; profile_picture_path: string | null }>
-}
-
-export interface MessagePreview {
-  content: string
-  sender_user_id: string
-  timestamp: string
 }
 
 // ── Content block types (matching agentbase.me schemas.ts) ──────────
@@ -162,6 +165,8 @@ export interface GroupMember {
   auth_level: GroupAuthLevel
   permissions: GroupPermissions
   joined_at: string
+  is_muted?: boolean
+  is_banned?: boolean
 }
 
 export type GroupAuthLevel = 0 | 1 | 3 | 5 // owner | admin | editor | member

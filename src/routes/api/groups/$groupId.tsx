@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { initFirebaseAdmin } from '@/lib/firebase-admin'
 import { getServerSession } from '@/lib/auth/session'
 import { GroupDatabaseService } from '@/services/group-database.service'
+import { ConversationDatabaseService } from '@/services/conversation-database.service'
 
 export const Route = createFileRoute('/api/groups/$groupId')({
   server: {
@@ -102,11 +103,13 @@ export const Route = createFileRoute('/api/groups/$groupId')({
             return Response.json({ error: 'Forbidden: only the group owner can delete it' }, { status: 403 })
           }
 
-          // Remove all members first, then delete the group
+          // Remove all members first, then delete the group and conversation docs
           const members = await GroupDatabaseService.listMembers(groupId)
           for (const member of members) {
             await GroupDatabaseService.removeMember(groupId, member.user_id)
           }
+          await GroupDatabaseService.deleteGroup(groupId)
+          await ConversationDatabaseService.deleteConversation(groupId)
 
           return Response.json({ success: true })
         } catch (error) {

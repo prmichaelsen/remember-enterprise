@@ -52,7 +52,7 @@ export async function syncConversationToAlgolia(conv: ConversationDoc): Promise<
       indexName: CONVERSATIONS_INDEX,
       body: {
         objectID: conv.id,
-        title: conv.name,
+        title: conv.title ?? conv.name ?? 'Untitled',
         last_message_preview: '',
         owner_id: conv.owner_user_id,
         type: conv.type,

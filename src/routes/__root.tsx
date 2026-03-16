@@ -15,6 +15,7 @@ import { ThemingProvider, type ThemeName } from '@/lib/theming'
 import { AuthProvider } from '@/components/auth/AuthContext'
 import { ToastProvider, StandaloneToastContainer } from '@prmichaelsen/pretty-toasts/standalone'
 import { AppShell } from '@/components/layout/AppShell'
+import { HeaderProvider } from '@/contexts/HeaderContext'
 import { getStoredTheme } from '@/components/layout/ThemeToggle'
 import { getAuthSession } from '@/lib/auth/server-fn'
 import appCss from '../styles.css?url'
@@ -78,7 +79,9 @@ function RootLayout() {
     <AuthProvider initialUser={initialUser}>
       <ThemingProvider theme={theme}>
         <ToastProvider>
-          <AppShell currentTheme={theme} onThemeToggle={setTheme} />
+          <HeaderProvider>
+            <AppShell currentTheme={theme} onThemeToggle={setTheme} />
+          </HeaderProvider>
           <StandaloneToastContainer />
         </ToastProvider>
       </ThemingProvider>

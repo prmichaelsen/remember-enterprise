@@ -143,6 +143,98 @@ export async function updateMemberRole(
 }
 
 /**
+ * Mute a member in a group.
+ */
+export async function muteMember(
+  conversationId: string,
+  userId: string,
+): Promise<void> {
+  const res = await fetch(`/api/groups/${conversationId}/members/${userId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'mute' }),
+  })
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as any
+    throw new Error(body.error ?? `Failed to mute member (${res.status})`)
+  }
+}
+
+/**
+ * Unmute a member in a group.
+ */
+export async function unmuteMember(
+  conversationId: string,
+  userId: string,
+): Promise<void> {
+  const res = await fetch(`/api/groups/${conversationId}/members/${userId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'unmute' }),
+  })
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as any
+    throw new Error(body.error ?? `Failed to unmute member (${res.status})`)
+  }
+}
+
+/**
+ * Ban a member from a group.
+ */
+export async function banMember(
+  conversationId: string,
+  userId: string,
+): Promise<void> {
+  const res = await fetch(`/api/groups/${conversationId}/members/${userId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'ban' }),
+  })
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as any
+    throw new Error(body.error ?? `Failed to ban member (${res.status})`)
+  }
+}
+
+/**
+ * Unban a member from a group.
+ */
+export async function unbanMember(
+  conversationId: string,
+  userId: string,
+): Promise<void> {
+  const res = await fetch(`/api/groups/${conversationId}/members/${userId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'unban' }),
+  })
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as any
+    throw new Error(body.error ?? `Failed to unban member (${res.status})`)
+  }
+}
+
+/**
+ * Leave a group (remove self). Pass the current user's ID.
+ */
+export async function leaveGroup(conversationId: string, userId: string): Promise<void> {
+  await removeMember(conversationId, userId)
+}
+
+/**
+ * Delete a group conversation.
+ */
+export async function deleteGroup(conversationId: string): Promise<void> {
+  const res = await fetch(`/api/groups/${conversationId}`, {
+    method: 'DELETE',
+  })
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as any
+    throw new Error(body.error ?? `Failed to delete group (${res.status})`)
+  }
+}
+
+/**
  * Check if a user has a specific permission in a group.
  */
 export async function checkPermission(
