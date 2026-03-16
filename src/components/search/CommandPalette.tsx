@@ -7,6 +7,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from '@tanstack/react-router'
 import { User, Users, MessageSquare, Search, Loader2 } from 'lucide-react'
+import { BrandIcon } from '@/components/BrandIcon'
 import { useTheme } from '@/lib/theming'
 import { useAuth } from '@/components/auth/AuthContext'
 import { createConversation } from '@/services/conversation.service'
@@ -16,7 +17,7 @@ interface CommandPaletteProps {
   onClose: () => void
 }
 
-type SectionKey = 'people' | 'conversations' | 'messages'
+type SectionKey = 'people' | 'conversations' | 'messages' | 'memories'
 
 interface SearchResult {
   objectID: string
@@ -44,6 +45,12 @@ interface ApiResponse {
     conversation_id?: string
     conversation_title?: string
     sender_display_name?: string
+  }>
+  memories?: Array<{
+    objectID: string
+    title?: string
+    content?: string
+    tags?: string[]
   }>
 }
 
@@ -78,6 +85,15 @@ function normalizeResults(data: ApiResponse): SearchResult[] {
         ? `${m.sender_display_name}: ${(m.content ?? '').slice(0, 60)}`
         : (m.content ?? '').slice(0, 80),
       conversationId: m.conversation_id,
+    })
+  }
+
+  for (const mem of data.memories ?? []) {
+    results.push({
+      objectID: mem.objectID,
+      section: 'memories',
+      label: mem.title || (mem.content ?? '').slice(0, 60) || 'Memory',
+      subtitle: mem.tags?.length ? mem.tags.join(', ') : (mem.content ?? '').slice(0, 80),
     })
   }
 
@@ -157,7 +173,9 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   const selectResult = useCallback(
     async (result: SearchResult) => {
       onClose()
-      if (result.conversationId) {
+      if (result.section === 'memories') {
+        router.navigate({ to: '/memories' })
+      } else if (result.conversationId) {
         router.navigate({ to: `/chat/${result.conversationId}` })
       } else if (result.section === 'people' && user) {
         const { conversation } = await createConversation({
@@ -192,6 +210,8 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
         return <Users className="w-4 h-4 shrink-0 opacity-60" />
       case 'messages':
         return <MessageSquare className="w-4 h-4 shrink-0 opacity-60" />
+      case 'memories':
+        return <BrandIcon className="w-4 h-4 opacity-60" size="w-4 h-4" />
     }
   }
 
@@ -203,6 +223,8 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
         return 'Conversations'
       case 'messages':
         return 'Messages'
+      case 'memories':
+        return 'Memories'
     }
   }
 
@@ -234,7 +256,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Search people, conversations, messages..."
+            placeholder="Search people, conversations, messages, memories..."
             className={`flex-1 bg-transparent outline-none text-base ${t.textPrimary} placeholder:opacity-50`}
           />
           <kbd className={`text-xs px-1.5 py-0.5 rounded ${t.buttonSecondary} opacity-60`}>
@@ -295,7 +317,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
 // --- helpers ---
 
 function groupResults(results: SearchResult[]): [SectionKey, SearchResult[]][] {
-  const order: SectionKey[] = ['people', 'conversations', 'messages']
+  const order: SectionKey[] = ['people', 'conversations', 'messages', 'memories']
   const map = new Map<SectionKey, SearchResult[]>()
   for (const r of results) {
     if (!map.has(r.section)) map.set(r.section, [])

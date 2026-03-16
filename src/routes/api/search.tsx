@@ -23,7 +23,7 @@ export const Route = createFileRoute('/api/search')({
         const q = url.searchParams.get('q')?.trim() ?? ''
 
         if (!q) {
-          return Response.json({ people: [], conversations: [], messages: [], query: '' })
+          return Response.json({ people: [], conversations: [], messages: [], memories: [], query: '' })
         }
 
         const hitsPerPage = Math.min(

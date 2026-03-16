@@ -6,7 +6,7 @@
 import { useState, useEffect } from 'react'
 import { Virtuoso } from 'react-virtuoso'
 import { Link, useParams } from '@tanstack/react-router'
-import { MessageSquare, Users, Menu, X, Plus, Globe } from 'lucide-react'
+import { MessageSquare, Users, Plus, Globe } from 'lucide-react'
 import { BrandIcon } from '@/components/BrandIcon'
 import { useTheme } from '@/lib/theming'
 import { useAuth } from '@/components/auth/AuthContext'
@@ -30,7 +30,6 @@ export function ConversationSidebar({ onNewDm, onNewGroup, initialConversations,
   const [conversations, setConversations] = useState<Conversation[]>(initialConversations ?? [])
   const [profiles, setProfiles] = useState<Record<string, ProfileSummary>>(initialProfiles ?? {})
   const [loading, setLoading] = useState(!initialConversations || initialConversations.length === 0)
-  const [mobileOpen, setMobileOpen] = useState(false)
 
   useEffect(() => {
     if (!user) return
@@ -150,9 +149,7 @@ export function ConversationSidebar({ onNewDm, onNewGroup, initialConversations,
       <div className={`px-2 py-2 ${t.border} border-t-0 border-l-0 border-r-0`}>
         <Link
           to="/chat/$conversationId"
-          params={{ conversationId: 'main' }}
-          onClick={() => setMobileOpen(false)}
-          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+          params={{ conversationId: 'main' }}          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
             activeConversationId === 'main' ? t.active : t.hover
           }`}
         >
@@ -165,9 +162,7 @@ export function ConversationSidebar({ onNewDm, onNewGroup, initialConversations,
         </Link>
         <Link
           to="/chat/$conversationId"
-          params={{ conversationId: 'ghost:space:the_void' }}
-          onClick={() => setMobileOpen(false)}
-          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+          params={{ conversationId: 'ghost:space:the_void' }}          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
             activeConversationId === 'ghost:space:the_void' ? t.active : t.hover
           }`}
         >
@@ -220,7 +215,7 @@ export function ConversationSidebar({ onNewDm, onNewGroup, initialConversations,
                 <Link
                   to="/chat/$conversationId"
                   params={{ conversationId: conv.id }}
-                  onClick={() => setMobileOpen(false)}
+                  onClick={() => {}}
                   className={`flex items-center gap-3 px-4 py-3 transition-colors ${
                     isActive ? t.active : t.hover
                   }`}
@@ -276,47 +271,14 @@ export function ConversationSidebar({ onNewDm, onNewGroup, initialConversations,
 
   return (
     <>
-      {/* Mobile hamburger toggle — positioned below the unified header (h-14 = 3.5rem) */}
-      <button
-        type="button"
-        onClick={() => setMobileOpen(true)}
-        className={`fixed top-16 left-3 z-40 p-2 rounded-lg lg:hidden ${t.buttonGhost} ${t.elevated}`}
-        aria-label="Open conversations"
-      >
-        <Menu className="w-5 h-5" />
-      </button>
-
-      {/* Mobile overlay */}
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={() => setMobileOpen(false)}
-        />
-      )}
-
-      {/* Sidebar — mobile: sliding drawer, desktop: fixed column */}
+      {/* Desktop sidebar — hidden on mobile, conversations show inline in chat index instead */}
       <aside
         className={`
-          fixed top-0 left-0 bottom-0 w-80 z-50
-          lg:relative lg:z-auto lg:w-80 lg:shrink-0
-          transform transition-transform
-          lg:translate-x-0
-          ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
+          hidden lg:block
+          relative z-auto w-80 shrink-0
           ${t.sidebar}
         `}
       >
-        {/* Mobile close button */}
-        <div className="flex items-center justify-end p-2 lg:hidden">
-          <button
-            type="button"
-            onClick={() => setMobileOpen(false)}
-            className={`p-2 rounded-lg ${t.buttonGhost}`}
-            aria-label="Close"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
         {sidebarContent}
       </aside>
     </>

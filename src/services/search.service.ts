@@ -9,10 +9,11 @@ import {
   CONVERSATIONS_INDEX,
 } from '@/lib/algolia'
 import { ConversationDatabaseService } from '@/services/conversation-database.service'
+import { MemoryDatabaseService } from '@/services/memory-database.service'
 
 // --- Types ---
 
-export type SearchCategory = 'people' | 'conversations' | 'messages'
+export type SearchCategory = 'people' | 'conversations' | 'messages' | 'memories'
 
 export interface UserHit {
   objectID: string
@@ -42,10 +43,19 @@ export interface MessageHit {
   timestamp?: string
 }
 
+export interface MemoryHit {
+  objectID: string
+  title?: string
+  content?: string
+  tags?: string[]
+  created_at?: string
+}
+
 export interface MultiSearchResponse {
   people: UserHit[]
   conversations: ConversationHit[]
   messages: MessageHit[]
+  memories: MemoryHit[]
   processingTimeMS: number
   query: string
 }
@@ -67,35 +77,47 @@ export async function search(
   }
   const messagesFilter = searchableByParts.join(' OR ')
 
-  const results = await client.search({
-    requests: [
-      {
-        indexName: USERS_INDEX,
-        query,
-        hitsPerPage,
-        filters: 'is_discoverable:true',
-      },
-      {
-        indexName: CONVERSATIONS_INDEX,
-        query,
-        hitsPerPage,
-        filters: `owner_id:${userId}`,
-      },
-      {
-        indexName: MESSAGES_INDEX,
-        query,
-        hitsPerPage,
-        filters: messagesFilter,
-      },
-    ],
-  }) as { results: Array<{ hits: unknown[]; processingTimeMS?: number }> }
+  const [algoliaResults, memoryResults] = await Promise.all([
+    client.search({
+      requests: [
+        {
+          indexName: USERS_INDEX,
+          query,
+          hitsPerPage,
+          filters: 'is_discoverable:true',
+        },
+        {
+          indexName: CONVERSATIONS_INDEX,
+          query,
+          hitsPerPage,
+          filters: `owner_id:${userId}`,
+        },
+        {
+          indexName: MESSAGES_INDEX,
+          query,
+          hitsPerPage,
+          filters: messagesFilter,
+        },
+      ],
+    }) as Promise<{ results: Array<{ hits: unknown[]; processingTimeMS?: number }> }>,
+    MemoryDatabaseService.search(userId, query, hitsPerPage).catch(() => []),
+  ])
 
-  const [usersResult, conversationsResult, messagesResult] = results.results
+  const [usersResult, conversationsResult, messagesResult] = algoliaResults.results
+
+  const memories: MemoryHit[] = memoryResults.map((m: any) => ({
+    objectID: m.id,
+    title: m.title,
+    content: m.content,
+    tags: m.tags,
+    created_at: m.created_at,
+  }))
 
   return {
     people: (usersResult.hits ?? []) as UserHit[],
     conversations: (conversationsResult.hits ?? []) as ConversationHit[],
     messages: (messagesResult.hits ?? []) as MessageHit[],
+    memories,
     processingTimeMS: Math.max(
       usersResult.processingTimeMS ?? 0,
       conversationsResult.processingTimeMS ?? 0,
