@@ -6,7 +6,7 @@
  */
 
 import { Link } from '@tanstack/react-router'
-import { Menu, X, LogOut, User, Settings, EllipsisVertical } from 'lucide-react'
+import { Menu, X, LogIn, LogOut, User, Settings, EllipsisVertical, Search } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import { useTheme, type ThemeName } from '@/lib/theming'
 import { useAuth } from '@/components/auth/AuthContext'
@@ -39,6 +39,8 @@ interface UnifiedHeaderProps {
   onNotificationClick?: (notification: Notification) => void
   /** Callback for ellipsis menu button. When provided, renders a ⋮ button in the header. */
   onEllipsisPress?: () => void
+  /** Callback to open Cmd+K search palette */
+  onSearchOpen?: () => void
 }
 
 export function UnifiedHeader({
@@ -55,9 +57,11 @@ export function UnifiedHeader({
   onDeleteNotification,
   onNotificationClick,
   onEllipsisPress,
+  onSearchOpen,
 }: UnifiedHeaderProps) {
   const t = useTheme()
   const { user } = useAuth()
+  const isAnonymous = !user || user.isAnonymous
   const [avatarMenuOpen, setAvatarMenuOpen] = useState(false)
   const avatarMenuRef = useRef<HTMLDivElement>(null)
 
@@ -132,65 +136,73 @@ export function UnifiedHeader({
             onNotificationClick={onNotificationClick}
           />
 
-          {/* User Avatar Dropdown */}
-          <div ref={avatarMenuRef} className="relative">
-            <button
-              type="button"
-              onClick={() => setAvatarMenuOpen(!avatarMenuOpen)}
-              className={`p-1 rounded-full ${t.hover} transition-colors`}
-              aria-label="User menu"
-              aria-expanded={avatarMenuOpen}
-              aria-haspopup="true"
+          {/* User Avatar Dropdown or Sign In link */}
+          {isAnonymous ? (
+            <Link
+              to="/auth"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium ${t.buttonPrimary}`}
             >
-              {user?.photoURL ? (
-                <img
-                  src={user.photoURL}
-                  alt={user.displayName ?? 'User avatar'}
-                  className="w-8 h-8 rounded-full object-cover"
-                />
-              ) : (
-                <div className={`w-8 h-8 rounded-full ${t.elevated} flex items-center justify-center`}>
-                  <User className={`w-4 h-4 ${t.textSecondary}`} />
-                </div>
-              )}
-            </button>
-
-            {/* Dropdown menu */}
-            {avatarMenuOpen && (
-              <div className={`absolute right-0 top-full mt-2 w-56 ${t.card} shadow-lg overflow-hidden z-50`}>
-                {/* User info */}
-                {user && (
-                  <div className={`px-4 py-3 border-b ${t.borderSubtle}`}>
-                    <p className={`text-sm font-medium ${t.textPrimary} truncate`}>
-                      {user.displayName || 'User'}
-                    </p>
-                    <p className={`text-xs ${t.textMuted} truncate`}>
-                      {user.email}
-                    </p>
+              <LogIn className="w-4 h-4" />
+              Sign in
+            </Link>
+          ) : (
+            <div ref={avatarMenuRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setAvatarMenuOpen(!avatarMenuOpen)}
+                className={`p-1 rounded-full ${t.hover} transition-colors`}
+                aria-label="User menu"
+                aria-expanded={avatarMenuOpen}
+                aria-haspopup="true"
+              >
+                {user?.photoURL ? (
+                  <img
+                    src={user.photoURL}
+                    alt={user.displayName ?? 'User avatar'}
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className={`w-8 h-8 rounded-full ${t.elevated} flex items-center justify-center`}>
+                    <User className={`w-4 h-4 ${t.textSecondary}`} />
                   </div>
                 )}
+              </button>
 
-                <div className="py-1">
-                  <Link
-                    to="/settings"
-                    onClick={() => setAvatarMenuOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-2 text-sm ${t.textSecondary} ${t.hover} transition-colors`}
-                  >
-                    <Settings className="w-4 h-4" />
-                    Settings
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={handleLogout}
-                    className={`flex items-center gap-3 px-4 py-2 text-sm w-full text-left text-brand-danger ${t.hover} transition-colors`}
-                  >
-                    <LogOut className="w-4 h-4" />
-                    Sign out
-                  </button>
+              {avatarMenuOpen && (
+                <div className={`absolute right-0 top-full mt-2 w-56 ${t.card} shadow-lg overflow-hidden z-50`}>
+                  {user && (
+                    <div className={`px-4 py-3 border-b ${t.borderSubtle}`}>
+                      <p className={`text-sm font-medium ${t.textPrimary} truncate`}>
+                        {user.displayName || 'User'}
+                      </p>
+                      <p className={`text-xs ${t.textMuted} truncate`}>
+                        {user.email}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="py-1">
+                    <Link
+                      to="/settings"
+                      onClick={() => setAvatarMenuOpen(false)}
+                      className={`flex items-center gap-3 px-4 py-2 text-sm ${t.textSecondary} ${t.hover} transition-colors`}
+                    >
+                      <Settings className="w-4 h-4" />
+                      Settings
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className={`flex items-center gap-3 px-4 py-2 text-sm w-full text-left text-brand-danger ${t.hover} transition-colors`}
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Sign out
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </header>

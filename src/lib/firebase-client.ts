@@ -10,6 +10,8 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signInAnonymously,
+  linkWithCredential,
+  EmailAuthProvider,
   signOut as firebaseSignOut,
   sendPasswordResetEmail,
   type Auth,
@@ -61,6 +63,18 @@ export async function signInAnon() {
   initializeFirebase()
   if (!auth) throw new Error('Firebase not initialized')
   return signInAnonymously(auth)
+}
+
+/**
+ * Link an anonymous account with email/password credentials.
+ * Preserves the anonymous UID so all existing data stays associated.
+ */
+export async function linkAnonymousAccount(email: string, password: string) {
+  initializeFirebase()
+  if (!auth?.currentUser) throw new Error('No current user')
+  if (!auth.currentUser.isAnonymous) throw new Error('Current user is not anonymous')
+  const credential = EmailAuthProvider.credential(email, password)
+  return linkWithCredential(auth.currentUser, credential)
 }
 
 export async function signOut() {

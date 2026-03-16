@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
-import { signIn, signUp, getIdToken, resetPassword } from '@/lib/firebase-client'
+import { signIn, signUp, linkAnonymousAccount, getIdToken, resetPassword } from '@/lib/firebase-client'
+import { useAuth } from '@/components/auth/AuthContext'
 
 interface AuthFormProps {
   onSuccess?: (redirectUrl?: string) => void
@@ -37,7 +38,9 @@ export function AuthForm({
   resetToken,
   resetEmail,
 }: AuthFormProps) {
-  const [isLogin, setIsLogin] = useState(initialMode === 'login')
+  const { user } = useAuth()
+  const isAnonymous = user?.isAnonymous ?? false
+  const [isLogin, setIsLogin] = useState(initialMode === 'login' && !isAnonymous)
   const [isForgot, setIsForgot] = useState(initialMode === 'forgot')
   const [isReset, setIsReset] = useState(initialMode === 'reset')
   const [email, setEmail] = useState(resetEmail || '')
@@ -71,13 +74,17 @@ export function AuthForm({
         }
         onSuccess?.('{{AUTH_REDIRECT}}')
       } else {
-        // Signup
+        // Signup (or link anonymous account)
         if (password !== confirmPassword) {
           setError('Passwords do not match.')
           setLoading(false)
           return
         }
-        await signUp(email, password)
+        if (isAnonymous) {
+          await linkAnonymousAccount(email, password)
+        } else {
+          await signUp(email, password)
+        }
         const idToken = await getIdToken()
         if (idToken) {
           await loginWithToken(idToken)
