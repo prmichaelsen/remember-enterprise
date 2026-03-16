@@ -247,7 +247,7 @@ export const MessageList = forwardRef<MessageListRef, MessageListProps>(function
                 <div className="w-full break-words space-y-3">
                   {item.blocks.map((block, bi) => {
                     if (block.type === 'text') {
-                      return <MarkdownContent key={`text-${bi}`} content={block.text} />
+                      return <MarkdownContent key={`text-${bi}`} content={block.text} className="text-sm" />
                     }
                     if (block.type === 'tool_use') {
                       return (
