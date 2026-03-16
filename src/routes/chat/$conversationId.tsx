@@ -50,6 +50,7 @@ const CONVERSATION_TABS: SubHeaderTab[] = [
 
 export const Route = createFileRoute('/chat/$conversationId')({
   component: ConversationView,
+  remountDeps: (opts) => opts.params.conversationId,
   validateSearch: (search: Record<string, unknown>): { tab?: string } => ({
     tab: search.tab as string | undefined,
   }),
@@ -121,22 +122,18 @@ function ConversationView() {
   // Typing indicator debounce refs
   const typingTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
 
-  // Load conversation + messages on route change (skip if SSR already provided for this conversationId)
-  const loadedConvIdRef = useRef<string | null>(
-    initialConversation && initialMessages?.length > 0 ? conversationId : null,
-  )
+  // Load conversation + messages if SSR didn't provide them (client-side navigation)
   useEffect(() => {
     if (!user || !conversationId) return
-    if (loadedConvIdRef.current === conversationId) return
-    loadedConvIdRef.current = conversationId
-
-    // Reset state for new conversation
-    setStreamingBlocks([])
-    streamingMessageIdRef.current = null
+    if (conversation && messages.length > 0) {
+      // SSR already provided data — just mark as read
+      setLoading(false)
+      markConversationRead(conversationId)
+      return
+    }
 
     let cancelled = false
     async function load() {
-      setLoading(true)
       try {
         const [envelope, msgResult] = await Promise.all([
           getConversation(conversationId),
@@ -157,7 +154,7 @@ function ConversationView() {
     }
     load()
     return () => { cancelled = true }
-  }, [conversationId, user])
+  }, [])
 
   // Handle incoming WebSocket messages
   useEffect(() => {
