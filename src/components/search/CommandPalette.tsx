@@ -1,6 +1,6 @@
 /**
- * CommandPalette — Cmd+K global search across DM partners, groups, and messages.
- * Powered by Algolia via GET /api/search. Rendered via createPortal to document.body.
+ * CommandPalette — Cmd+K global search across people, conversations, and messages.
+ * Queries agentbase.me Algolia indices via GET /api/search.
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react'
@@ -14,38 +14,83 @@ interface CommandPaletteProps {
   onClose: () => void
 }
 
-type ResultType = 'dm_partner' | 'group' | 'message'
+type SectionKey = 'people' | 'conversations' | 'messages'
 
 interface SearchResult {
   objectID: string
-  type: ResultType
-  name: string
-  content?: string
-  conversation_id?: string
-  description?: string
-  sender_name?: string
-  email?: string
-  photo_url?: string
-  _highlightResult?: Record<string, { value: string; matchLevel: string }>
+  section: SectionKey
+  label: string
+  subtitle: string
+  conversationId?: string
+}
+
+interface ApiResponse {
+  people?: Array<{
+    objectID: string
+    display_name?: string
+    username?: string
+    profile_picture_path?: string
+  }>
+  conversations?: Array<{
+    objectID: string
+    title?: string
+    last_message_preview?: string
+  }>
+  messages?: Array<{
+    objectID: string
+    content?: string
+    conversation_id?: string
+    conversation_title?: string
+    sender_display_name?: string
+  }>
+}
+
+function normalizeResults(data: ApiResponse): SearchResult[] {
+  const results: SearchResult[] = []
+
+  for (const p of data.people ?? []) {
+    results.push({
+      objectID: p.objectID,
+      section: 'people',
+      label: p.display_name || p.username || 'Unknown',
+      subtitle: p.username ? `@${p.username}` : '',
+    })
+  }
+
+  for (const c of data.conversations ?? []) {
+    results.push({
+      objectID: c.objectID,
+      section: 'conversations',
+      label: c.title || 'Untitled',
+      subtitle: c.last_message_preview ? c.last_message_preview.slice(0, 80) : '',
+      conversationId: c.objectID,
+    })
+  }
+
+  for (const m of data.messages ?? []) {
+    results.push({
+      objectID: m.objectID,
+      section: 'messages',
+      label: m.conversation_title || 'Message',
+      subtitle: m.sender_display_name
+        ? `${m.sender_display_name}: ${(m.content ?? '').slice(0, 60)}`
+        : (m.content ?? '').slice(0, 80),
+      conversationId: m.conversation_id,
+    })
+  }
+
+  return results
 }
 
 export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   const t = useTheme()
   const router = useRouter()
   const inputRef = useRef<HTMLInputElement>(null)
-  const syncedRef = useRef(false)
 
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
   const [activeIndex, setActiveIndex] = useState(0)
   const [loading, setLoading] = useState(false)
-
-  // Trigger Algolia sync on first open (fire-and-forget)
-  useEffect(() => {
-    if (!isOpen || syncedRef.current) return
-    syncedRef.current = true
-    fetch('/api/search/sync', { method: 'POST' }).catch(() => {})
-  }, [isOpen])
 
   // Auto-focus input on open
   useEffect(() => {
@@ -57,7 +102,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     }
   }, [isOpen])
 
-  // Debounced search via Algolia endpoint
+  // Debounced search
   useEffect(() => {
     if (!query.trim()) {
       setResults([])
@@ -69,11 +114,11 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
       setLoading(true)
       try {
         const res = await fetch(
-          `/api/search?q=${encodeURIComponent(query.trim())}&hitsPerPage=15`,
+          `/api/search?q=${encodeURIComponent(query.trim())}&hitsPerPage=5`,
         )
         if (res.ok) {
-          const data = (await res.json()) as { hits?: SearchResult[] }
-          setResults(data.hits ?? [])
+          const data = (await res.json()) as ApiResponse
+          setResults(normalizeResults(data))
         } else {
           setResults([])
         }
@@ -109,9 +154,9 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   const selectResult = useCallback(
     (result: SearchResult) => {
       onClose()
-      if (result.conversation_id) {
-        router.navigate({ to: `/chat/${result.conversation_id}` })
-      } else if (result.type === 'dm_partner') {
+      if (result.conversationId) {
+        router.navigate({ to: `/chat/${result.conversationId}` })
+      } else if (result.section === 'people') {
         router.navigate({ to: '/chat' })
       }
     },
@@ -131,38 +176,25 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
 
   const grouped = groupResults(results)
 
-  const iconForType = (type: ResultType) => {
-    switch (type) {
-      case 'dm_partner':
+  const iconForSection = (section: SectionKey) => {
+    switch (section) {
+      case 'people':
         return <User className="w-4 h-4 shrink-0 opacity-60" />
-      case 'group':
+      case 'conversations':
         return <Users className="w-4 h-4 shrink-0 opacity-60" />
-      case 'message':
+      case 'messages':
         return <MessageSquare className="w-4 h-4 shrink-0 opacity-60" />
     }
   }
 
-  const sectionLabel = (type: ResultType) => {
-    switch (type) {
-      case 'dm_partner':
+  const sectionLabel = (section: SectionKey) => {
+    switch (section) {
+      case 'people':
         return 'People'
-      case 'group':
-        return 'Groups'
-      case 'message':
+      case 'conversations':
+        return 'Conversations'
+      case 'messages':
         return 'Messages'
-    }
-  }
-
-  const subtitle = (result: SearchResult) => {
-    switch (result.type) {
-      case 'dm_partner':
-        return result.email || ''
-      case 'group':
-        return result.description || ''
-      case 'message':
-        return result.sender_name
-          ? `${result.sender_name}: ${(result.content ?? '').slice(0, 60)}`
-          : (result.content ?? '').slice(0, 80)
     }
   }
 
@@ -194,7 +226,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Search people, groups, messages..."
+            placeholder="Search people, conversations, messages..."
             className={`flex-1 bg-transparent outline-none text-sm ${t.textPrimary} placeholder:opacity-50`}
           />
           <kbd className={`text-xs px-1.5 py-0.5 rounded ${t.buttonSecondary} opacity-60`}>
@@ -210,12 +242,12 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
             </div>
           )}
 
-          {grouped.map(([type, items]) => (
-            <div key={type}>
+          {grouped.map(([section, items]) => (
+            <div key={section}>
               <div
                 className={`px-4 py-1.5 text-xs font-medium uppercase tracking-wider ${t.textMuted}`}
               >
-                {sectionLabel(type)}
+                {sectionLabel(section)}
               </div>
               {items.map((result) => {
                 globalIndex++
@@ -231,12 +263,14 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
                     onMouseEnter={() => setActiveIndex(idx)}
                     onClick={() => selectResult(result)}
                   >
-                    {iconForType(result.type)}
+                    {iconForSection(result.section)}
                     <div className="min-w-0 flex-1">
-                      <div className={`truncate ${t.textPrimary}`}>{result.name}</div>
-                      <div className={`truncate text-xs ${t.textMuted}`}>
-                        {subtitle(result)}
-                      </div>
+                      <div className={`truncate ${t.textPrimary}`}>{result.label}</div>
+                      {result.subtitle && (
+                        <div className={`truncate text-xs ${t.textMuted}`}>
+                          {result.subtitle}
+                        </div>
+                      )}
                     </div>
                   </button>
                 )
@@ -252,12 +286,12 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
 
 // --- helpers ---
 
-function groupResults(results: SearchResult[]): [ResultType, SearchResult[]][] {
-  const order: ResultType[] = ['dm_partner', 'group', 'message']
-  const map = new Map<ResultType, SearchResult[]>()
+function groupResults(results: SearchResult[]): [SectionKey, SearchResult[]][] {
+  const order: SectionKey[] = ['people', 'conversations', 'messages']
+  const map = new Map<SectionKey, SearchResult[]>()
   for (const r of results) {
-    if (!map.has(r.type)) map.set(r.type, [])
-    map.get(r.type)!.push(r)
+    if (!map.has(r.section)) map.set(r.section, [])
+    map.get(r.section)!.push(r)
   }
-  return order.filter((t) => map.has(t)).map((t) => [t, map.get(t)!])
+  return order.filter((s) => map.has(s)).map((s) => [s, map.get(s)!])
 }

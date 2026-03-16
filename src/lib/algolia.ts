@@ -1,13 +1,15 @@
 /**
- * Algolia client factory — adapted from goodneighbor-core.
+ * Algolia client — queries existing agentbase.me indices (read-only).
  * Uses env vars: ALGOLIA_APPLICATION_ID, ALGOLIA_ADMIN_API_KEY
- * Both admin and search clients use the admin key (server-side only).
  */
 
 import { algoliasearch } from 'algoliasearch'
 
-export const ALGOLIA_INDEX_NAME =
-  process.env.ALGOLIA_INDEX_NAME ?? 'remember_enterprise'
+// Indices populated by agentbase.me
+export const MESSAGES_INDEX = 'agentbase_messages'
+export const USERS_INDEX = 'agentbase_users'
+export const CONVERSATIONS_INDEX = 'agentbase_conversations'
+export const GROUPS_INDEX = 'agentbase_groups'
 
 let client: ReturnType<typeof algoliasearch> | null = null
 
@@ -22,5 +24,4 @@ function getClient() {
   return client
 }
 
-export const getAlgoliaAdminClient = getClient
-export const getAlgoliaSearchClient = getClient
+export const getAlgoliaClient = getClient

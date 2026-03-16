@@ -1,51 +1,50 @@
 /**
- * SearchService — Algolia-backed search for DM partners, groups, and messages.
- * Adapted from goodneighbor-core SearchService for remember-enterprise.
+ * SearchService — read-only multi-index search against agentbase.me Algolia indices.
  */
 
 import {
-  getAlgoliaAdminClient,
-  getAlgoliaSearchClient,
-  ALGOLIA_INDEX_NAME,
+  getAlgoliaClient,
+  MESSAGES_INDEX,
+  USERS_INDEX,
+  CONVERSATIONS_INDEX,
 } from '@/lib/algolia'
-import { AlgoliaFilters } from '@/lib/algolia-filters'
-import { ALGOLIA_INDEX_SETTINGS } from '@/lib/algolia-index-settings'
 
 // --- Types ---
 
-export type SearchEntityType = 'dm_partner' | 'group' | 'message'
+export type SearchCategory = 'people' | 'conversations' | 'messages'
 
-export interface SearchParams {
-  query: string
-  types?: SearchEntityType[]
-  page?: number
-  hitsPerPage?: number
-  filters?: string
+export interface UserHit {
+  objectID: string
+  display_name?: string
+  username?: string
+  profile_picture_path?: string
+  is_discoverable?: boolean
 }
 
-export interface SearchHit {
+export interface ConversationHit {
   objectID: string
-  type: SearchEntityType
-  name: string
-  search: string
+  title?: string
+  last_message_preview?: string
+  owner_id?: string
+  type?: string
+  is_archived?: boolean
+  updated_at?: string
+}
+
+export interface MessageHit {
+  objectID: string
   content?: string
   conversation_id?: string
-  participant_ids?: string[]
-  photo_url?: string
-  email?: string
-  description?: string
-  sender_name?: string
-  created_at?: string
-  updated_at?: string
-  _highlightResult?: Record<string, { value: string; matchLevel: string }>
+  conversation_title?: string
+  sender_display_name?: string
+  role?: string
+  timestamp?: string
 }
 
-export interface SearchResponse {
-  hits: SearchHit[]
-  nbHits: number
-  page: number
-  nbPages: number
-  hitsPerPage: number
+export interface MultiSearchResponse {
+  people: UserHit[]
+  conversations: ConversationHit[]
+  messages: MessageHit[]
   processingTimeMS: number
   query: string
 }
@@ -53,173 +52,52 @@ export interface SearchResponse {
 // --- Search ---
 
 export async function search(
-  params: SearchParams,
+  query: string,
   userId: string,
-): Promise<SearchResponse> {
-  const client = getAlgoliaSearchClient()
+  hitsPerPage = 5,
+): Promise<MultiSearchResponse> {
+  const client = getAlgoliaClient()
 
-  const filterBuilder = params.filters
-    ? AlgoliaFilters.fromString(params.filters)
-    : AlgoliaFilters.create()
+  const results = await client.search({
+    requests: [
+      {
+        indexName: USERS_INDEX,
+        query,
+        params: {
+          hitsPerPage,
+          filters: 'is_discoverable:true',
+        },
+      },
+      {
+        indexName: CONVERSATIONS_INDEX,
+        query,
+        params: {
+          hitsPerPage,
+          filters: `owner_id:${userId}`,
+        },
+      },
+      {
+        indexName: MESSAGES_INDEX,
+        query,
+        params: {
+          hitsPerPage,
+          filters: `searchable_by:user:${userId}`,
+        },
+      },
+    ],
+  }) as { results: Array<{ hits: unknown[]; processingTimeMS?: number }> }
 
-  // Scope to user's conversations/DMs
-  filterBuilder.addParticipant(userId)
-
-  // Type filter
-  if (params.types && params.types.length > 0) {
-    filterBuilder.addOrGroup(params.types.map((t) => `type:${t}`))
-  }
-
-  const response = (await client.searchSingleIndex({
-    indexName: ALGOLIA_INDEX_NAME,
-    searchParams: {
-      query: params.query,
-      filters: filterBuilder.getFilter(),
-      page: params.page ?? 0,
-      hitsPerPage: params.hitsPerPage ?? 15,
-    },
-  })) as Record<string, unknown>
+  const [usersResult, conversationsResult, messagesResult] = results.results
 
   return {
-    hits: (response.hits as SearchHit[]) || [],
-    nbHits: (response.nbHits as number) || 0,
-    page: (response.page as number) || 0,
-    nbPages: (response.nbPages as number) || 0,
-    hitsPerPage: (response.hitsPerPage as number) || 15,
-    processingTimeMS: (response.processingTimeMS as number) || 0,
-    query: (response.query as string) || '',
-  }
-}
-
-// --- Indexing ---
-
-export async function indexDocument(
-  doc: Record<string, unknown> & { objectID: string },
-): Promise<void> {
-  const client = getAlgoliaAdminClient()
-  await client.saveObject({
-    indexName: ALGOLIA_INDEX_NAME,
-    body: doc,
-  })
-}
-
-export async function indexDocuments(
-  docs: Array<Record<string, unknown> & { objectID: string }>,
-): Promise<void> {
-  if (docs.length === 0) return
-  const client = getAlgoliaAdminClient()
-  await client.saveObjects({
-    indexName: ALGOLIA_INDEX_NAME,
-    objects: docs,
-  })
-}
-
-export async function deleteDocument(objectID: string): Promise<void> {
-  const client = getAlgoliaAdminClient()
-  await client.deleteObject({
-    indexName: ALGOLIA_INDEX_NAME,
-    objectID,
-  })
-}
-
-export async function updateDocument(
-  objectID: string,
-  updates: Record<string, unknown>,
-): Promise<void> {
-  const client = getAlgoliaAdminClient()
-  await client.partialUpdateObject({
-    indexName: ALGOLIA_INDEX_NAME,
-    objectID,
-    attributesToUpdate: updates,
-  })
-}
-
-export async function initializeIndex(): Promise<void> {
-  const client = getAlgoliaAdminClient()
-  await client.setSettings({
-    indexName: ALGOLIA_INDEX_NAME,
-    indexSettings: { ...ALGOLIA_INDEX_SETTINGS } as Record<string, unknown>,
-  })
-}
-
-// --- Data Sync Helpers ---
-
-/**
- * Build an Algolia document for a DM partner (user in a DM conversation).
- */
-export function buildDmPartnerDoc(user: {
-  uid: string
-  displayName?: string | null
-  email?: string | null
-  photoURL?: string | null
-  conversationId: string
-  participantIds: string[]
-}) {
-  return {
-    objectID: `dm_partner_${user.uid}_${user.conversationId}`,
-    type: 'dm_partner' as const,
-    name: user.displayName || user.email || user.uid,
-    search: [user.displayName, user.email].filter(Boolean).join(' '),
-    email: user.email ?? undefined,
-    photo_url: user.photoURL ?? undefined,
-    conversation_id: user.conversationId,
-    participant_ids: user.participantIds,
-    updated_at: new Date().toISOString(),
-    updated_at_ts: Math.floor(Date.now() / 1000),
-  }
-}
-
-/**
- * Build an Algolia document for a group conversation.
- */
-export function buildGroupDoc(group: {
-  id: string
-  name?: string | null
-  description?: string | null
-  participantIds: string[]
-  createdAt?: string
-  updatedAt?: string
-}) {
-  return {
-    objectID: `group_${group.id}`,
-    type: 'group' as const,
-    name: group.name || 'Unnamed Group',
-    search: [group.name, group.description].filter(Boolean).join(' '),
-    description: group.description ?? undefined,
-    conversation_id: group.id,
-    participant_ids: group.participantIds,
-    created_at: group.createdAt,
-    updated_at: group.updatedAt ?? new Date().toISOString(),
-    updated_at_ts: Math.floor(
-      new Date(group.updatedAt ?? Date.now()).getTime() / 1000,
+    people: (usersResult.hits ?? []) as UserHit[],
+    conversations: (conversationsResult.hits ?? []) as ConversationHit[],
+    messages: (messagesResult.hits ?? []) as MessageHit[],
+    processingTimeMS: Math.max(
+      usersResult.processingTimeMS ?? 0,
+      conversationsResult.processingTimeMS ?? 0,
+      messagesResult.processingTimeMS ?? 0,
     ),
-  }
-}
-
-/**
- * Build an Algolia document for a message.
- */
-export function buildMessageDoc(message: {
-  id: string
-  conversationId: string
-  content: string
-  senderName?: string
-  participantIds: string[]
-  createdAt?: string
-}) {
-  return {
-    objectID: `msg_${message.id}`,
-    type: 'message' as const,
-    name: message.senderName ?? 'Unknown',
-    search: message.content,
-    content: message.content,
-    sender_name: message.senderName,
-    conversation_id: message.conversationId,
-    participant_ids: message.participantIds,
-    created_at: message.createdAt,
-    updated_at: message.createdAt ?? new Date().toISOString(),
-    updated_at_ts: Math.floor(
-      new Date(message.createdAt ?? Date.now()).getTime() / 1000,
-    ),
+    query,
   }
 }

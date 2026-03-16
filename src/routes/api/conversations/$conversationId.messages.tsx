@@ -3,6 +3,9 @@ import { initFirebaseAdmin } from '@/lib/firebase-admin'
 import { getServerSession } from '@/lib/auth/session'
 import { MessageDatabaseService } from '@/services/message-database.service'
 import { syncMessageToAlgolia, getParticipantIds } from '@/lib/algolia-sync'
+import { createLogger } from '@/lib/logger'
+
+const log = createLogger('api/conversations/messages')
 
 export const Route = createFileRoute('/api/conversations/$conversationId/messages')({
   server: {
@@ -27,7 +30,7 @@ export const Route = createFileRoute('/api/conversations/$conversationId/message
           )
           return Response.json(result)
         } catch (err) {
-          console.error('[api/conversations/messages] GET failed:', err)
+          log.error({ err }, 'GET failed')
           return Response.json({ error: 'Failed to fetch messages' }, { status: 500 })
         }
       },
@@ -64,14 +67,12 @@ export const Route = createFileRoute('/api/conversations/$conversationId/message
             role,
           })
 
-          // Fire-and-forget Algolia sync
-          getParticipantIds(params.conversationId, session.uid).then((pIds) => {
-            syncMessageToAlgolia(message, pIds)
-          })
+          const pIds = await getParticipantIds(params.conversationId, session.uid)
+          await syncMessageToAlgolia(message, pIds)
 
           return Response.json(message, { status: 201 })
         } catch (err) {
-          console.error('[api/conversations/messages] POST failed:', err)
+          log.error({ err }, 'POST failed')
           return Response.json({ error: 'Failed to send message' }, { status: 500 })
         }
       },

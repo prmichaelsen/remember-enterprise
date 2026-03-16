@@ -3,33 +3,36 @@ import { initFirebaseAdmin } from '@/lib/firebase-admin'
 import { getServerSession } from '@/lib/auth/session'
 import { ConversationDatabaseService } from '@/services/conversation-database.service'
 import { syncConversationToAlgolia } from '@/lib/algolia-sync'
+import { createLogger } from '@/lib/logger'
+
+const log = createLogger('api/conversations')
 
 export const Route = createFileRoute('/api/conversations/')({
   server: {
     handlers: {
       GET: async ({ request }: { request: Request }) => {
-        console.log('[api/conversations] GET hit')
+        log.debug('GET hit')
 
         initFirebaseAdmin()
 
         const cookieHeader = request.headers.get('cookie')
-        console.log('[api/conversations] cookie header present:', !!cookieHeader)
+        log.debug({ present: !!cookieHeader }, 'cookie header present')
         if (cookieHeader) {
           const cookieNames = cookieHeader.split(';').map(c => c.trim().split('=')[0])
-          console.log('[api/conversations] cookie names:', cookieNames)
+          log.debug({ cookieNames }, 'cookie names')
         }
 
         let session
         try {
           session = await getServerSession(request)
-          console.log('[api/conversations] session result:', session ? { uid: session.uid, email: session.email } : null)
+          log.debug({ session: session ? { uid: session.uid, email: session.email } : null }, 'session result')
         } catch (err) {
-          console.error('[api/conversations] getServerSession threw:', err)
+          log.error({ err }, 'getServerSession threw')
           return Response.json({ error: 'Auth error', detail: String(err) }, { status: 500 })
         }
 
         if (!session) {
-          console.log('[api/conversations] no session — returning 401')
+          log.debug('no session — returning 401')
           return Response.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
@@ -37,7 +40,7 @@ export const Route = createFileRoute('/api/conversations/')({
         const limit = parseInt(url.searchParams.get('limit') ?? '50', 10)
         const type = url.searchParams.get('type')
 
-        console.log('[api/conversations] fetching conversations for', session.uid, 'type:', type, 'limit:', limit)
+        log.debug({ uid: session.uid, type, limit }, 'fetching conversations')
 
         let conversations
         try {
@@ -54,9 +57,9 @@ export const Route = createFileRoute('/api/conversations/')({
             default:
               conversations = await ConversationDatabaseService.getAllConversations(session.uid, limit)
           }
-          console.log('[api/conversations] found', conversations.length, 'conversations')
+          log.debug({ count: conversations.length }, 'found conversations')
         } catch (err) {
-          console.error('[api/conversations] database query failed:', err)
+          log.error({ err }, 'database query failed')
           return Response.json({ error: 'Database error', detail: String(err) }, { status: 500 })
         }
 
@@ -64,7 +67,7 @@ export const Route = createFileRoute('/api/conversations/')({
       },
 
       POST: async ({ request }: { request: Request }) => {
-        console.log('[api/conversations] POST hit')
+        log.debug('POST hit')
 
         initFirebaseAdmin()
 
@@ -72,7 +75,7 @@ export const Route = createFileRoute('/api/conversations/')({
         try {
           session = await getServerSession(request)
         } catch (err) {
-          console.error('[api/conversations] getServerSession threw:', err)
+          log.error({ err }, 'getServerSession threw')
           return Response.json({ error: 'Auth error', detail: String(err) }, { status: 500 })
         }
 
@@ -104,14 +107,13 @@ export const Route = createFileRoute('/api/conversations/')({
             description,
             created_by: created_by ?? session.uid,
           })
-          console.log('[api/conversations] created conversation:', conversation.id)
+          log.debug({ conversationId: conversation.id }, 'created conversation')
 
-          // Fire-and-forget Algolia sync
-          syncConversationToAlgolia(conversation)
+          await syncConversationToAlgolia(conversation)
 
           return Response.json(conversation, { status: 201 })
         } catch (err) {
-          console.error('[api/conversations] create failed:', err)
+          log.error({ err }, 'create failed')
           return Response.json({ error: 'Failed to create conversation', detail: String(err) }, { status: 500 })
         }
       },

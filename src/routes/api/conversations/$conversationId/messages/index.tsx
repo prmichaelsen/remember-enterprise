@@ -3,6 +3,9 @@ import { initFirebaseAdmin } from '@/lib/firebase-admin'
 import { getServerSession } from '@/lib/auth/session'
 import { MessageDatabaseService } from '@/services/message-database.service'
 import { syncMessageToAlgolia, getParticipantIds } from '@/lib/algolia-sync'
+import { createLogger } from '@/lib/logger'
+
+const log = createLogger('api/conversations/messages')
 
 export const Route = createFileRoute(
   '/api/conversations/$conversationId/messages/' as any,
@@ -35,7 +38,7 @@ export const Route = createFileRoute(
 
           return Response.json(result)
         } catch (error) {
-          console.error('[API] Message list error:', error)
+          log.error({ err: error }, 'Message list error')
           return Response.json(
             {
               error: 'Internal server error',
@@ -84,14 +87,12 @@ export const Route = createFileRoute(
             },
           )
 
-          // Fire-and-forget Algolia sync
-          getParticipantIds(params.conversationId, session.uid).then((pIds) => {
-            syncMessageToAlgolia(message, pIds)
-          })
+          const pIds = await getParticipantIds(params.conversationId, session.uid)
+          await syncMessageToAlgolia(message, pIds)
 
           return Response.json(message, { status: 201 })
         } catch (error) {
-          console.error('[API] Message send error:', error)
+          log.error({ err: error }, 'Message send error')
           return Response.json(
             {
               error: 'Internal server error',

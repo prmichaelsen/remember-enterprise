@@ -1,13 +1,14 @@
 /**
- * GET /api/search — Algolia-powered global search across DM partners, groups, and messages.
- * Query params: q (required), types (optional, comma-separated: dm_partner,group,message), hitsPerPage, page
+ * GET /api/search — multi-index Algolia search across people, conversations, and messages.
+ * Query params: q (required), hitsPerPage (optional, default 5)
  */
 
 import { createFileRoute } from '@tanstack/react-router'
 import { getServerSession } from '@/lib/auth/session'
-import { search, type SearchEntityType } from '@/services/search.service'
+import { search } from '@/services/search.service'
+import { createLogger } from '@/lib/logger'
 
-const VALID_TYPES = new Set<SearchEntityType>(['dm_partner', 'group', 'message'])
+const log = createLogger('api/search')
 
 export const Route = createFileRoute('/api/search')({
   server: {
@@ -22,28 +23,19 @@ export const Route = createFileRoute('/api/search')({
         const q = url.searchParams.get('q')?.trim() ?? ''
 
         if (!q) {
-          return Response.json({ hits: [], nbHits: 0, query: '' })
+          return Response.json({ people: [], conversations: [], messages: [], query: '' })
         }
 
-        const typesParam = url.searchParams.get('types')
-        const types = typesParam
-          ? (typesParam.split(',').filter((t) => VALID_TYPES.has(t as SearchEntityType)) as SearchEntityType[])
-          : undefined
-
         const hitsPerPage = Math.min(
-          Math.max(parseInt(url.searchParams.get('hitsPerPage') ?? '15', 10) || 15, 1),
-          50,
+          Math.max(parseInt(url.searchParams.get('hitsPerPage') ?? '5', 10) || 5, 1),
+          20,
         )
-        const page = Math.max(parseInt(url.searchParams.get('page') ?? '0', 10) || 0, 0)
 
         try {
-          const result = await search(
-            { query: q, types, hitsPerPage, page },
-            session.uid,
-          )
+          const result = await search(q, session.uid, hitsPerPage)
           return Response.json(result)
         } catch (error) {
-          console.error('[API] Search error:', error)
+          log.error({ err: error }, 'search error')
           return Response.json(
             { error: 'Search failed', message: error instanceof Error ? error.message : 'Unknown error' },
             { status: 500 },

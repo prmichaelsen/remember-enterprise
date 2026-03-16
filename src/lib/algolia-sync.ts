@@ -1,78 +1,65 @@
 /**
  * Fire-and-forget Algolia sync helpers.
- * Called from API routes after successful writes to keep the search index fresh.
+ * Called from API routes after successful writes to keep agentbase indices fresh.
  * All functions catch errors silently — search indexing must never block the write path.
  */
 
-import {
-  indexDocument,
-  buildMessageDoc,
-  buildGroupDoc,
-  buildDmPartnerDoc,
-} from '@/services/search.service'
+import { getAlgoliaClient, MESSAGES_INDEX, CONVERSATIONS_INDEX } from '@/lib/algolia'
+import { createLogger } from '@/lib/logger'
 import { ConversationDatabaseService } from '@/services/conversation-database.service'
 import type { Message } from '@/types/conversations'
 import type { ConversationDoc } from '@/services/conversation-database.service'
 
+const log = createLogger('algolia-sync')
+
 /**
- * Index a newly sent message to Algolia (fire-and-forget).
- * Needs the conversation's participant_ids to scope search visibility.
+ * Index a newly sent message to Algolia.
+ * Must be awaited — Cloudflare terminates execution after response is sent.
  */
-export function syncMessageToAlgolia(
+export async function syncMessageToAlgolia(
   message: Message,
   participantIds: string[],
-) {
-  indexDocument(
-    buildMessageDoc({
-      id: message.id,
-      conversationId: message.conversation_id,
-      content: message.content,
-      senderName: message.sender_name,
-      participantIds,
-      createdAt: message.created_at,
-    }),
-  ).catch((err) => {
-    console.error('[algolia-sync] Failed to index message:', err)
-  })
+): Promise<void> {
+  try {
+    const client = getAlgoliaClient()
+    await client.saveObject({
+      indexName: MESSAGES_INDEX,
+      body: {
+        objectID: message.id,
+        content: message.content,
+        conversation_id: message.conversation_id,
+        sender_display_name: message.sender_name,
+        role: 'user',
+        timestamp: message.created_at,
+        searchable_by: participantIds.map((id) => `user:${id}`),
+      },
+    })
+  } catch (err) {
+    log.error({ err }, 'failed to index message')
+  }
 }
 
 /**
- * Index a newly created conversation to Algolia (fire-and-forget).
- * For groups: indexes the group itself.
- * For DMs: indexes each participant as a DM partner for the other.
+ * Index a newly created conversation to Algolia.
+ * Must be awaited — Cloudflare terminates execution after response is sent.
  */
-export function syncConversationToAlgolia(conv: ConversationDoc) {
-  const participantIds = conv.participant_user_ids ?? []
-
-  if (conv.type === 'group') {
-    indexDocument(
-      buildGroupDoc({
-        id: conv.id,
-        name: conv.name,
-        description: conv.description,
-        participantIds,
-        createdAt: conv.created_at,
-        updatedAt: conv.updated_at,
-      }),
-    ).catch((err) => {
-      console.error('[algolia-sync] Failed to index group:', err)
+export async function syncConversationToAlgolia(conv: ConversationDoc): Promise<void> {
+  try {
+    const client = getAlgoliaClient()
+    await client.saveObject({
+      indexName: CONVERSATIONS_INDEX,
+      body: {
+        objectID: conv.id,
+        title: conv.name,
+        last_message_preview: '',
+        owner_id: conv.created_by,
+        type: conv.type,
+        is_archived: false,
+        updated_at: conv.updated_at,
+      },
     })
-  } else {
-    // DM — index each user as a DM partner for the other
-    for (const userId of participantIds) {
-      const otherIds = participantIds.filter((id) => id !== userId)
-      for (const otherId of otherIds) {
-        indexDocument(
-          buildDmPartnerDoc({
-            uid: otherId,
-            conversationId: conv.id,
-            participantIds,
-          }),
-        ).catch((err) => {
-          console.error('[algolia-sync] Failed to index DM partner:', err)
-        })
-      }
-    }
+  } catch (err) {
+    log.error({ err }, 'failed to index conversation')
   }
 }
 
