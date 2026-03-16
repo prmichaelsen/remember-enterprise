@@ -121,34 +121,33 @@ function ConversationView() {
   // Typing indicator debounce refs
   const typingTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
 
-  // Load conversation + messages once if not provided by SSR
-  const didLoadRef = useRef(false)
+  // Load conversation + messages on route change (skip if SSR already provided for this conversationId)
+  const loadedConvIdRef = useRef<string | null>(
+    initialConversation && initialMessages?.length > 0 ? conversationId : null,
+  )
   useEffect(() => {
-    if (didLoadRef.current || !user || !conversationId) return
-    if (conversation && messages.length > 0) {
-      // SSR already provided data
-      didLoadRef.current = true
-      return
-    }
-    didLoadRef.current = true
+    if (!user || !conversationId) return
+    if (loadedConvIdRef.current === conversationId) return
+    loadedConvIdRef.current = conversationId
+
+    // Reset state for new conversation
+    setStreamingBlocks([])
+    streamingMessageIdRef.current = null
 
     let cancelled = false
     async function load() {
+      setLoading(true)
       try {
         const [envelope, msgResult] = await Promise.all([
-          !conversation ? getConversation(conversationId) : Promise.resolve(null),
-          messages.length === 0 ? listMessages({ conversation_id: conversationId, limit: 50 }) : Promise.resolve(null),
+          getConversation(conversationId),
+          listMessages({ conversation_id: conversationId, limit: 50 }),
         ])
         if (cancelled) return
 
-        if (envelope) {
-          setConversation(envelope.conversation ?? null)
-          setProfiles(envelope.profiles ?? {})
-        }
-        if (msgResult) {
-          setMessages(msgResult.messages.reverse())
-          setHasMore(msgResult.has_more)
-        }
+        setConversation(envelope?.conversation ?? null)
+        setProfiles(envelope?.profiles ?? {})
+        setMessages(msgResult.messages.reverse())
+        setHasMore(msgResult.has_more)
         markConversationRead(conversationId)
       } catch {
         // Error loading conversation
