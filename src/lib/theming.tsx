@@ -125,29 +125,19 @@ export function ThemingProvider({
   customVariables?: Record<string, string>
   children: ReactNode
 }) {
-  // Apply custom CSS variables to document root on mount and when they change
-  useEffect(() => {
-    if (typeof document === 'undefined' || !customVariables) return
-
-    const root = document.documentElement
-    const appliedKeys: string[] = []
-
-    for (const [shortKey, value] of Object.entries(customVariables)) {
-      const cssVar = shortKeyToCssVar(shortKey)
-      root.style.setProperty(cssVar, value)
-      appliedKeys.push(cssVar)
-    }
-
-    return () => {
-      for (const cssVar of appliedKeys) {
-        root.style.removeProperty(cssVar)
-      }
-    }
-  }, [customVariables])
+  // Build inline style from custom variables to override data-theme defaults
+  const customStyle = customVariables
+    ? Object.fromEntries(
+        Object.entries(customVariables).map(([shortKey, value]) => [
+          shortKeyToCssVar(shortKey),
+          value,
+        ]),
+      ) as React.CSSProperties
+    : undefined
 
   return (
     <ThemingContext.Provider value={themes[theme]}>
-      <div data-theme={theme} className={themes[theme].page}>
+      <div data-theme={theme} className={themes[theme].page} style={customStyle}>
         {children}
       </div>
     </ThemingContext.Provider>
