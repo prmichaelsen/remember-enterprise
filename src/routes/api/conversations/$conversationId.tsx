@@ -12,11 +12,23 @@ export const Route = createFileRoute('/api/conversations/$conversationId')({
         const session = await getServerSession(request)
         if (!session) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
-        const conversation = await ConversationDatabaseService.getConversation(
+        let conversation = await ConversationDatabaseService.getConversation(
           params.conversationId,
           session.uid,
         )
-        if (!conversation) return Response.json({ error: 'Not found' }, { status: 404 })
+        if (!conversation) {
+          // Lazily create synthetic conversations on first access
+          const syntheticDefaults: Record<string, { title: string; type: 'chat' }> = {
+            'main': { title: 'Agent', type: 'chat' },
+            'ghost:space:the_void': { title: 'The Void', type: 'chat' },
+          }
+          const defaults = syntheticDefaults[params.conversationId]
+          if (defaults) {
+            await ConversationDatabaseService.ensureUserConversation(session.uid, params.conversationId, defaults)
+            conversation = await ConversationDatabaseService.getConversation(params.conversationId, session.uid)
+          }
+          if (!conversation) return Response.json({ error: 'Not found' }, { status: 404 })
+        }
         const profiles = await buildProfileMap(conversation.participant_user_ids ?? [])
         return Response.json({ conversation, profiles })
       },

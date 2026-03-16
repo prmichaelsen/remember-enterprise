@@ -33,19 +33,17 @@ export function AuthProvider({
 
     const unsubscribe = onAuthChange(async (firebaseUser) => {
       if (firebaseUser) {
-        // Exchange ID token for session cookie (skip for anonymous)
-        if (!firebaseUser.isAnonymous) {
-          const idToken = await getIdToken()
-          if (idToken) {
-            try {
-              await fetch('/api/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ idToken }),
-              })
-            } catch {
-              // Non-critical — session cookie creation failed
-            }
+        // Exchange ID token for session cookie (including anonymous users)
+        const idToken = await getIdToken()
+        if (idToken) {
+          try {
+            await fetch('/api/auth/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ idToken }),
+            })
+          } catch {
+            // Non-critical — session cookie creation failed
           }
         }
 

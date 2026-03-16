@@ -95,7 +95,7 @@ function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-2xl mx-auto px-4">
       <h1 className={`text-2xl font-bold ${t.textPrimary}`}>Settings</h1>
 
       {/* Search */}

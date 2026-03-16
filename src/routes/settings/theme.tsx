@@ -195,9 +195,9 @@ function ThemeEditorPage() {
   }, [])
 
   return (
-    <div className="lg:flex lg:gap-6 lg:max-w-5xl lg:mx-auto pb-12">
+    <div className="lg:flex lg:gap-6 pb-12 px-4 lg:px-6">
       {/* Left column: Editor */}
-      <div className="space-y-6 max-w-2xl mx-auto lg:mx-0 lg:flex-1 lg:min-w-0">
+      <div className="space-y-6 lg:flex-1 lg:min-w-0">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Link
