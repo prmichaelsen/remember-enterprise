@@ -222,27 +222,6 @@ function ThemeEditorPage() {
         />
       </div>
 
-      {/* Base Theme */}
-      <div>
-        <label className={`block text-sm ${t.textSecondary} mb-1`}>Base Theme</label>
-        <div className="flex gap-2">
-          {(['dark', 'light'] as const).map((base) => (
-            <button
-              key={base}
-              type="button"
-              onClick={() => setBaseTheme(base)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                baseTheme === base
-                  ? `${t.active} border-2 border-brand-primary text-brand-primary`
-                  : `${t.buttonGhost} border-2 border-transparent`
-              }`}
-            >
-              {base.charAt(0).toUpperCase() + base.slice(1)}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* Preset Bar */}
       <div>
         <label className={`block text-sm ${t.textSecondary} mb-2`}>Presets</label>
