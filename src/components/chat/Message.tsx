@@ -301,8 +301,9 @@ function MessageContentDisplay({ content }: { content: MessageContent }) {
           return (
             <ToolCallBadge
               key={`tool-${block.id}`}
-              name={block.name}
+              toolName={block.name}
               status="success"
+              timestamp={new Date()}
             />
           )
         }

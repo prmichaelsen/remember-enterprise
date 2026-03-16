@@ -32,9 +32,9 @@ export function StreamingBlockRenderer({
           return (
             <ToolCallBadge
               key={block.id ?? `tool-${i}`}
-              name={block.name}
+              toolName={block.name}
               status={badgeStatus}
-              id={block.id}
+              timestamp={new Date()}
             />
           )
         }
