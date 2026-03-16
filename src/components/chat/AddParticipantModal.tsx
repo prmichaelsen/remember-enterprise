@@ -182,7 +182,7 @@ export function AddParticipantModal({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search users by name or email..."
-              className={`w-full pl-9 pr-3 py-2 rounded-lg border text-sm ${t.border} ${t.textPrimary} bg-bg-elevated focus:outline-none focus:ring-1 focus:ring-accent`}
+              className={`w-full pl-9 pr-3 py-2 rounded-lg border text-base ${t.border} ${t.textPrimary} bg-bg-elevated focus:outline-none focus:ring-1 focus:ring-accent`}
             />
           </div>
 
@@ -240,7 +240,7 @@ export function AddParticipantModal({
                   value={expiryHours}
                   onChange={(e) => setExpiryHours(Number(e.target.value))}
                   min={1}
-                  className={`w-full px-3 py-2 rounded-lg border text-sm ${t.border} ${t.textPrimary} bg-bg-elevated focus:outline-none focus:ring-1 focus:ring-accent`}
+                  className={`w-full px-3 py-2 rounded-lg border text-base ${t.border} ${t.textPrimary} bg-bg-elevated focus:outline-none focus:ring-1 focus:ring-accent`}
                 />
               </div>
 
@@ -253,7 +253,7 @@ export function AddParticipantModal({
                   value={maxUses}
                   onChange={(e) => setMaxUses(Number(e.target.value))}
                   min={1}
-                  className={`w-full px-3 py-2 rounded-lg border text-sm ${t.border} ${t.textPrimary} bg-bg-elevated focus:outline-none focus:ring-1 focus:ring-accent`}
+                  className={`w-full px-3 py-2 rounded-lg border text-base ${t.border} ${t.textPrimary} bg-bg-elevated focus:outline-none focus:ring-1 focus:ring-accent`}
                 />
               </div>
 
@@ -273,7 +273,7 @@ export function AddParticipantModal({
                   type="text"
                   readOnly
                   value={inviteLink.url}
-                  className={`flex-1 text-sm bg-transparent ${t.textPrimary} outline-none`}
+                  className={`flex-1 text-base bg-transparent ${t.textPrimary} outline-none`}
                 />
                 <button
                   type="button"

@@ -144,7 +144,7 @@ export function GroupCreateModal({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g., Project Alpha"
-            className={`w-full px-3 py-2 rounded-lg text-sm ${t.input} ${t.inputFocus} outline-none`}
+            className={`w-full px-3 py-2 rounded-lg text-base ${t.input} ${t.inputFocus} outline-none`}
             maxLength={100}
           />
         </div>
@@ -159,7 +159,7 @@ export function GroupCreateModal({
             onChange={(e) => setDescription(e.target.value)}
             placeholder="What is this group about?"
             rows={2}
-            className={`w-full px-3 py-2 rounded-lg text-sm resize-none ${t.input} ${t.inputFocus} outline-none`}
+            className={`w-full px-3 py-2 rounded-lg text-base resize-none ${t.input} ${t.inputFocus} outline-none`}
             maxLength={500}
           />
         </div>
@@ -199,7 +199,7 @@ export function GroupCreateModal({
               value={searchQuery}
               onChange={handleSearchChange}
               placeholder="Search by name or email..."
-              className={`w-full pl-9 pr-3 py-2 rounded-lg text-sm ${t.input} ${t.inputFocus} outline-none`}
+              className={`w-full pl-9 pr-3 py-2 rounded-lg text-base ${t.input} ${t.inputFocus} outline-none`}
             />
           </div>
 

@@ -283,7 +283,7 @@ export function MessageCompose({
           placeholder="Type a message..."
           disabled={disabled}
           rows={1}
-          className={`flex-1 resize-none rounded-lg px-3 py-2 text-sm ${t.input} ${t.inputFocus} outline-none disabled:opacity-50`}
+          className={`flex-1 resize-none rounded-lg px-3 py-2 text-base ${t.input} ${t.inputFocus} outline-none disabled:opacity-50`}
           style={{ maxHeight: '200px' }}
         />
 

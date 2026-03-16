@@ -246,7 +246,7 @@ export function GroupMemberList({
               onChange={handleInviteSearchChange}
               placeholder="Search by name or email..."
               disabled={inviting}
-              className={`w-full pl-9 pr-3 py-2 rounded-lg text-sm ${t.input} ${t.inputFocus} outline-none disabled:opacity-50`}
+              className={`w-full pl-9 pr-3 py-2 rounded-lg text-base ${t.input} ${t.inputFocus} outline-none disabled:opacity-50`}
             />
           </div>
 
