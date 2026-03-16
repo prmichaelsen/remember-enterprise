@@ -127,8 +127,11 @@ export class MessageDatabaseService {
     conversationType?: ConversationType,
   ): Promise<Message> {
     initFirebaseAdmin()
-    const collection = input.sender_user_id
-      ? resolveMessagesPath(conversationId, input.sender_user_id, conversationType)
+    // Use created_for_user_id for path routing if present (e.g. agent messages
+    // saved to the user's collection), otherwise fall back to sender_user_id.
+    const routingUserId = input.created_for_user_id ?? input.sender_user_id
+    const collection = routingUserId
+      ? resolveMessagesPath(conversationId, routingUserId, conversationType)
       : sharedMessagesCollection(conversationId)
     const now = new Date().toISOString()
 

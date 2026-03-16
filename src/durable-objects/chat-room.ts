@@ -300,6 +300,8 @@ export class ChatRoom extends DurableObject {
       })
 
       // Save assistant message
+      // Use real userId for path routing so agent messages land in the same
+      // user-scoped collection as user messages (for solo chat type).
       if (fullAssistantContent.trim()) {
         const assistantMessage = await MessageDatabaseService.sendMessage(
           conversationId,
@@ -307,6 +309,7 @@ export class ChatRoom extends DurableObject {
             sender_user_id: 'agent',
             content: fullAssistantContent,
             role: 'assistant',
+            created_for_user_id: userId,
           },
           conversationType === 'chat' ? undefined : conversationType,
         )
