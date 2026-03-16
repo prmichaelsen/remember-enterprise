@@ -3,7 +3,9 @@ import { env } from 'cloudflare:workers'
 import { initFirebaseAdmin } from '@/lib/firebase-admin'
 import { getServerSession } from '@/lib/auth/session'
 import { MessageDatabaseService } from '@/services/message-database.service'
+import { ConversationDatabaseService } from '@/services/conversation-database.service'
 import { syncMessageToAlgolia, getParticipantIds } from '@/lib/algolia-sync'
+import { getTextContent } from '@/lib/message-content'
 import { createLogger } from '@/lib/logger'
 
 const log = createLogger('api/conversations/messages')
@@ -86,6 +88,21 @@ export const Route = createFileRoute(
               ...(is_tool_interaction != null && { is_tool_interaction }),
             },
           )
+
+          // Update conversation last_message metadata
+          try {
+            const preview = getTextContent(message.content)
+            await ConversationDatabaseService.updateLastMessage(
+              params.conversationId,
+              {
+                content: preview.substring(0, 200),
+                sender_user_id: session.uid,
+                timestamp: message.timestamp,
+              },
+            )
+          } catch (updateErr) {
+            log.error({ err: updateErr }, 'Failed to update conversation last_message')
+          }
 
           const pIds = await getParticipantIds(params.conversationId, session.uid)
           const senderName = session.displayName ?? session.email ?? 'Unknown'
