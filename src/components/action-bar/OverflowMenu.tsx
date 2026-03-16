@@ -7,7 +7,7 @@ export function useOverflowActionBarItem(items: ActionBarItem[]): ActionBarItem 
   const triggerRef = useRef<HTMLButtonElement>(null)
 
   const renderContent = useCallback(
-    (_ctx: ActionBarContentContext) => <ActionBar items={items} layout="vertical" />,
+    (_ctx: ActionBarContentContext) => <ActionBar items={items} layout="horizontal" />,
     [items],
   )
 

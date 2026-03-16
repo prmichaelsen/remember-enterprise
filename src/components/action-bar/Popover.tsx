@@ -18,20 +18,10 @@ export function Popover({ children, anchorRef, onClose }: PopoverProps) {
     if (!anchor) return
 
     const rect = anchor.getBoundingClientRect()
-    const spaceAbove = rect.top
-    const popoverHeight = popoverRef.current?.offsetHeight ?? 200
-
-    if (spaceAbove >= popoverHeight + 8) {
-      setPosition({
-        top: rect.top + window.scrollY - 8,
-        left: rect.left + window.scrollX + rect.width / 2,
-      })
-    } else {
-      setPosition({
-        top: rect.bottom + window.scrollY + 8,
-        left: rect.left + window.scrollX + rect.width / 2,
-      })
-    }
+    setPosition({
+      top: rect.bottom + window.scrollY + 4,
+      left: rect.left + window.scrollX + rect.width / 2,
+    })
   }, [anchorRef])
 
   useEffect(() => {
@@ -53,7 +43,7 @@ export function Popover({ children, anchorRef, onClose }: PopoverProps) {
   return createPortal(
     <div
       ref={popoverRef}
-      className={`absolute z-50 -translate-x-1/2 -translate-y-full ${t.card} p-3 shadow-lg`}
+      className={`absolute z-50 -translate-x-1/2 ${t.card} p-2 shadow-lg`}
       style={{ top: position.top, left: position.left }}
     >
       {children}
