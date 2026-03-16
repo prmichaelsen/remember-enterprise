@@ -243,14 +243,14 @@ export const Message = memo(function Message({ message, currentUserId, conversat
  */
 function MessageContentDisplay({ content }: { content: MessageContent }) {
   if (typeof content === 'string') {
-    return <MarkdownContent content={content} />
+    return <MarkdownContent content={content} className="text-sm" />
   }
 
   return (
     <div className="space-y-3">
       {content.map((block, index) => {
         if (block.type === 'text') {
-          return <MarkdownContent key={index} content={block.text} />
+          return <MarkdownContent key={index} content={block.text} className="text-sm" />
         }
 
         if (block.type === 'image') {
