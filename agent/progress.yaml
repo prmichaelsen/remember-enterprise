@@ -103,6 +103,14 @@ milestones:
     tasks_completed: 6
     estimated_weeks: 2
 
+  - id: milestone_13
+    name: Custom Theme Editor
+    status: not_started
+    file: agent/milestones/milestone-13-custom-theme-editor.md
+    tasks_total: 6
+    tasks_completed: 0
+    estimated_weeks: 2
+
 tasks:
   milestone_1:
     - id: task-2
@@ -472,11 +480,61 @@ tasks:
       actual_hours: 0.2
       completed_date: 2026-03-16T12:20:00Z
 
+  milestone_13:
+    - id: task-45
+      name: Theme Variable Config & Preset Themes
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-13-custom-theme-editor/task-45-theme-variable-config.md
+      estimated_hours: 2
+      actual_hours: null
+      completed_date: null
+    - id: task-46
+      name: Theme Editor Page
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-13-custom-theme-editor/task-46-theme-editor-page.md
+      estimated_hours: 5
+      actual_hours: null
+      completed_date: null
+    - id: task-47
+      name: Color Picker & Live Preview
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-13-custom-theme-editor/task-47-color-picker-live-preview.md
+      estimated_hours: 4
+      actual_hours: null
+      completed_date: null
+    - id: task-48
+      name: Theme Persistence & SSR
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-13-custom-theme-editor/task-48-theme-persistence-ssr.md
+      estimated_hours: 5
+      actual_hours: null
+      completed_date: null
+    - id: task-49
+      name: YAML Import/Export
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-13-custom-theme-editor/task-49-yaml-import-export.md
+      estimated_hours: 3
+      actual_hours: null
+      completed_date: null
+    - id: task-50
+      name: Settings Integration
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-13-custom-theme-editor/task-50-settings-integration.md
+      estimated_hours: 2
+      actual_hours: null
+      completed_date: null
+
 documentation:
-  design_documents: 2
-  milestone_documents: 11
+  design_documents: 3
+  milestone_documents: 12
   pattern_documents: 44
-  task_documents: 41
+  task_documents: 47
 
 progress:
   planning: 100
