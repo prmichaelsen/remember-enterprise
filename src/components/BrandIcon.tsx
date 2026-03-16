@@ -17,7 +17,7 @@ interface BrandIconProps {
 export function BrandIcon({ className, size }: BrandIconProps) {
   const hasBg = className?.includes('bg-')
   const hasSize = className?.includes('w-') || className?.includes('h-')
-  const bgClass = hasBg ? '' : 'bg-brand-primary'
+  const bgClass = hasBg ? '' : 'bg-current'
   const sizeClass = hasSize ? '' : (size ?? 'w-8 h-8')
 
   return (
