@@ -20,14 +20,14 @@ import type {
   GhostMessage,
 } from '@/services/ghost.service'
 
-const GHOSTS_COLLECTION = 'ghosts'
+const GHOSTS_COLLECTION = 'agentbase.ghosts'
 
 function ghostConversationsCollection(userId: string): string {
-  return `users/${userId}/ghost_conversations`
+  return `agentbase.users/${userId}/ghost_conversations`
 }
 
 function ghostMessagesCollection(userId: string, conversationId: string): string {
-  return `users/${userId}/ghost_conversations/${conversationId}/messages`
+  return `agentbase.users/${userId}/ghost_conversations/${conversationId}/messages`
 }
 
 export class GhostDatabaseService {

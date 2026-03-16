@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { initFirebaseAdmin } from '@/lib/firebase-admin'
 import { getServerSession } from '@/lib/auth/session'
 import { MessageDatabaseService } from '@/services/message-database.service'
+import { ConversationDatabaseService } from '@/services/conversation-database.service'
 import { createLogger } from '@/lib/logger'
 
 const log = createLogger('api/conversations/messages/messageId')
@@ -40,10 +41,15 @@ export const Route = createFileRoute(
         }
 
         try {
+          const conv = await ConversationDatabaseService.getConversation(params.conversationId, session.uid)
+          const convType = conv?.type === 'dm' || conv?.type === 'group' ? conv.type : undefined
+
           await MessageDatabaseService.updateMessage(
             params.conversationId,
             params.messageId,
             { ...(content !== undefined && { content }) },
+            session.uid,
+            convType,
           )
           return Response.json({ ok: true })
         } catch (error) {

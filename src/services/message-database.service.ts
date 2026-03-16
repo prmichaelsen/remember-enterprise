@@ -1,6 +1,9 @@
 /**
  * MessageDatabaseService — server-side Firestore CRUD for messages.
- * Collection path: conversations/{conversationId}/messages
+ *
+ * Dual-collection routing (matches agentbase.me):
+ *   DMs & groups (shared):  agentbase.conversations/{conversationId}/messages
+ *   Solo chats (user-scoped): agentbase.users/{userId}/conversations/{conversationId}/messages
  */
 
 import {
@@ -12,16 +15,39 @@ import {
 import type { QueryOptions } from '@prmichaelsen/firebase-admin-sdk-v8'
 import { initFirebaseAdmin } from '@/lib/firebase-admin'
 import { createLogger } from '@/lib/logger'
-import type { Message, MessageContent } from '@/types/conversations'
+import type { Message, MessageContent, ConversationType } from '@/types/conversations'
 
 const log = createLogger('MessageDatabaseService')
 
-function messagesCollection(conversationId: string): string {
-  return `agentbase.conversations/${conversationId}/messages`
+const BASE = 'agentbase'
+
+function sharedMessagesCollection(conversationId: string): string {
+  return `${BASE}.conversations/${conversationId}/messages`
+}
+
+function userMessagesCollection(userId: string, conversationId: string): string {
+  return `${BASE}.users/${userId}/conversations/${conversationId}/messages`
 }
 
 function readReceiptsCollection(userId: string): string {
-  return `users/${userId}/read_receipts`
+  return `agentbase.users/${userId}/read_receipts`
+}
+
+/**
+ * Resolve the messages collection path based on conversation type.
+ * DM/group → shared collection. Solo chat → user-scoped collection.
+ * Matches agentbase.me's resolveMessagesPath() — no Firestore lookup, type-based routing.
+ */
+function resolveMessagesPath(
+  conversationId: string,
+  userId: string,
+  conversationType?: ConversationType,
+): string {
+  if (conversationType === 'dm' || conversationType === 'group') {
+    return sharedMessagesCollection(conversationId)
+  }
+  // Solo chat or unknown → user-scoped
+  return userMessagesCollection(userId, conversationId)
 }
 
 export interface SendMessageInput {
@@ -54,9 +80,13 @@ export class MessageDatabaseService {
     conversationId: string,
     limit: number = 50,
     cursor?: string,
+    userId?: string,
+    conversationType?: ConversationType,
   ): Promise<MessageListResult> {
     initFirebaseAdmin()
-    const collection = messagesCollection(conversationId)
+    const collection = userId
+      ? resolveMessagesPath(conversationId, userId, conversationType)
+      : sharedMessagesCollection(conversationId)
 
     try {
       const options: QueryOptions = {
@@ -93,9 +123,12 @@ export class MessageDatabaseService {
   static async sendMessage(
     conversationId: string,
     input: SendMessageInput,
+    conversationType?: ConversationType,
   ): Promise<Message> {
     initFirebaseAdmin()
-    const collection = messagesCollection(conversationId)
+    const collection = input.sender_user_id
+      ? resolveMessagesPath(conversationId, input.sender_user_id, conversationType)
+      : sharedMessagesCollection(conversationId)
     const now = new Date().toISOString()
     const id = crypto.randomUUID()
 
@@ -122,9 +155,13 @@ export class MessageDatabaseService {
   static async getMessage(
     conversationId: string,
     messageId: string,
+    userId?: string,
+    conversationType?: ConversationType,
   ): Promise<Message | null> {
     initFirebaseAdmin()
-    const collection = messagesCollection(conversationId)
+    const collection = userId
+      ? resolveMessagesPath(conversationId, userId, conversationType)
+      : sharedMessagesCollection(conversationId)
 
     try {
       const doc = await getDocument(collection, messageId)
@@ -143,9 +180,13 @@ export class MessageDatabaseService {
     conversationId: string,
     messageId: string,
     updates: Partial<Pick<Message, 'content'>>,
+    userId?: string,
+    conversationType?: ConversationType,
   ): Promise<void> {
     initFirebaseAdmin()
-    const collection = messagesCollection(conversationId)
+    const collection = userId
+      ? resolveMessagesPath(conversationId, userId, conversationType)
+      : sharedMessagesCollection(conversationId)
 
     await setDocument(
       collection,
@@ -161,9 +202,13 @@ export class MessageDatabaseService {
   static async deleteMessage(
     conversationId: string,
     messageId: string,
+    userId?: string,
+    conversationType?: ConversationType,
   ): Promise<void> {
     initFirebaseAdmin()
-    const collection = messagesCollection(conversationId)
+    const collection = userId
+      ? resolveMessagesPath(conversationId, userId, conversationType)
+      : sharedMessagesCollection(conversationId)
     await deleteDocument(collection, messageId)
   }
 

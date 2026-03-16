@@ -98,7 +98,7 @@ export class MCPProvider implements IMCPProvider {
     // Query Firestore for active static MCP servers
     onDebug?.('Querying Firestore for MCP servers', { userId })
 
-    const serverDocs = await queryDocuments('mcp-servers', {
+    const serverDocs = await queryDocuments('agentbase.mcp-servers', {
       where: [
         { field: 'status', op: '==', value: 'active' },
         { field: 'type', op: '==', value: 'static' },

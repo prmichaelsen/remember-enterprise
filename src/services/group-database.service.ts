@@ -19,14 +19,14 @@ import type {
 } from '@/types/conversations'
 import { OWNER_PRESET, MEMBER_PRESET } from '@/types/conversations'
 
-const GROUPS_COLLECTION = 'groups'
+const GROUPS_COLLECTION = 'agentbase.groups'
 
 function groupDoc(groupId: string): string {
   return GROUPS_COLLECTION
 }
 
 function membersCollection(groupId: string): string {
-  return `groups/${groupId}/members`
+  return `agentbase.groups/${groupId}/members`
 }
 
 export interface CreateGroupInput {

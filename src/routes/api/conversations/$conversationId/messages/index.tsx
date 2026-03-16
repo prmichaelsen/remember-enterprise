@@ -33,10 +33,16 @@ export const Route = createFileRoute(
           const limit = parseInt(url.searchParams.get('limit') ?? '50', 10)
           const cursor = url.searchParams.get('before_cursor') ?? undefined
 
+          // Resolve conversation type for dual-collection routing
+          const conv = await ConversationDatabaseService.getConversation(params.conversationId, session.uid)
+          const convType = conv?.type === 'dm' || conv?.type === 'group' ? conv.type : undefined
+
           const result = await MessageDatabaseService.listMessages(
             params.conversationId,
             limit,
             cursor,
+            session.uid,
+            convType,
           )
 
           return Response.json(result)
@@ -77,6 +83,10 @@ export const Route = createFileRoute(
             )
           }
 
+          // Resolve conversation type for dual-collection routing
+          const conv = await ConversationDatabaseService.getConversation(params.conversationId, session.uid)
+          const convType = conv?.type === 'dm' || conv?.type === 'group' ? conv.type : undefined
+
           const message = await MessageDatabaseService.sendMessage(
             params.conversationId,
             {
@@ -87,6 +97,7 @@ export const Route = createFileRoute(
               ...(metadata && { metadata }),
               ...(is_tool_interaction != null && { is_tool_interaction }),
             },
+            convType,
           )
 
           // Update conversation last_message metadata
@@ -99,6 +110,8 @@ export const Route = createFileRoute(
                 sender_user_id: session.uid,
                 timestamp: message.timestamp,
               },
+              session.uid,
+              convType,
             )
           } catch (updateErr) {
             log.error({ err: updateErr }, 'Failed to update conversation last_message')

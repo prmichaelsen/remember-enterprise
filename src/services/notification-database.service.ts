@@ -15,7 +15,7 @@ import { initFirebaseAdmin } from '@/lib/firebase-admin'
 import type { Notification, NotificationType } from '@/types/notifications'
 
 function notificationsCollection(userId: string): string {
-  return `users/${userId}/notifications`
+  return `agentbase.users/${userId}/notifications`
 }
 
 export interface CreateNotificationInput {

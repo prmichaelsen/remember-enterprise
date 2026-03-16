@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { initFirebaseAdmin } from '@/lib/firebase-admin'
 import { getServerSession } from '@/lib/auth/session'
 import { MessageDatabaseService } from '@/services/message-database.service'
+import { ConversationDatabaseService } from '@/services/conversation-database.service'
 import { syncMessageToAlgolia, getParticipantIds } from '@/lib/algolia-sync'
 import { createLogger } from '@/lib/logger'
 
@@ -23,10 +24,15 @@ export const Route = createFileRoute('/api/conversations/$conversationId/message
         const beforeCursor = url.searchParams.get('before_cursor') ?? undefined
 
         try {
+          const conv = await ConversationDatabaseService.getConversation(params.conversationId, session.uid)
+          const convType = conv?.type === 'dm' || conv?.type === 'group' ? conv.type : undefined
+
           const result = await MessageDatabaseService.listMessages(
             params.conversationId,
             limit,
             beforeCursor,
+            session.uid,
+            convType,
           )
           return Response.json(result)
         } catch (err) {
@@ -57,6 +63,9 @@ export const Route = createFileRoute('/api/conversations/$conversationId/message
         }
 
         try {
+          const conv = await ConversationDatabaseService.getConversation(params.conversationId, session.uid)
+          const convType = conv?.type === 'dm' || conv?.type === 'group' ? conv.type : undefined
+
           const message = await MessageDatabaseService.sendMessage(params.conversationId, {
             sender_user_id: session.uid,
             content,
@@ -64,7 +73,7 @@ export const Route = createFileRoute('/api/conversations/$conversationId/message
             role,
             ...(metadata && { metadata }),
             ...(is_tool_interaction != null && { is_tool_interaction }),
-          })
+          }, convType)
 
           const pIds = await getParticipantIds(params.conversationId, session.uid)
           const senderName = session.displayName ?? session.email ?? 'Unknown'
