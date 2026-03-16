@@ -235,11 +235,14 @@ export class ChatRoom extends DurableObject {
     )
     const history = historyResult.messages.reverse()
 
-    // Build chat messages for ChatEngine
-    const chatMessages = history.map((msg) => ({
-      role: msg.role as 'user' | 'assistant',
-      content: getTextContent(msg.content),
-    }))
+    // Build chat messages for ChatEngine — filter out empty/system messages
+    const chatMessages = history
+      .filter((msg) => msg.role !== 'system')
+      .map((msg) => ({
+        role: msg.role as 'user' | 'assistant',
+        content: getTextContent(msg.content),
+      }))
+      .filter((msg) => msg.content.trim() !== '')
 
     // Build a basic system prompt
     const systemPrompt = 'You are a helpful AI assistant. Be concise and accurate.'
