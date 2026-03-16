@@ -114,7 +114,6 @@ function ConversationView() {
   // Streaming blocks state for real-time agent generation
   const [streamingBlocks, setStreamingBlocks] = useState<StreamingBlock[]>([])
   const streamingMessageIdRef = useRef<string | null>(null)
-  const wsInitSentRef = useRef<string | null>(null)
 
   // WebSocket for real-time
   const { status: wsStatus, lastMessage: wsMessage, send: wsSend } = useWebSocket(conversationId)
@@ -122,100 +121,50 @@ function ConversationView() {
   // Typing indicator debounce refs
   const typingTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
 
-  // Load conversation and initial messages
+  // Load conversation + messages once if not provided by SSR
+  const didLoadRef = useRef(false)
   useEffect(() => {
-    return;
-    if (!user || !conversationId) return
+    if (didLoadRef.current || !user || !conversationId) return
+    if (conversation && messages.length > 0) {
+      // SSR already provided data
+      didLoadRef.current = true
+      return
+    }
+    didLoadRef.current = true
 
     let cancelled = false
-
     async function load() {
-      setLoading(true)
-      setMessages([])
-      setHasMore(false)
-      setStreamingBlocks([])
-      streamingMessageIdRef.current = null
-
       try {
         const [envelope, msgResult] = await Promise.all([
-          getConversation(conversationId),
-          listMessages({ conversation_id: conversationId, limit: 50 }),
+          !conversation ? getConversation(conversationId) : Promise.resolve(null),
+          messages.length === 0 ? listMessages({ conversation_id: conversationId, limit: 50 }) : Promise.resolve(null),
         ])
-
         if (cancelled) return
 
-        setConversation(envelope?.conversation ?? null)
-        setProfiles(envelope?.profiles ?? {})
-        // Messages come newest-first from service, reverse for display
-        setMessages(msgResult.messages.reverse())
-        setHasMore(msgResult.has_more)
-
-        // Mark as read
-        markConversationRead(conversationId)
-
-        // Load permissions for group conversations
-        if (envelope?.conversation?.type === 'group') {
-          const [canManage, canKick, canBan, canModerate] = await Promise.all([
-            checkPermission(conversationId, user!.uid, 'can_manage_members'),
-            checkPermission(conversationId, user!.uid, 'can_kick'),
-            checkPermission(conversationId, user!.uid, 'can_ban'),
-            checkPermission(conversationId, user!.uid, 'can_moderate'),
-          ])
-          if (!cancelled) {
-            setCurrentUserPermissions({
-              can_read: true,
-              can_publish: true,
-              can_manage_members: canManage,
-              can_kick: canKick,
-              can_ban: canBan,
-              can_moderate: canModerate,
-            })
-            // Determine auth level from permissions
-            if (canBan) setCurrentUserAuthLevel(0)
-            else if (canKick) setCurrentUserAuthLevel(1)
-            else if (canModerate) setCurrentUserAuthLevel(3)
-            else setCurrentUserAuthLevel(5)
-          }
+        if (envelope) {
+          setConversation(envelope.conversation ?? null)
+          setProfiles(envelope.profiles ?? {})
         }
+        if (msgResult) {
+          setMessages(msgResult.messages.reverse())
+          setHasMore(msgResult.has_more)
+        }
+        markConversationRead(conversationId)
       } catch {
         // Error loading conversation
       } finally {
         if (!cancelled) setLoading(false)
       }
     }
-
     load()
-    return () => {
-      cancelled = true
-    }
+    return () => { cancelled = true }
   }, [conversationId, user])
-
-  // Send init message when WebSocket connects to load messages via ChatRoom DO
-  useEffect(() => {
-    const key = `${conversationId}:${wsStatus}`
-    if (wsStatus === 'connected' && user && wsInitSentRef.current !== key) {
-      wsInitSentRef.current = key
-      wsSend({
-        type: 'init',
-        userId: user.uid,
-        conversationId,
-      } as any)
-    }
-  }, [wsStatus, user, conversationId])
 
   // Handle incoming WebSocket messages
   useEffect(() => {
     if (!wsMessage || !user) return
 
     switch (wsMessage.type) {
-      case 'messages_loaded': {
-        // const event = wsMessage as ServerMessagesLoadedEvent
-        // setMessages(event.messages)
-        // setHasMore(event.hasMore)
-        // setLoading(false)
-        break
-      }
-
       case 'message': {
         const event = wsMessage as ServerMessageEvent
         const msg = event.message
@@ -349,6 +298,14 @@ function ConversationView() {
         }
         break
       }
+
+      // No-op — handled elsewhere or not needed, but prevent unknown type logs
+      case 'messages_loaded':
+      case 'ready':
+      case 'conversation_type':
+      case 'generation_in_progress':
+      case 'presence_update':
+        break
     }
   }, [wsMessage, conversationId, user])
 
