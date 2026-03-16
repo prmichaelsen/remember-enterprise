@@ -72,7 +72,7 @@ function ChatLayout() {
     if (!user) return
 
     try {
-      const conversation = await createConversation({
+      const { conversation } = await createConversation({
         type: 'dm',
         participant_ids: [user.uid, targetUserId],
         created_by: user.uid,
@@ -109,7 +109,7 @@ function ChatLayout() {
       />
 
       {/* Main conversation area */}
-      <main className="flex-1 flex flex-col min-w-0">
+      <main className="flex-1 flex flex-col min-w-0 min-h-0">
         <Outlet />
       </main>
 
