@@ -6,7 +6,8 @@
 import { useState, useEffect } from 'react'
 import { Virtuoso } from 'react-virtuoso'
 import { Link, useParams } from '@tanstack/react-router'
-import { MessageSquare, Users, Menu, X, Plus } from 'lucide-react'
+import { MessageSquare, Users, Menu, X, Plus, Globe } from 'lucide-react'
+import { BrandIcon } from '@/components/BrandIcon'
 import { useTheme } from '@/lib/theming'
 import { useAuth } from '@/components/auth/AuthContext'
 import { listConversations } from '@/services/conversation.service'
@@ -143,6 +144,40 @@ export function ConversationSidebar({ onNewDm, onNewGroup, initialConversations,
             <Users className="w-4 h-4" />
           </button>
         </div>
+      </div>
+
+      {/* Pinned conversations */}
+      <div className={`px-2 py-2 ${t.border} border-t-0 border-l-0 border-r-0`}>
+        <Link
+          to="/chat/$conversationId"
+          params={{ conversationId: 'main' }}
+          onClick={() => setMobileOpen(false)}
+          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+            activeConversationId === 'main' ? t.active : t.hover
+          }`}
+        >
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${t.elevated}`}>
+            <BrandIcon className="w-5 h-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <span className={`text-sm font-medium ${t.textPrimary}`}>Agent</span>
+          </div>
+        </Link>
+        <Link
+          to="/chat/$conversationId"
+          params={{ conversationId: 'ghost:space:the_void' }}
+          onClick={() => setMobileOpen(false)}
+          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+            activeConversationId === 'ghost:space:the_void' ? t.active : t.hover
+          }`}
+        >
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${t.elevated}`}>
+            <Globe className="w-5 h-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <span className={`text-sm font-medium ${t.textPrimary}`}>The Void</span>
+          </div>
+        </Link>
       </div>
 
       {/* Conversation list */}
