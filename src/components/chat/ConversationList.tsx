@@ -105,6 +105,74 @@ export function ConversationList({ onNewDm, onNewGroup, initialConversations, in
     )
   }
 
+  const syntheticConversations: Array<{
+    id: string
+    name: string
+    type: 'agent' | 'group'
+    preview: string
+    icon: React.ReactNode
+  }> = [
+    {
+      id: 'main',
+      name: 'Agent',
+      type: 'agent',
+      preview: 'Ask me anything',
+      icon: <BrandIcon className="w-5 h-5" size="w-5 h-5" />,
+    },
+    {
+      id: 'ghost:space:the_void',
+      name: 'The Void',
+      type: 'group',
+      preview: 'Anonymous posting feed',
+      icon: <Globe className="w-5 h-5" />,
+    },
+  ]
+
+  function renderConversationItem(
+    id: string,
+    name: string,
+    type: string,
+    preview: string,
+    avatar: React.ReactNode,
+  ) {
+    const isActive = id === activeConversationId
+    return (
+      <Link
+        key={id}
+        to="/chat/$conversationId"
+        params={{ conversationId: id }}
+        className={`flex items-center gap-3 px-4 py-3 transition-colors ${
+          isActive ? t.active : t.hover
+        }`}
+      >
+        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${t.elevated}`}>
+          {avatar}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between">
+            <span className={`text-sm font-medium truncate ${t.textSecondary}`}>
+              {name}
+            </span>
+            <div className="flex items-center gap-1.5 shrink-0 ml-2">
+              <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                type === 'dm' ? 'bg-brand-primary/20 text-brand-primary'
+                : type === 'group' ? 'bg-brand-secondary/20 text-brand-secondary'
+                : 'bg-brand-accent/20 text-brand-accent'
+              }`}>
+                {type === 'dm' ? 'dm' : type === 'group' ? 'group' : 'agent'}
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center justify-between mt-0.5">
+            <span className={`text-xs truncate ${t.textMuted}`}>
+              {preview}
+            </span>
+          </div>
+        </div>
+      </Link>
+    )
+  }
+
   return (
     <div className="flex flex-col h-full">
       {/* Header with action buttons */}
@@ -145,83 +213,32 @@ export function ConversationList({ onNewDm, onNewGroup, initialConversations, in
             ))}
           </div>
         ) : conversations.length === 0 ? (
-          <div className="p-6 text-center">
-            {/* Pinned conversations */}
-            <div className={`px-2 py-2 mb-4`}>
-              <Link
-                to="/chat/$conversationId"
-                params={{ conversationId: 'main' }}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                  activeConversationId === 'main' ? t.active : t.hover
-                }`}
+          <div>
+            {syntheticConversations.map((s) =>
+              renderConversationItem(s.id, s.name, s.type, s.preview, s.icon)
+            )}
+            <div className="p-6 text-center">
+              <MessageSquare className={`w-10 h-10 mx-auto mb-3 ${t.textMuted}`} />
+              <p className={`text-sm ${t.textMuted}`}>No conversations yet</p>
+              <button
+                type="button"
+                onClick={onNewDm}
+                className={`mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm ${t.buttonPrimary}`}
               >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${t.elevated}`}>
-                  <BrandIcon className="w-5 h-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <span className={`text-sm font-medium ${t.textPrimary}`}>Agent</span>
-                </div>
-              </Link>
-              <Link
-                to="/chat/$conversationId"
-                params={{ conversationId: 'ghost:space:the_void' }}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                  activeConversationId === 'ghost:space:the_void' ? t.active : t.hover
-                }`}
-              >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${t.elevated}`}>
-                  <Globe className="w-5 h-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <span className={`text-sm font-medium ${t.textPrimary}`}>The Void</span>
-                </div>
-              </Link>
+                <Plus className="w-4 h-4" />
+                Start a conversation
+              </button>
             </div>
-            <MessageSquare className={`w-10 h-10 mx-auto mb-3 ${t.textMuted}`} />
-            <p className={`text-sm ${t.textMuted}`}>No conversations yet</p>
-            <button
-              type="button"
-              onClick={onNewDm}
-              className={`mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm ${t.buttonPrimary}`}
-            >
-              <Plus className="w-4 h-4" />
-              Start a conversation
-            </button>
           </div>
         ) : (
           <Virtuoso
             style={{ height: '100%' }}
             components={{
               Header: () => (
-                <div className={`px-2 py-2`}>
-                  <Link
-                    to="/chat/$conversationId"
-                    params={{ conversationId: 'main' }}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                      activeConversationId === 'main' ? t.active : t.hover
-                    }`}
-                  >
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${t.elevated}`}>
-                      <BrandIcon className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <span className={`text-sm font-medium ${t.textPrimary}`}>Agent</span>
-                    </div>
-                  </Link>
-                  <Link
-                    to="/chat/$conversationId"
-                    params={{ conversationId: 'ghost:space:the_void' }}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                      activeConversationId === 'ghost:space:the_void' ? t.active : t.hover
-                    }`}
-                  >
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${t.elevated}`}>
-                      <Globe className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <span className={`text-sm font-medium ${t.textPrimary}`}>The Void</span>
-                    </div>
-                  </Link>
+                <div>
+                  {syntheticConversations.map((s) =>
+                    renderConversationItem(s.id, s.name, s.type, s.preview, s.icon)
+                  )}
                 </div>
               ),
             }}

@@ -52,8 +52,35 @@ function ChatLayout() {
     Array<{ uid: string; displayName: string; email: string; photoURL: string | null }>
   >([])
   const [dmSearching, setDmSearching] = useState(false)
+  const [friends, setFriends] = useState<
+    Array<{ uid: string; displayName: string; email: string; photoURL: string | null }>
+  >([])
+  const [friendsLoading, setFriendsLoading] = useState(false)
 
   const dmSearchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  async function loadFriends() {
+    setFriendsLoading(true)
+    try {
+      const res = await fetch('/api/relationships?friend=true')
+      const data = await res.json()
+      const profiles = data.maps?.profiles ?? {}
+      const friendList = (data.relationships ?? []).map((r: any) => {
+        const profile = profiles[r.related_user_id] ?? {}
+        return {
+          uid: r.related_user_id,
+          displayName: profile.displayName ?? 'Unknown',
+          email: profile.email ?? '',
+          photoURL: profile.photoURL ?? null,
+        }
+      })
+      setFriends(friendList)
+    } catch {
+      // Friends load error
+    } finally {
+      setFriendsLoading(false)
+    }
+  }
 
   async function handleDmSearch(query: string) {
     setDmSearchQuery(query)
@@ -113,7 +140,7 @@ function ChatLayout() {
       {/* Conversation sidebar */}
       <ErrorBoundary name="ConversationSidebar">
         <ConversationSidebar
-          onNewDm={() => setShowNewDm(true)}
+          onNewDm={() => { setShowNewDm(true); loadFriends() }}
           onNewGroup={() => setShowNewGroup(true)}
           initialConversations={initialConversations}
           initialProfiles={initialProfiles}
@@ -155,55 +182,25 @@ function ChatLayout() {
 
           {/* Results */}
           <div className="max-h-60 overflow-y-auto">
-            {dmSearching ? (
+            {dmSearching || friendsLoading ? (
               <div className={`text-center py-4 text-sm ${t.textMuted}`}>
-                Searching...
-              </div>
-            ) : dmSearchResults.length > 0 ? (
-              <div className="space-y-0.5">
-                {dmSearchResults.map((result) => (
-                  <button
-                    key={result.uid}
-                    type="button"
-                    onClick={() => handleStartDm(result.uid)}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left ${t.hover} transition-colors`}
-                  >
-                    {result.photoURL ? (
-                      <img
-                        src={result.photoURL}
-                        alt={result.displayName}
-                        className="w-9 h-9 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div
-                        className={`w-9 h-9 rounded-full flex items-center justify-center ${t.elevated}`}
-                      >
-                        <span className={`text-sm font-medium ${t.textSecondary}`}>
-                          {(result.displayName || result.email)
-                            .charAt(0)
-                            .toUpperCase()}
-                        </span>
-                      </div>
-                    )}
-                    <div className="min-w-0">
-                      <p className={`text-sm ${t.textPrimary}`}>
-                        {result.displayName}
-                      </p>
-                      <p className={`text-xs ${t.textMuted}`}>{result.email}</p>
-                    </div>
-                  </button>
-                ))}
+                {dmSearching ? 'Searching...' : 'Loading friends...'}
               </div>
             ) : dmSearchQuery.length >= 2 ? (
-              <div className={`text-center py-4 text-sm ${t.textMuted}`}>
-                No users found
-              </div>
+              dmSearchResults.length > 0 ? (
+                <DmUserList users={dmSearchResults} onSelect={handleStartDm} t={t} />
+              ) : (
+                <div className={`text-center py-4 text-sm ${t.textMuted}`}>No users found</div>
+              )
+            ) : friends.length > 0 ? (
+              <>
+                <p className={`text-xs font-medium px-3 py-1.5 ${t.textMuted} uppercase tracking-wide`}>Friends</p>
+                <DmUserList users={friends} onSelect={handleStartDm} t={t} />
+              </>
             ) : (
               <div className="flex flex-col items-center py-6">
                 <MessageSquare className={`w-8 h-8 mb-2 ${t.textMuted}`} />
-                <p className={`text-sm ${t.textMuted}`}>
-                  Search for a user to start a conversation
-                </p>
+                <p className={`text-sm ${t.textMuted}`}>Search for a user to start a conversation</p>
               </div>
             )}
           </div>
@@ -216,6 +213,43 @@ function ChatLayout() {
         onClose={() => setShowNewGroup(false)}
         onGroupCreated={handleGroupCreated}
       />
+    </div>
+  )
+}
+
+function DmUserList({
+  users,
+  onSelect,
+  t,
+}: {
+  users: Array<{ uid: string; displayName: string; email: string; photoURL: string | null }>
+  onSelect: (uid: string) => void
+  t: ReturnType<typeof useTheme>
+}) {
+  return (
+    <div className="space-y-0.5">
+      {users.map((u) => (
+        <button
+          key={u.uid}
+          type="button"
+          onClick={() => onSelect(u.uid)}
+          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left ${t.hover} transition-colors`}
+        >
+          {u.photoURL ? (
+            <img src={u.photoURL} alt={u.displayName} className="w-9 h-9 rounded-full object-cover" />
+          ) : (
+            <div className={`w-9 h-9 rounded-full flex items-center justify-center ${t.elevated}`}>
+              <span className={`text-sm font-medium ${t.textSecondary}`}>
+                {(u.displayName || u.email).charAt(0).toUpperCase()}
+              </span>
+            </div>
+          )}
+          <div className="min-w-0">
+            <p className={`text-sm ${t.textPrimary}`}>{u.displayName}</p>
+            <p className={`text-xs ${t.textMuted}`}>{u.email}</p>
+          </div>
+        </button>
+      ))}
     </div>
   )
 }
