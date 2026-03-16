@@ -45,7 +45,7 @@ function RedeemFriendLinkPage() {
   }
 
   const handleLogin = () => {
-    navigate({ to: '/login' })
+    navigate({ to: '/auth' })
   }
 
   return (

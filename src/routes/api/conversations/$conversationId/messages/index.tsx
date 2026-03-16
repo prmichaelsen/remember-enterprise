@@ -4,7 +4,7 @@ import { getServerSession } from '@/lib/auth/session'
 import { MessageDatabaseService } from '@/services/message-database.service'
 
 export const Route = createFileRoute(
-  '/api/conversations/$conversationId/messages/',
+  '/api/conversations/$conversationId/messages/' as any,
 )({
   server: {
     handlers: {
@@ -60,7 +60,7 @@ export const Route = createFileRoute(
         }
 
         try {
-          const body = await request.json()
+          const body = await (request.json() as Promise<any>)
           const { content, role, attachments, sender_name, sender_photo_url, visible_to_user_ids } = body
 
           if (!content || typeof content !== 'string') {

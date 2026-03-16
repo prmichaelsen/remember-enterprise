@@ -218,7 +218,7 @@ export async function executeMCPTool(
   if (onProgress) {
     connection.client.setNotificationHandler(
       ProgressNotificationSchema,
-      (notification) => {
+      (notification: any) => {
         onProgress({
           progress: notification.params.progress,
           total: notification.params.total,

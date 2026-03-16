@@ -434,6 +434,8 @@ recent_work:
     description: "Audit #1: requirements vs implementation — 14/14 P0 features, 100% color system compliance"
   - date: 2026-03-15
     description: "Completed M9-M11: messaging API, groups & MCP API, streaming & tool blocks — all 11 milestones done"
+  - date: 2026-03-16
+    description: "Resolved all TypeScript errors (78→0) across 35 files — route casts, MCP imports, body typing, auth paths"
 
 next_steps:
   - Fix SSR build failure (TanStack Start manifest plugin error)

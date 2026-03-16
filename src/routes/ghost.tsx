@@ -21,7 +21,7 @@ export const Route = createFileRoute('/ghost')({
       const user = await getAuthSession()
       if (!user) return { initialGhosts: [] }
       const ghosts = await GhostDatabaseService.listGhosts(user.uid)
-      return { initialGhosts: ghosts }
+      return { initialGhosts: ghosts as any[] }
     } catch {
       return { initialGhosts: [] }
     }
@@ -70,7 +70,7 @@ function GhostPage() {
         ) : (
           <div className="px-4 py-6">
             <GhostSelector
-              selectedGhostId={selectedGhost?.id ?? null}
+              selectedGhostId={null}
               onSelect={setSelectedGhost}
               initialGhosts={initialGhosts}
             />

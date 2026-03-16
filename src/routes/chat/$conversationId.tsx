@@ -45,7 +45,7 @@ export const Route = createFileRoute('/chat/$conversationId')({
       if (!user) return { initialConversation: null, initialMessages: [] }
       const [conversation, msgResult] = await Promise.all([
         ConversationDatabaseService.getConversation(params.conversationId),
-        MessageDatabaseService.listMessages({ conversation_id: params.conversationId, limit: 50 }),
+        MessageDatabaseService.listMessages(params.conversationId, 50),
       ])
       return {
         initialConversation: conversation,
@@ -114,13 +114,13 @@ function ConversationView() {
         setHasMore(msgResult.has_more)
 
         // Mark as read
-        markConversationRead(conversationId, user.uid)
+        markConversationRead(conversationId)
 
         // Load permissions for group conversations
         if (conv?.type === 'group') {
           const [canManage, canKick] = await Promise.all([
-            checkPermission(conversationId, user.uid, 'can_manage_members'),
-            checkPermission(conversationId, user.uid, 'can_kick'),
+            checkPermission(conversationId, user!.uid, 'can_manage_members'),
+            checkPermission(conversationId, user!.uid, 'can_kick'),
           ])
           if (!cancelled) {
             setCurrentUserPermissions({
@@ -182,7 +182,7 @@ function ConversationView() {
         })
 
         // Auto-mark as read if this is the active conversation
-        markConversationRead(conversationId, user.uid)
+        markConversationRead(conversationId)
 
         // Clear typing indicator for this sender
         setTypingUsers((prev) =>

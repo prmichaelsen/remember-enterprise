@@ -62,7 +62,7 @@ export const Route = createFileRoute(
         }
 
         try {
-          const body = await request.json()
+          const body = await (request.json() as Promise<any>)
           const { content, saved_memory_id } = body
 
           const updates: Partial<{ content: string; saved_memory_id: string | null }> = {}
