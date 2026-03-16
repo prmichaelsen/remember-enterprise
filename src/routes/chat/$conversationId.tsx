@@ -32,7 +32,7 @@ import {
   insertToolUseBlock,
   completeToolUseBlock,
 } from '@/types/streaming'
-import { Users, ChevronLeft, Wifi, WifiOff, Ghost } from 'lucide-react'
+import { Users, ChevronLeft, Ghost } from 'lucide-react'
 import { ConversationHeaderMenu } from '@/components/chat/ConversationHeaderMenu'
 import { AddParticipantModal } from '@/components/chat/AddParticipantModal'
 import { getAuthSession } from '@/lib/auth/server-fn'
@@ -466,12 +466,6 @@ function ConversationView() {
           </div>
 
           <div className="flex items-center gap-2">
-            {wsStatus === 'connected' ? (
-              <Wifi className={`w-4 h-4 ${t.statusOnline}`} style={{ color: 'currentColor' }} />
-            ) : (
-              <WifiOff className={`w-4 h-4 ${t.textMuted}`} />
-            )}
-
             {isGroup && (
               <button
                 type="button"
