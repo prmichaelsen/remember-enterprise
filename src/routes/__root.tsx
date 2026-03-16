@@ -13,6 +13,7 @@ import {
 } from '@tanstack/react-router'
 import { ThemingProvider, type ThemeName } from '@/lib/theming'
 import { AuthProvider } from '@/components/auth/AuthContext'
+import { ToastProvider, StandaloneToastContainer } from '@prmichaelsen/pretty-toasts/standalone'
 import { AppShell } from '@/components/layout/AppShell'
 import { getStoredTheme } from '@/components/layout/ThemeToggle'
 import { getAuthSession } from '@/lib/auth/server-fn'
@@ -76,7 +77,10 @@ function RootLayout() {
   return (
     <AuthProvider initialUser={initialUser}>
       <ThemingProvider theme={theme}>
-        <AppShell currentTheme={theme} onThemeToggle={setTheme} />
+        <ToastProvider>
+          <AppShell currentTheme={theme} onThemeToggle={setTheme} />
+          <StandaloneToastContainer />
+        </ToastProvider>
       </ThemingProvider>
     </AuthProvider>
   )
