@@ -283,8 +283,8 @@ export class ChatRoom extends DurableObject {
       }))
       .filter((msg) => msg.content.trim() !== '')
 
-    // Build a basic system prompt
-    const systemPrompt = 'You are a helpful AI assistant. Be concise and accurate.'
+    // Build system prompt (ghost-specific if ghostOwner present)
+    const systemPrompt = this.buildSystemPrompt(ghostOwner, conversationId)
 
     // Get API key
     const apiKey = (this.env as any).ANTHROPIC_API_KEY as string | undefined
@@ -444,6 +444,57 @@ export class ChatRoom extends DurableObject {
     }
 
     return 'chat'
+  }
+
+  /**
+   * Build system prompt based on conversation context.
+   * Ghost conversations get persona-specific prompts that instruct the AI
+   * to search memories and speak from the ghost's perspective.
+   */
+  private buildSystemPrompt(ghostOwner: string | undefined, conversationId: string): string {
+    if (!ghostOwner) {
+      // Default agent prompt
+      return 'You are a helpful AI assistant. Be concise and accurate.'
+    }
+
+    // Parse ghostOwner: 'space:the_void' → type=space, id=the_void
+    const [ghostType, ghostId] = ghostOwner.split(':', 2)
+
+    if (ghostType === 'space') {
+      const spaceName = ghostId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+      return `You are the Ghost of ${spaceName} — an AI curator representing the collective memories shared in this space.
+
+You speak from the space's perspective, drawing from the memories that people have contributed to ${spaceName}.
+
+IMPORTANT: On EVERY user message, you MUST search the ${spaceName} space memories using the available memory search tools before responding. Use the memories you find to inform your response.
+
+When sharing information:
+- Reference specific memories that have been shared to the space
+- Acknowledge the contributors when relevant
+- Speak as the voice of the collective knowledge in ${spaceName}
+
+If no relevant memories are found, acknowledge that nothing has been shared about that topic yet in ${spaceName}.`
+    }
+
+    if (ghostType === 'group') {
+      const groupName = ghostId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+      return `You are the Ghost of ${groupName} — an AI representative of this group's shared knowledge and memories.
+
+IMPORTANT: On EVERY user message, you MUST search the ${groupName} group memories using available memory search tools before responding.
+
+Speak from the group's collective perspective and reference memories that group members have shared.`
+    }
+
+    if (ghostType === 'user') {
+      return `You are ${ghostId}'s ghost — an AI representation that speaks from their perspective using their memories.
+
+IMPORTANT: On EVERY user message, you MUST search ${ghostId}'s memories using available memory search tools before responding.
+
+Speak in first person as ${ghostId}. Share information based on their memories while respecting their privacy boundaries.`
+    }
+
+    // Fallback
+    return 'You are a helpful AI assistant. Be concise and accurate.'
   }
 
   private sendMsg(socket: WebSocket, message: ServerMessage): void {
