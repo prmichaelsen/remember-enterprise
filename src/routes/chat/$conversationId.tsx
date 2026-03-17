@@ -41,6 +41,9 @@ import { getTextContent } from '@/lib/message-content'
 import { useHeader } from '@/contexts/HeaderContext'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 
+// Anonymous message limit constant
+const ANON_MESSAGE_LIMIT = 10
+
 function ConversationViewWrapper() {
   const { conversationId } = Route.useParams()
   return <ConversationView key={conversationId} />
@@ -110,6 +113,16 @@ function ConversationView() {
   const [currentUserPermissions, setCurrentUserPermissions] = useState<GroupPermissions>({ ...MEMBER_PRESET })
   const [currentUserAuthLevel, setCurrentUserAuthLevel] = useState<GroupAuthLevel>(5)
   const [showAddParticipant, setShowAddParticipant] = useState(false)
+
+  // Derive anonymous message count from current messages
+  const userMessageCount = messages.filter(
+    m => m.role === 'user' && m.sender_user_id === user?.uid
+  ).length
+
+  const anonLimitReached = !!(
+    user?.isAnonymous &&
+    userMessageCount >= ANON_MESSAGE_LIMIT
+  )
 
   // Streaming blocks state for real-time agent generation
   const [streamingBlocks, setStreamingBlocks] = useState<StreamingBlock[]>([])

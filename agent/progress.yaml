@@ -549,12 +549,12 @@ tasks:
       completed_date: 2026-03-17T20:37:00Z
     - id: task-52
       name: Add Client-Side Message Count Logic
-      status: not_started
-      started: null
+      status: completed
+      started: 2026-03-17T20:37:00Z
       file: agent/tasks/milestone-14-anonymous-message-limit/task-52-client-side-count-logic.md
       estimated_hours: 2
-      actual_hours: null
-      completed_date: null
+      actual_hours: 0.1
+      completed_date: 2026-03-17T20:38:00Z
     - id: task-53
       name: Integrate SignupCta into Chat Route
       status: not_started
