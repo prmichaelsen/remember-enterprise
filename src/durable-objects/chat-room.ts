@@ -187,6 +187,31 @@ export class ChatRoom extends DurableObject {
 
     const conversationType = await this.getConversationType(userId, conversationId)
 
+    // === ANONYMOUS MESSAGE LIMIT VALIDATION ===
+    const isAnonymous = await this.checkIfAnonymous(userId)
+
+    if (isAnonymous) {
+      const stats = await this.getUserStats(userId)
+      const currentCount = stats?.count ?? 0
+
+      if (currentCount >= ANON_MESSAGE_LIMIT) {
+        // Reject message — limit reached
+        this.sendMsg(socket, {
+          type: 'error',
+          error: 'limit_reached',
+          message: `You've sent ${ANON_MESSAGE_LIMIT} messages. Sign up to continue!`,
+          signupUrl: `/auth?mode=signup&redirect_url=${encodeURIComponent('/')}`,
+        })
+
+        log.info({ userId, currentCount }, 'Anonymous message limit reached')
+        return // Early return — don't process message
+      }
+
+      // If we reach here, validation passed
+      log.debug({ userId, currentCount }, 'Anonymous user under limit')
+    }
+    // === END VALIDATION ===
+
     // Save user message to Firestore
     const savedMessage = await MessageDatabaseService.sendMessage(
       conversationId,
