@@ -8,10 +8,26 @@ import type { WebSocketMessage } from '@/types/websocket'
 
 type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error'
 
-export function useWebSocket(conversationId: string | null) {
+interface UseWebSocketParams {
+  conversationId: string | null
+  ghostOwner?: string
+}
+
+export function useWebSocket(params: UseWebSocketParams | string | null) {
+  // Support both object and legacy string parameter
+  const { conversationId, ghostOwner } = typeof params === 'string' || params === null
+    ? { conversationId: params, ghostOwner: undefined }
+    : params
+
   const [status, setStatus] = useState<ConnectionStatus>('disconnected')
   const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null)
   const managerRef = useRef<WebSocketManager | null>(null)
+  const ghostOwnerRef = useRef<string | undefined>(ghostOwner)
+
+  // Update ghostOwnerRef when ghostOwner changes
+  useEffect(() => {
+    ghostOwnerRef.current = ghostOwner
+  }, [ghostOwner])
 
   useEffect(() => {
     if (!conversationId) return
@@ -42,7 +58,11 @@ export function useWebSocket(conversationId: string | null) {
   }, [conversationId])
 
   const send = useCallback((message: WebSocketMessage) => {
-    managerRef.current?.send(message)
+    const enrichedMessage = {
+      ...message,
+      ...(ghostOwnerRef.current && { ghostOwner: ghostOwnerRef.current }),
+    }
+    managerRef.current?.send(enrichedMessage)
   }, [])
 
   return { status, lastMessage, send }

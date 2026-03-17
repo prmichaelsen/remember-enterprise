@@ -13,6 +13,8 @@ export interface ClientInitMessage {
   type: 'init'
   userId: string
   conversationId: string
+  /** Ghost owner user ID for ghost/persona conversations (e.g., 'space:the_void') */
+  ghostOwner?: string
 }
 
 export interface ClientChatMessage {
@@ -20,6 +22,8 @@ export interface ClientChatMessage {
   userId: string
   conversationId: string
   message: MessageContent
+  /** Ghost owner user ID for ghost/persona conversations (e.g., 'space:the_void') */
+  ghostOwner?: string
 }
 
 export interface ClientLoadMessagesMessage {
@@ -28,6 +32,8 @@ export interface ClientLoadMessagesMessage {
   conversationId: string
   limit?: number
   startAfter?: string
+  /** Ghost owner user ID for ghost/persona conversations (e.g., 'space:the_void') */
+  ghostOwner?: string
 }
 
 export interface ClientCancelMessage {

@@ -35,6 +35,8 @@ export interface ProcessMessageParams {
   signal?: AbortSignal
   /** User ID - required for MCP tool integration */
   userId?: string
+  /** Ghost owner user ID for ghost/persona conversations (e.g., 'space:the_void') */
+  ghostOwner?: string
 }
 
 export class ChatEngine {

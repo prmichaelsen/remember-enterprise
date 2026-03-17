@@ -29,6 +29,8 @@ interface ClientMessage {
   message?: MessageContent
   userId: string
   conversationId?: string
+  /** Ghost owner user ID for ghost/persona conversations (e.g., 'space:the_void') */
+  ghostOwner?: string
   limit?: number
   startAfter?: string
 }
@@ -117,7 +119,7 @@ export class ChatRoom extends DurableObject {
   }
 
   private async handleInit(data: ClientMessage, socket: WebSocket): Promise<void> {
-    const { userId, conversationId } = data
+    const { userId, conversationId, ghostOwner } = data
 
     if (userId) {
       this.sessions.set(socket, userId)
@@ -164,7 +166,7 @@ export class ChatRoom extends DurableObject {
   }
 
   private async handleMessage(data: ClientMessage, socket: WebSocket): Promise<void> {
-    const { userId, conversationId = 'main', message } = data
+    const { userId, conversationId = 'main', message, ghostOwner } = data
 
     if (!message) {
       this.sendMsg(socket, { type: 'error', error: 'No message provided' })
@@ -303,6 +305,7 @@ export class ChatRoom extends DurableObject {
         messages: chatMessages,
         systemPrompt,
         userId,
+        ghostOwner,  // Pass space context to ChatEngine
         signal: controller.signal,
         onEvent: (event: StreamEvent) => {
           switch (event.type) {
@@ -399,7 +402,7 @@ export class ChatRoom extends DurableObject {
   }
 
   private async handleLoadMessages(data: ClientMessage, socket: WebSocket): Promise<void> {
-    const { userId, conversationId = 'main', limit = 50, startAfter } = data
+    const { userId, conversationId = 'main', limit = 50, startAfter, ghostOwner } = data
 
     try {
       const conversationType = await this.getConversationType(userId, conversationId)

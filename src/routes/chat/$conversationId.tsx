@@ -129,8 +129,20 @@ function ConversationView() {
   const [streamingBlocks, setStreamingBlocks] = useState<StreamingBlock[]>([])
   const streamingMessageIdRef = useRef<string | null>(null)
 
+  // Determine if this is a ghost conversation
+  const ghostOwner = conversationId.startsWith('ghost:space:')
+    ? conversationId.replace('ghost:', '')  // 'ghost:space:the_void' → 'space:the_void'
+    : undefined
+
+  if (ghostOwner) {
+    console.log('[ChatRoute] Ghost conversation detected', { conversationId, ghostOwner })
+  }
+
   // WebSocket for real-time
-  const { status: wsStatus, lastMessage: wsMessage, send: wsSend } = useWebSocket(conversationId)
+  const { status: wsStatus, lastMessage: wsMessage, send: wsSend } = useWebSocket({
+    conversationId,
+    ghostOwner,
+  })
 
   // Typing indicator debounce refs
   const typingTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
