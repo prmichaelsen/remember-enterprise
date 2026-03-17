@@ -111,6 +111,14 @@ milestones:
     tasks_completed: 6
     estimated_weeks: 2
 
+  - id: milestone_14
+    name: Anonymous Message Limit
+    status: not_started
+    file: agent/milestones/milestone-14-anonymous-message-limit.md
+    tasks_total: 9
+    tasks_completed: 0
+    estimated_weeks: 2-3
+
 tasks:
   milestone_1:
     - id: task-2
@@ -530,11 +538,85 @@ tasks:
       actual_hours: null
       completed_date: null
 
+  milestone_14:
+    - id: task-51
+      name: Create SignupCta Component
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-14-anonymous-message-limit/task-51-signupcta-component.md
+      estimated_hours: 2
+      actual_hours: null
+      completed_date: null
+    - id: task-52
+      name: Add Client-Side Message Count Logic
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-14-anonymous-message-limit/task-52-client-side-count-logic.md
+      estimated_hours: 2
+      actual_hours: null
+      completed_date: null
+    - id: task-53
+      name: Integrate SignupCta into Chat Route
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-14-anonymous-message-limit/task-53-chat-route-integration.md
+      estimated_hours: 2
+      actual_hours: null
+      completed_date: null
+    - id: task-54
+      name: Client-Side Error Handling for Limit
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-14-anonymous-message-limit/task-54-client-error-handling.md
+      estimated_hours: 2
+      actual_hours: null
+      completed_date: null
+    - id: task-55
+      name: Firestore Stats Schema & Helper Methods
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-14-anonymous-message-limit/task-55-firestore-stats-schema.md
+      estimated_hours: 3
+      actual_hours: null
+      completed_date: null
+    - id: task-56
+      name: ChatRoom DO Anonymous Detection
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-14-anonymous-message-limit/task-56-anonymous-detection.md
+      estimated_hours: 2
+      actual_hours: null
+      completed_date: null
+    - id: task-57
+      name: ChatRoom DO Message Count Validation
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-14-anonymous-message-limit/task-57-message-count-validation.md
+      estimated_hours: 3
+      actual_hours: null
+      completed_date: null
+    - id: task-58
+      name: ChatRoom DO Count Increment Logic
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-14-anonymous-message-limit/task-58-count-increment-logic.md
+      estimated_hours: 2
+      actual_hours: null
+      completed_date: null
+    - id: task-59
+      name: Integration Testing & Bypass Prevention
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-14-anonymous-message-limit/task-59-integration-testing.md
+      estimated_hours: 4
+      actual_hours: null
+      completed_date: null
+
 documentation:
-  design_documents: 3
-  milestone_documents: 12
+  design_documents: 4
+  milestone_documents: 14
   pattern_documents: 44
-  task_documents: 47
+  task_documents: 59
 
 progress:
   planning: 100
@@ -564,7 +646,9 @@ recent_work:
     description: "Resolved all TypeScript errors (78→0) across 35 files — route casts, MCP imports, body typing, auth paths"
 
 next_steps:
-  - "M12: Message Action Bar — start with Task 38 (SVG migration), then Task 39 (ActionBar infrastructure)"
+  - "M12: Complete remaining task (Task 38: SVG migration)"
+  - "M13: Custom Theme Editor — all tasks ready to start"
+  - "M14: Anonymous Message Limit — two-phase implementation (client-side gating → server enforcement)"
   - Fix SSR build failure (TanStack Start manifest plugin error)
   - Deploy to Cloudflare Workers
 
