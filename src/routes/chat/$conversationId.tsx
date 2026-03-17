@@ -69,7 +69,7 @@ export const Route = createFileRoute('/chat/$conversationId')({
             conversation = await ConversationDatabaseService.getConversation('main', user.uid)
             break
           case 'ghost:space:the_void':
-            await ConversationDatabaseService.ensureUserConversation(user.uid, 'ghost:space:the_void', { title: 'The Void', type: 'chat' })
+            await ConversationDatabaseService.ensureUserConversation(user.uid, 'ghost:space:the_void', { title: 'Ghost of the Void', type: 'chat' })
             conversation = await ConversationDatabaseService.getConversation('ghost:space:the_void', user.uid)
             break
         }

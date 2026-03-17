@@ -20,7 +20,7 @@ export const Route = createFileRoute('/api/conversations/$conversationId')({
           // Lazily create synthetic conversations on first access
           const syntheticDefaults: Record<string, { title: string; type: 'chat' }> = {
             'main': { title: 'Agent', type: 'chat' },
-            'ghost:space:the_void': { title: 'The Void', type: 'chat' },
+            'ghost:space:the_void': { title: 'Ghost of the Void', type: 'chat' },
           }
           const defaults = syntheticDefaults[params.conversationId]
           if (defaults) {

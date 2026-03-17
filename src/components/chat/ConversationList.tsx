@@ -121,9 +121,9 @@ export function ConversationList({ onNewDm, onNewGroup, initialConversations, in
     },
     {
       id: 'ghost:space:the_void',
-      name: 'The Void',
+      name: 'Ghost of the Void',
       type: 'group',
-      preview: 'Anonymous posting feed',
+      preview: 'Ask me about anything shared in The Void',
       icon: <Globe className="w-5 h-5" />,
     },
   ]
