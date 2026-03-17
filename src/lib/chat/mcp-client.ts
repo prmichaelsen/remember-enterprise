@@ -203,6 +203,7 @@ export async function executeMCPTool(
   toolName: string,
   input: Record<string, unknown>,
   toolToConnectionMap: Map<string, MCPClientConnection>,
+  ghostOwner?: string,
   onProgress?: (progress: {
     progress?: number
     total?: number
@@ -212,6 +213,24 @@ export async function executeMCPTool(
   const connection = toolToConnectionMap.get(toolName)
   if (!connection) {
     throw new Error(`No MCP connection found for tool: ${toolName}`)
+  }
+
+  // Add ghost context headers if ghostOwner is provided
+  if (ghostOwner && connection._transportHeaders) {
+    // Parse ghostOwner format: 'space:the_void' → type=space, id=the_void
+    const [ghostType, ghostId] = ghostOwner.split(':', 2)
+
+    connection._transportHeaders['X-Internal-Type'] = 'ghost'
+    connection._transportHeaders['X-Ghost-Type'] = ghostType
+
+    // Set the appropriate ID header based on ghost type
+    if (ghostType === 'space') {
+      connection._transportHeaders['X-Ghost-Space'] = ghostId
+    } else if (ghostType === 'group') {
+      connection._transportHeaders['X-Ghost-Group'] = ghostId
+    } else if (ghostType === 'user') {
+      connection._transportHeaders['X-Ghost-Owner'] = ghostId
+    }
   }
 
   // Set up progress notification handler if callback provided

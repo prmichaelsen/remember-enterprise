@@ -39,6 +39,7 @@ export interface ExecuteToolParams {
   toolName: string
   toolInput: Record<string, unknown>
   connections: MCPConnection[]
+  ghostOwner?: string
   onStatusUpdate?: (status: ToolStatus) => void
   onProgress?: (progress: {
     progress?: number

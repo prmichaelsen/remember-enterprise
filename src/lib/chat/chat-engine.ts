@@ -59,7 +59,7 @@ export class ChatEngine {
    * via the onEvent callback. Returns the final content for persistence.
    */
   async processMessage(params: ProcessMessageParams): Promise<ProcessMessageResult> {
-    const { messages, systemPrompt, onEvent, signal, userId } = params
+    const { messages, systemPrompt, onEvent, signal, userId, ghostOwner } = params
 
     // If no MCP provider or no userId, use the simple path
     if (!this.mcpProvider || !userId) {
@@ -124,6 +124,7 @@ export class ChatEngine {
       messages,
       systemPrompt,
       tools: mcpTools,
+      ghostOwner,
       onEvent,
       signal,
     })
@@ -138,10 +139,11 @@ export class ChatEngine {
     messages: ChatMessage[]
     systemPrompt: string
     tools: Tool[]
+    ghostOwner?: string
     onEvent: (event: StreamEvent) => void
     signal?: AbortSignal
   }): Promise<ProcessMessageResult> {
-    const { messages, systemPrompt, tools, onEvent, signal } = params
+    const { messages, systemPrompt, tools, ghostOwner, onEvent, signal } = params
 
     // Track intermediate assistant messages (content blocks from each tool round)
     const turnMessages: Array<{ role: 'assistant'; content: ContentBlock[] }> = []
@@ -329,6 +331,7 @@ export class ChatEngine {
           const result = await this.mcpProvider!.executeTool({
             toolName,
             toolInput,
+            ghostOwner,
             connections: [],
           })
 

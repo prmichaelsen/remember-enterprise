@@ -295,7 +295,7 @@ export class MCPProvider implements IMCPProvider {
   }
 
   async executeTool(params: ExecuteToolParams): Promise<unknown> {
-    const { toolName, toolInput, onProgress } = params
+    const { toolName, toolInput, ghostOwner, onProgress } = params
 
     // Proactively refresh token if expiring soon
     const connection = this.toolToConnectionMap.get(toolName)
@@ -308,6 +308,7 @@ export class MCPProvider implements IMCPProvider {
         toolName,
         toolInput,
         this.toolToConnectionMap,
+        ghostOwner,
         onProgress,
       )
     } catch (error) {
@@ -321,6 +322,7 @@ export class MCPProvider implements IMCPProvider {
           toolName,
           toolInput,
           this.toolToConnectionMap,
+          ghostOwner,
         )
       }
       throw error
