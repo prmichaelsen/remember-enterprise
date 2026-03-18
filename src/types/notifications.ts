@@ -10,6 +10,7 @@ export type NotificationType =
   | 'memory_saved'
   | 'friend_request'
   | 'friend_accepted'
+  | 'thread_reply'
 
 export interface Notification {
   id: string
@@ -20,6 +21,7 @@ export interface Notification {
   conversation_id: string | null
   read: boolean
   created_at: string
+  metadata?: Record<string, any>
 }
 
 export interface NotificationPreferences {

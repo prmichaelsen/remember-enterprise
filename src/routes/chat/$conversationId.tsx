@@ -4,10 +4,10 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate, useLocation } from '@tanstack/react-router'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useTheme } from '@/lib/theming'
 import { useAuth } from '@/components/auth/AuthContext'
-import { SignupCta } from '@/components/auth/SignupCta'
 import { useWebSocket } from '@/hooks/useWebSocket'
 import { MessageList } from '@/components/chat/MessageList'
 import { MessageCompose } from '@/components/chat/MessageCompose'
@@ -41,9 +41,9 @@ import { MessageDatabaseService } from '@/services/message-database.service'
 import { getTextContent } from '@/lib/message-content'
 import { useHeader } from '@/contexts/HeaderContext'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
-
-// Anonymous message limit constant
-const ANON_MESSAGE_LIMIT = 10
+import { ThreadMetadataService } from '@/services/thread-metadata.service'
+import type { ThreadMetadata } from '@/types/threads'
+import { parseThreadHash } from '@/lib/thread-links'
 
 function ConversationViewWrapper() {
   const { conversationId } = Route.useParams()
@@ -69,7 +69,7 @@ export const Route = createFileRoute('/chat/$conversationId')({
             conversation = await ConversationDatabaseService.getConversation('main', user.uid)
             break
           case 'ghost:space:the_void':
-            await ConversationDatabaseService.ensureUserConversation(user.uid, 'ghost:space:the_void', { title: 'Ghost of the Void', type: 'chat' })
+            await ConversationDatabaseService.ensureUserConversation(user.uid, 'ghost:space:the_void', { title: 'The Void', type: 'chat' })
             conversation = await ConversationDatabaseService.getConversation('ghost:space:the_void', user.uid)
             break
         }
@@ -96,6 +96,9 @@ function ConversationView() {
   const t = useTheme()
   const { user } = useAuth()
   const { conversationId } = Route.useParams()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const isMobile = useMediaQuery('(max-width: 768px)')
 
   // SSR data from beforeLoad
   const { initialConversation, initialMessages, initialProfiles, initialHasMore } = Route.useRouteContext()
@@ -114,38 +117,91 @@ function ConversationView() {
   const [currentUserPermissions, setCurrentUserPermissions] = useState<GroupPermissions>({ ...MEMBER_PRESET })
   const [currentUserAuthLevel, setCurrentUserAuthLevel] = useState<GroupAuthLevel>(5)
   const [showAddParticipant, setShowAddParticipant] = useState(false)
-
-  // Derive anonymous message count from current messages
-  const userMessageCount = messages.filter(
-    m => m.role === 'user' && m.sender_user_id === user?.uid
-  ).length
-
-  const anonLimitReached = !!(
-    user?.isAnonymous &&
-    userMessageCount >= ANON_MESSAGE_LIMIT
-  )
+  const [openThread, setOpenThread] = useState<Message | null>(null)
+  const [threadMetadata, setThreadMetadata] = useState<Record<string, ThreadMetadata>>({})
 
   // Streaming blocks state for real-time agent generation
   const [streamingBlocks, setStreamingBlocks] = useState<StreamingBlock[]>([])
   const streamingMessageIdRef = useRef<string | null>(null)
 
-  // Determine if this is a ghost conversation
-  const ghostOwner = conversationId.startsWith('ghost:space:')
-    ? conversationId.replace('ghost:', '')  // 'ghost:space:the_void' → 'space:the_void'
-    : undefined
-
-  if (ghostOwner) {
-    console.log('[ChatRoute] Ghost conversation detected', { conversationId, ghostOwner })
-  }
-
   // WebSocket for real-time
-  const { status: wsStatus, lastMessage: wsMessage, send: wsSend } = useWebSocket({
-    conversationId,
-    ghostOwner,
-  })
+  const { status: wsStatus, lastMessage: wsMessage, send: wsSend } = useWebSocket(conversationId)
 
   // Typing indicator debounce refs
   const typingTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
+
+  // Load thread metadata for visible messages
+  useEffect(() => {
+    async function loadThreadMetadata() {
+      if (!messages.length) return
+
+      // Only load metadata for top-level messages
+      const topLevelMessages = messages.filter(m => !m.parent_message_id)
+      if (!topLevelMessages.length) return
+
+      // Batch load metadata in parallel
+      const metadataPromises = topLevelMessages.map(async (msg) => {
+        try {
+          const metadata = await ThreadMetadataService.getMetadata(conversationId, msg.id)
+          return { messageId: msg.id, metadata }
+        } catch (error) {
+          console.error(`Failed to load thread metadata for message ${msg.id}:`, error)
+          return { messageId: msg.id, metadata: null }
+        }
+      })
+
+      const results = await Promise.all(metadataPromises)
+      const metadataMap: Record<string, ThreadMetadata> = {}
+      for (const { messageId, metadata } of results) {
+        if (metadata) {
+          metadataMap[messageId] = metadata
+        }
+      }
+      setThreadMetadata(metadataMap)
+    }
+
+    loadThreadMetadata()
+  }, [messages, conversationId])
+
+  // Handle deep links to threads (e.g., #thread-{parentId}/reply-{replyId})
+  useEffect(() => {
+    function handleHashChange() {
+      const hash = window.location.hash
+
+      if (!hash) {
+        // Hash cleared - close thread
+        setOpenThread(null)
+        return
+      }
+
+      const parsed = parseThreadHash(hash)
+      if (!parsed) return
+
+      // Find the parent message in the current messages
+      const parentMessage = messages.find(m => m.id === parsed.parentId)
+      if (parentMessage) {
+        setOpenThread(parentMessage)
+
+        // If there's a specific reply ID, scroll to it after a short delay
+        if (parsed.replyId) {
+          setTimeout(() => {
+            const replyElement = document.getElementById(`message-${parsed.replyId}`)
+            replyElement?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          }, 300)
+        }
+      }
+    }
+
+    // Initial load
+    handleHashChange()
+
+    // Listen for hash changes (back button, deep links)
+    window.addEventListener('hashchange', handleHashChange)
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange)
+    }
+  }, [messages])
 
   // Load conversation + messages if SSR didn't provide them (client-side navigation)
   useEffect(() => {
@@ -200,24 +256,46 @@ function ConversationView() {
           }
         }
 
-        // Deduplicate and add to messages
-        setMessages((prev) => {
-          if (prev.some((m) => m.id === msg.id)) return prev
-          return [...prev, msg]
-        })
+        // Route thread replies to ThreadPanel, main messages to main chat
+        if (msg.parent_message_id) {
+          // Thread reply - route to ThreadPanel if open
+          if (openThread && msg.parent_message_id === openThread.id) {
+            const threadPanelId = `thread-${msg.parent_message_id}`
+            const threadPanel = (window as any)[threadPanelId]
+            if (threadPanel && threadPanel.addReply) {
+              threadPanel.addReply(msg)
+            }
+          }
 
-        // Clear streaming blocks when a saved message arrives
-        setStreamingBlocks([])
+          // Refresh thread metadata for parent message
+          ThreadMetadataService.getMetadata(conversationId, msg.parent_message_id).then((metadata) => {
+            if (metadata) {
+              setThreadMetadata((prev) => ({
+                ...prev,
+                [msg.parent_message_id!]: metadata,
+              }))
+            }
+          })
+        } else {
+          // Top-level message - add to main chat
+          setMessages((prev) => {
+            if (prev.some((m) => m.id === msg.id)) return prev
+            return [...prev, msg]
+          })
 
-        // Update sidebar last_message preview
-        updateLastMessage(conversationId, {
-          content: getTextContent(msg.content),
-          sender_user_id: msg.sender_user_id ?? '',
-          timestamp: msg.timestamp,
-        })
+          // Clear streaming blocks when a saved message arrives
+          setStreamingBlocks([])
 
-        // Auto-mark as read
-        markConversationRead(conversationId)
+          // Update sidebar last_message preview
+          updateLastMessage(conversationId, {
+            content: getTextContent(msg.content),
+            sender_user_id: msg.sender_user_id ?? '',
+            timestamp: msg.timestamp,
+          })
+
+          // Auto-mark as read
+          markConversationRead(conversationId)
+        }
 
         // Clear typing indicator for sender
         if (msg.sender_user_id) {
@@ -268,19 +346,7 @@ function ConversationView() {
 
       case 'error': {
         const event = wsMessage as any
-
-        // Handle anonymous message limit error specially
-        if (event.error === 'limit_reached') {
-          // Force UI to show SignupCta by clearing messages state
-          // This ensures client count re-syncs with server
-          setMessages([])
-
-          // Optionally, show a toast notification
-          console.warn('[WebSocket] Anonymous message limit reached')
-        } else {
-          console.error('[WebSocket] Error:', event.error)
-        }
-
+        console.error('[WebSocket] Error:', event.error)
         setStreamingBlocks([])
         streamingMessageIdRef.current = null
         break
@@ -384,6 +450,48 @@ function ConversationView() {
       message: content,
     } as any)
   }
+
+  // Send thread reply handler
+  function handleSendReply(content: string, parentMessageId: string) {
+    if (!user) return
+    wsSend({
+      type: 'message',
+      userId: user.uid,
+      conversationId,
+      message: content,
+      parent_message_id: parentMessageId,
+    } as any)
+  }
+
+  // Open thread handler (mobile: push hash for back button support)
+  function handleOpenThread(message: Message) {
+    if (isMobile) {
+      navigate({ hash: `thread-${message.id}` })
+    }
+    setOpenThread(message)
+  }
+
+  // Close thread handler (mobile: clear hash)
+  function handleCloseThread() {
+    if (isMobile) {
+      navigate({ hash: '' })
+    }
+    setOpenThread(null)
+    // Clear hash if present (desktop)
+    if (!isMobile && typeof window !== 'undefined' && window.location.hash) {
+      history.replaceState(null, '', window.location.pathname + window.location.search)
+    }
+  }
+
+  // Scroll lock when thread is open on mobile
+  useEffect(() => {
+    if (openThread && isMobile) {
+      document.body.style.overflow = 'hidden'
+      return () => {
+        document.body.style.overflow = ''
+      }
+    }
+  }, [openThread, isMobile])
 
   // Typing indicator handlers
   function handleTypingStart() {
@@ -538,24 +646,21 @@ function ConversationView() {
             onDelete={handleDelete}
             onTogglePin={handleTogglePin}
             onReport={handleReport}
+            onOpenThread={handleOpenThread}
+            threadMetadata={threadMetadata}
             conversationType={conversation?.type}
           />
         </ErrorBoundary>
 
         {/* Compose */}
         <ErrorBoundary name="MessageCompose">
-          {/* Anonymous users: show sign-up prompt after 10 messages */}
-          {anonLimitReached ? (
-            <SignupCta message="You've sent 10 messages! Sign up to continue the conversation." />
-          ) : (
-            <MessageCompose
-              conversationId={conversationId}
-              senderId={user?.uid ?? ''}
-              onSend={handleSend}
-              onTypingStart={handleTypingStart}
-              onTypingStop={handleTypingStop}
-            />
-          )}
+          <MessageCompose
+            conversationId={conversationId}
+            senderId={user?.uid ?? ''}
+            onSend={handleSend}
+            onTypingStart={handleTypingStart}
+            onTypingStop={handleTypingStop}
+          />
         </ErrorBoundary>
       </div>
 

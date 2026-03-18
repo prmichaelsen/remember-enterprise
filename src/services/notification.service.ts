@@ -11,6 +11,7 @@ export interface CreateNotificationParams {
   title: string
   body: string
   conversation_id?: string | null
+  metadata?: Record<string, any>
 }
 
 /**

@@ -135,6 +135,7 @@ export interface ProgressStream {
 export interface Message {
   id: string
   conversation_id: string
+  parent_message_id?: string | null
   role: 'user' | 'assistant' | 'system'
   content: MessageContent
   timestamp: string
@@ -216,3 +217,7 @@ export const MEMBER_PRESET: GroupPermissions = {
   can_kick: false,
   can_ban: false,
 }
+
+// ── Thread types ────────────────────────────────────────────────────
+
+export type { ThreadMetadata, ThreadIndicator } from './threads'

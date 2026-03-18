@@ -8,8 +8,7 @@
  *  3. Optionally sends an FCM push notification (if the user has push enabled)
  */
 
-import type { Notification, NotificationType } from '@/types/notifications'
-import type { NotificationEvent } from '@/types/websocket'
+import type { Notification } from '@/types/notifications'
 import {
   createNotification,
   type CreateNotificationParams,
@@ -39,7 +38,7 @@ async function broadcastToUser(
   const doId = ctx.notificationHub.idFromName(userId)
   const stub = ctx.notificationHub.get(doId)
 
-  const event: { type: string; data: NotificationEvent['notification'] } = {
+  const event = {
     type: 'new_notification',
     data: {
       id: notification.id,
@@ -206,6 +205,43 @@ export async function triggerMentionNotification(
         ? params.context.slice(0, 117) + '...'
         : params.context,
       conversation_id: params.conversationId,
+    },
+    ctx,
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Trigger: Thread Reply
+// ---------------------------------------------------------------------------
+
+export interface ThreadReplyTriggerParams {
+  recipientUserId: string
+  senderName: string
+  parentMessagePreview: string
+  replyPreview: string
+  conversationId: string
+  parentMessageId: string
+  replyMessageId: string
+}
+
+export async function triggerThreadReplyNotification(
+  params: ThreadReplyTriggerParams,
+  ctx?: BroadcastContext,
+): Promise<Notification> {
+  return triggerNotification(
+    {
+      user_id: params.recipientUserId,
+      type: 'thread_reply',
+      title: `${params.senderName} replied in thread`,
+      body: params.replyPreview.length > 120
+        ? params.replyPreview.slice(0, 117) + '...'
+        : params.replyPreview,
+      conversation_id: params.conversationId,
+      metadata: {
+        parent_message_id: params.parentMessageId,
+        reply_message_id: params.replyMessageId,
+        parent_message_preview: params.parentMessagePreview.substring(0, 80),
+      },
     },
     ctx,
   )

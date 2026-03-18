@@ -13,26 +13,26 @@ import { ChatEngine } from '@/lib/chat/chat-engine'
 import { AnthropicAIProvider } from '@/lib/chat/anthropic-ai-provider'
 import { MCPProvider } from '@/lib/chat/mcp-provider'
 import { MessageDatabaseService } from '@/services/message-database.service'
+import { ThreadMetadataService } from '@/services/thread-metadata.service'
 import { ConversationDatabaseService } from '@/services/conversation-database.service'
+import { triggerThreadReplyNotification } from '@/services/notification-triggers'
 import { detectAgentMention, shouldAgentRespond } from '@/lib/chat/agent-mention'
 import { getTextContent } from '@/lib/message-content'
 import { createLogger } from '@/lib/logger'
-import { getDocument, setDocument } from '@prmichaelsen/firebase-admin-sdk-v8'
 import type { Message, MessageContent } from '@/types/conversations'
 import type { StreamEvent } from '@/lib/chat/types'
 
 const log = createLogger('ChatRoom')
-const ANON_MESSAGE_LIMIT = 10
 
 interface ClientMessage {
   type: 'message' | 'load_messages' | 'init' | 'cancel'
   message?: MessageContent
   userId: string
   conversationId?: string
-  /** Ghost owner user ID for ghost/persona conversations (e.g., 'space:the_void') */
-  ghostOwner?: string
   limit?: number
   startAfter?: string
+  /** Parent message ID for thread replies */
+  parent_message_id?: string | null
 }
 
 interface ServerMessage {
@@ -46,7 +46,6 @@ export class ChatRoom extends DurableObject {
   private activeControllers: Map<string, AbortController> = new Map()
   private mcpProvider: MCPProvider
   private request?: Request
-  private anonCache: Map<string, boolean> = new Map()
 
   constructor(state: DurableObjectState, env: Env) {
     super(state, env)
@@ -119,7 +118,7 @@ export class ChatRoom extends DurableObject {
   }
 
   private async handleInit(data: ClientMessage, socket: WebSocket): Promise<void> {
-    const { userId, conversationId, ghostOwner } = data
+    const { userId, conversationId } = data
 
     if (userId) {
       this.sessions.set(socket, userId)
@@ -166,7 +165,7 @@ export class ChatRoom extends DurableObject {
   }
 
   private async handleMessage(data: ClientMessage, socket: WebSocket): Promise<void> {
-    const { userId, conversationId = 'main', message, ghostOwner } = data
+    const { userId, conversationId = 'main', message } = data
 
     if (!message) {
       this.sendMsg(socket, { type: 'error', error: 'No message provided' })
@@ -189,31 +188,6 @@ export class ChatRoom extends DurableObject {
 
     const conversationType = await this.getConversationType(userId, conversationId)
 
-    // === ANONYMOUS MESSAGE LIMIT VALIDATION ===
-    const isAnonymous = await this.checkIfAnonymous(userId)
-
-    if (isAnonymous) {
-      const stats = await this.getUserStats(userId)
-      const currentCount = stats?.count ?? 0
-
-      if (currentCount >= ANON_MESSAGE_LIMIT) {
-        // Reject message — limit reached
-        this.sendMsg(socket, {
-          type: 'error',
-          error: 'limit_reached',
-          message: `You've sent ${ANON_MESSAGE_LIMIT} messages. Sign up to continue!`,
-          signupUrl: `/auth?mode=signup&redirect_url=${encodeURIComponent('/')}`,
-        })
-
-        log.info({ userId, currentCount }, 'Anonymous message limit reached')
-        return // Early return — don't process message
-      }
-
-      // If we reach here, validation passed
-      log.debug({ userId, currentCount }, 'Anonymous user under limit')
-    }
-    // === END VALIDATION ===
-
     // Save user message to Firestore
     const savedMessage = await MessageDatabaseService.sendMessage(
       conversationId,
@@ -221,18 +195,68 @@ export class ChatRoom extends DurableObject {
         sender_user_id: userId,
         content: message,
         role: 'user',
+        parent_message_id: data.parent_message_id,
       },
       conversationType === 'chat' ? undefined : conversationType,
     )
 
-    // === INCREMENT MESSAGE COUNT FOR ANONYMOUS USERS ===
-    if (isAnonymous && savedMessage) {
-      // Fire-and-forget increment (don't await to avoid blocking)
-      this.incrementMessageCount(userId).catch((err) => {
-        log.error({ err, userId, messageId: savedMessage.id }, 'Increment failed (non-critical)')
-      })
+    // === UPDATE THREAD METADATA IF THIS IS A THREAD REPLY ===
+    if (savedMessage.parent_message_id && userId) {
+      try {
+        await ThreadMetadataService.incrementReply(
+          conversationId,
+          savedMessage.parent_message_id,
+          userId,
+        )
+      } catch (error) {
+        log.error(
+          { err: error, conversationId, parentMessageId: savedMessage.parent_message_id },
+          'Failed to update thread metadata',
+        )
+        // Continue execution - metadata update failure shouldn't break message sending
+      }
     }
-    // === END INCREMENT ===
+    // === END THREAD METADATA UPDATE ===
+
+    // === TRIGGER THREAD REPLY NOTIFICATIONS ===
+    if (savedMessage.parent_message_id && userId) {
+      try {
+        // Fetch thread metadata to get participants
+        const metadata = await ThreadMetadataService.getMetadata(
+          conversationId,
+          savedMessage.parent_message_id,
+        )
+
+        if (metadata && metadata.participant_user_ids.length > 1) {
+          // Get sender display name from user profile or default to "Someone"
+          const senderName = 'Someone' // TODO: Fetch from user profile service
+
+          // Notify all participants except the sender
+          const recipientIds = metadata.participant_user_ids.filter((id) => id !== userId)
+
+          await Promise.all(
+            recipientIds.map((recipientId) =>
+              triggerThreadReplyNotification({
+                recipientUserId: recipientId,
+                senderName,
+                parentMessagePreview: getTextContent(savedMessage.content),
+                replyPreview: getTextContent(savedMessage.content),
+                conversationId,
+                parentMessageId: savedMessage.parent_message_id!,
+                replyMessageId: savedMessage.id,
+              }),
+            ),
+          )
+        }
+      } catch (error) {
+        log.error(
+          { err: error, conversationId, parentMessageId: savedMessage.parent_message_id },
+          'Failed to send thread reply notifications',
+        )
+        // Continue execution - notification failure shouldn't break message flow
+      }
+    }
+    // === END THREAD REPLY NOTIFICATIONS ===
 
     // Broadcast saved user message to all clients viewing this conversation
     this.broadcastMessage({ type: 'message', message: savedMessage }, conversationId)
@@ -283,8 +307,8 @@ export class ChatRoom extends DurableObject {
       }))
       .filter((msg) => msg.content.trim() !== '')
 
-    // Build system prompt (ghost-specific if ghostOwner present)
-    const systemPrompt = this.buildSystemPrompt(ghostOwner, conversationId)
+    // Build a basic system prompt
+    const systemPrompt = 'You are a helpful AI assistant. Be concise and accurate.'
 
     // Get API key
     const apiKey = (this.env as any).ANTHROPIC_API_KEY as string | undefined
@@ -305,7 +329,6 @@ export class ChatRoom extends DurableObject {
         messages: chatMessages,
         systemPrompt,
         userId,
-        ghostOwner,  // Pass space context to ChatEngine
         signal: controller.signal,
         onEvent: (event: StreamEvent) => {
           switch (event.type) {
@@ -402,7 +425,7 @@ export class ChatRoom extends DurableObject {
   }
 
   private async handleLoadMessages(data: ClientMessage, socket: WebSocket): Promise<void> {
-    const { userId, conversationId = 'main', limit = 50, startAfter, ghostOwner } = data
+    const { userId, conversationId = 'main', limit = 50, startAfter } = data
 
     try {
       const conversationType = await this.getConversationType(userId, conversationId)
@@ -446,57 +469,6 @@ export class ChatRoom extends DurableObject {
     return 'chat'
   }
 
-  /**
-   * Build system prompt based on conversation context.
-   * Ghost conversations get persona-specific prompts that instruct the AI
-   * to search memories and speak from the ghost's perspective.
-   */
-  private buildSystemPrompt(ghostOwner: string | undefined, conversationId: string): string {
-    if (!ghostOwner) {
-      // Default agent prompt
-      return 'You are a helpful AI assistant. Be concise and accurate.'
-    }
-
-    // Parse ghostOwner: 'space:the_void' → type=space, id=the_void
-    const [ghostType, ghostId] = ghostOwner.split(':', 2)
-
-    if (ghostType === 'space') {
-      const spaceName = ghostId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-      return `You are the Ghost of ${spaceName} — an AI curator representing the collective memories shared in this space.
-
-You speak from the space's perspective, drawing from the memories that people have contributed to ${spaceName}.
-
-IMPORTANT: On EVERY user message, you MUST search the ${spaceName} space memories using the available memory search tools before responding. Use the memories you find to inform your response.
-
-When sharing information:
-- Reference specific memories that have been shared to the space
-- Acknowledge the contributors when relevant
-- Speak as the voice of the collective knowledge in ${spaceName}
-
-If no relevant memories are found, acknowledge that nothing has been shared about that topic yet in ${spaceName}.`
-    }
-
-    if (ghostType === 'group') {
-      const groupName = ghostId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-      return `You are the Ghost of ${groupName} — an AI representative of this group's shared knowledge and memories.
-
-IMPORTANT: On EVERY user message, you MUST search the ${groupName} group memories using available memory search tools before responding.
-
-Speak from the group's collective perspective and reference memories that group members have shared.`
-    }
-
-    if (ghostType === 'user') {
-      return `You are ${ghostId}'s ghost — an AI representation that speaks from their perspective using their memories.
-
-IMPORTANT: On EVERY user message, you MUST search ${ghostId}'s memories using available memory search tools before responding.
-
-Speak in first person as ${ghostId}. Share information based on their memories while respecting their privacy boundaries.`
-    }
-
-    // Fallback
-    return 'You are a helpful AI assistant. Be concise and accurate.'
-  }
-
   private sendMsg(socket: WebSocket, message: ServerMessage): void {
     try {
       socket.send(JSON.stringify(message))
@@ -525,78 +497,6 @@ Speak in first person as ${ghostId}. Share information based on their memories w
   private broadcastToAll(message: ServerMessage): void {
     for (const [socket] of this.sessions.entries()) {
       this.sendMsg(socket, message)
-    }
-  }
-
-  /**
-   * Get user stats document from Firestore
-   * Path: agentbase.users/{uid}/stats/message_count
-   */
-  private async getUserStats(userId: string): Promise<{ count: number } | null> {
-    try {
-      const statsDoc = await getDocument(`agentbase.users/${userId}/stats`, 'message_count')
-      if (!statsDoc) {
-        return null
-      }
-      return { count: statsDoc.count ?? 0 }
-    } catch (err) {
-      log.error({ userId, err }, 'Failed to fetch user stats')
-      return null
-    }
-  }
-
-  /**
-   * Increment message count for anonymous users
-   * Uses atomic Firestore increment to prevent race conditions
-   */
-  private async incrementMessageCount(userId: string): Promise<void> {
-    try {
-      const collectionPath = `agentbase.users/${userId}/stats`
-
-      // Use atomic increment via FieldValue.increment()
-      // If document doesn't exist, Firestore creates it with count = 1
-      await setDocument(
-        collectionPath,
-        'message_count',
-        {
-          count: { _increment: 1 },
-          updated_at: new Date().toISOString(),
-        },
-        { merge: true }
-      )
-
-      log.debug({ userId }, 'Message count incremented')
-    } catch (err) {
-      log.error({ userId, err }, 'Failed to increment message count')
-      throw err
-    }
-  }
-
-  /**
-   * Check if user is anonymous based on their Firestore profile
-   * Returns true if user has isAnonymous flag set, false otherwise
-   * Defaults to false (safer) if profile can't be fetched
-   * Uses caching to reduce Firestore reads
-   */
-  private async checkIfAnonymous(userId: string): Promise<boolean> {
-    // Check cache first
-    if (this.anonCache.has(userId)) {
-      return this.anonCache.get(userId)!
-    }
-
-    // Query Firestore profile document
-    try {
-      const userDoc = await getDocument(`agentbase.users/${userId}`, 'profile')
-      const isAnon = userDoc?.isAnonymous === true
-
-      // Cache result
-      this.anonCache.set(userId, isAnon)
-
-      return isAnon
-    } catch (err) {
-      log.error({ userId, err }, 'Failed to check isAnonymous flag')
-      // Default to non-anonymous on error (safer — don't block authenticated users)
-      return false
     }
   }
 }

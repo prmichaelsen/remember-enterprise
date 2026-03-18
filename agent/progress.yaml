@@ -131,8 +131,8 @@ milestones:
     name: Threaded Replies
     status: in_progress
     file: agent/milestones/milestone-16-threaded-replies.md
-    tasks_total: 10
-    tasks_completed: 7
+    tasks_total: 11
+    tasks_completed: 10
     estimated_weeks: 4-6
 
   - id: milestone_17
@@ -737,20 +737,20 @@ tasks:
       completed_date: 2026-03-18T16:00:00Z
     - id: task-77
       name: Notifications + Deep Links
-      status: not_started
-      started: null
+      status: completed
+      started: 2026-03-18T17:00:00Z
       file: agent/tasks/milestone-16-threaded-replies/task-77-notifications-deep-links.md
       estimated_hours: 4-6
-      actual_hours: null
-      completed_date: null
+      actual_hours: 0.3
+      completed_date: 2026-03-18T17:20:00Z
     - id: task-78
       name: Mobile Full-Screen View
-      status: not_started
-      started: null
+      status: completed
+      started: 2026-03-18T17:00:00Z
       file: agent/tasks/milestone-16-threaded-replies/task-78-mobile-fullscreen-view.md
       estimated_hours: 3-4
-      actual_hours: null
-      completed_date: null
+      actual_hours: 0.1
+      completed_date: 2026-03-18T17:10:00Z
     - id: task-79
       name: Integration Testing + Polish
       status: not_started
@@ -759,6 +759,14 @@ tasks:
       estimated_hours: 4-6
       actual_hours: null
       completed_date: null
+    - id: task-83
+      name: Resizable Thread Panel via Drag
+      status: completed
+      started: 2026-03-18T17:00:00Z
+      file: agent/tasks/milestone-16-threaded-replies/task-83-resizable-thread-panel.md
+      estimated_hours: 2
+      actual_hours: 0.2
+      completed_date: 2026-03-18T17:15:00Z
 
   milestone_17:
     - id: task-80
