@@ -116,7 +116,7 @@ milestones:
     status: not_started
     file: agent/milestones/milestone-14-anonymous-message-limit.md
     tasks_total: 9
-    tasks_completed: 0
+    tasks_completed: 4
     estimated_weeks: 2-3
 
   - id: milestone_15
@@ -124,6 +124,22 @@ milestones:
     status: not_started
     file: agent/milestones/milestone-15-ghost-space-integration.md
     tasks_total: 5
+    tasks_completed: 0
+    estimated_weeks: 1
+
+  - id: milestone_16
+    name: Threaded Replies
+    status: in_progress
+    file: agent/milestones/milestone-16-threaded-replies.md
+    tasks_total: 10
+    tasks_completed: 7
+    estimated_weeks: 4-6
+
+  - id: milestone_17
+    name: Group Ghost Chat
+    status: not_started
+    file: agent/milestones/milestone-17-group-ghost-chat.md
+    tasks_total: 3
     tasks_completed: 0
     estimated_weeks: 1
 
@@ -621,11 +637,11 @@ tasks:
       completed_date: null
 
   milestone_15:
-    - id: task-60
+    - id: task-65
       name: Update useWebSocket Hook
       status: not_started
       started: null
-      file: agent/tasks/milestone-15-ghost-space-integration/task-60-usewebsocket-ghostowner.md
+      file: agent/tasks/milestone-15-ghost-space-integration/task-65-usewebsocket-ghostowner.md
       estimated_hours: 1-2
       actual_hours: null
       completed_date: null
@@ -658,15 +674,123 @@ tasks:
       status: not_started
       started: null
       file: agent/tasks/milestone-15-ghost-space-integration/task-64-integration-testing.md
-      estimated_hours: 1-2
+      estimated_hours: 2
+      actual_hours: null
+      completed_date: null
+
+  milestone_16:
+    - id: task-70
+      name: Message Schema + ThreadMetadata Types
+      status: completed
+      started: 2026-03-18T06:00:00Z
+      file: agent/tasks/milestone-16-threaded-replies/task-70-message-schema-threadmetadata.md
+      estimated_hours: 2-3
+      actual_hours: 2.5
+      completed_date: 2026-03-18T08:30:00Z
+    - id: task-71
+      name: ThreadMetadataService
+      status: completed
+      started: 2026-03-18T08:30:00Z
+      file: agent/tasks/milestone-16-threaded-replies/task-71-threadmetadataservice.md
+      estimated_hours: 4-6
+      actual_hours: 1.5
+      completed_date: 2026-03-18T10:00:00Z
+    - id: task-72
+      name: MessageDatabaseService Extensions
+      status: completed
+      started: 2026-03-18T10:00:00Z
+      file: agent/tasks/milestone-16-threaded-replies/task-72-messagedatabaseservice-extensions.md
+      estimated_hours: 3-4
+      actual_hours: 1.0
+      completed_date: 2026-03-18T11:00:00Z
+    - id: task-73
+      name: Firestore Composite Index Deployment
+      status: completed
+      started: 2026-03-18T11:00:00Z
+      file: agent/tasks/milestone-16-threaded-replies/task-73-firestore-composite-index.md
+      estimated_hours: 1
+      actual_hours: 0.5
+      completed_date: 2026-03-18T11:30:00Z
+    - id: task-74
+      name: ChatRoom DO Metadata Updates
+      status: completed
+      started: 2026-03-18T11:30:00Z
+      file: agent/tasks/milestone-16-threaded-replies/task-74-chatroom-metadata-updates.md
+      estimated_hours: 3-4
+      actual_hours: 1.0
+      completed_date: 2026-03-18T12:30:00Z
+    - id: task-75
+      name: ThreadPanel Component + WebSocket Filtering
+      status: completed
+      started: 2026-03-18T12:30:00Z
+      file: agent/tasks/milestone-16-threaded-replies/task-75-threadpanel-component.md
+      estimated_hours: 6-8
+      actual_hours: 2.0
+      completed_date: 2026-03-18T14:30:00Z
+    - id: task-76
+      name: Thread Indicator + Action Bar Integration
+      status: completed
+      started: 2026-03-18T14:30:00Z
+      file: agent/tasks/milestone-16-threaded-replies/task-76-thread-indicator-action-bar.md
+      estimated_hours: 4-6
+      actual_hours: 1.5
+      completed_date: 2026-03-18T16:00:00Z
+    - id: task-77
+      name: Notifications + Deep Links
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-16-threaded-replies/task-77-notifications-deep-links.md
+      estimated_hours: 4-6
+      actual_hours: null
+      completed_date: null
+    - id: task-78
+      name: Mobile Full-Screen View
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-16-threaded-replies/task-78-mobile-fullscreen-view.md
+      estimated_hours: 3-4
+      actual_hours: null
+      completed_date: null
+    - id: task-79
+      name: Integration Testing + Polish
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-16-threaded-replies/task-79-integration-testing.md
+      estimated_hours: 4-6
+      actual_hours: null
+      completed_date: null
+
+  milestone_17:
+    - id: task-80
+      name: Group Ghost Route UI
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-17-group-ghost-chat/task-80-group-ghost-route-ui.md
+      estimated_hours: 0.5
+      actual_hours: null
+      completed_date: null
+    - id: task-81
+      name: Group Ghost System Prompt
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-17-group-ghost-chat/task-81-group-ghost-system-prompt.md
+      estimated_hours: 0.25
+      actual_hours: null
+      completed_date: null
+    - id: task-82
+      name: Group Ghost Context Enrichment
+      status: not_started
+      started: null
+      file: agent/tasks/milestone-17-group-ghost-chat/task-82-group-ghost-context-enrichment.md
+      estimated_hours: 0.33
       actual_hours: null
       completed_date: null
 
 documentation:
-  design_documents: 4
-  milestone_documents: 15
+  design_documents: 5
+  milestone_documents: 17
   pattern_documents: 44
-  task_documents: 64
+  task_documents: 82
 
 progress:
   planning: 100
@@ -674,6 +798,12 @@ progress:
   overall: 100
 
 recent_work:
+  - date: 2026-03-18
+    description: "M17: Planned Group Ghost Chat milestone (3 tasks, 1 week) — ports agentbase.me group ghost UX with Ghost tab on group pages, group-specific system prompt with attribution requirements, and group context enrichment. Builds on M15 ghostOwner infrastructure."
+  - date: 2026-03-18
+    description: "M16: Completed backend implementation (tasks 70-74) — Message schema with parent_message_id, ThreadMetadataService with CRUD operations, MessageDatabaseService.listThreadReplies(), Firestore composite index, ChatRoom DO metadata updates. Created all remaining frontend task files (75-79). Backend infrastructure complete and ready for UI integration."
+  - date: 2026-03-17
+    description: "M16: Planned Threaded Replies milestone (10 tasks, 4-6 weeks) — clarification-5 completed (55 decisions), design document created, milestone + task documents generated"
   - date: 2026-03-16
     description: "M12: Implemented message action bar — ActionBarItem infrastructure, toast system, 9 action hooks, emoji reactions, overflow menu, wired into Message.tsx (tasks 39-44)"
   - date: 2026-03-15
@@ -696,10 +826,12 @@ recent_work:
     description: "Resolved all TypeScript errors (78→0) across 35 files — route casts, MCP imports, body typing, auth paths"
 
 next_steps:
+  - "M17: Group Ghost Chat — implement group ghost UI, system prompt, and context enrichment (3 tasks, ~1 hour)"
+  - "M16: Continue with Task 77-79 (Notifications, Mobile View, Testing) to complete threaded replies"
+  - "M14: Complete Phase 2 (Tasks 55-59: Server-side enforcement for anonymous message limit)"
+  - "M15: Ghost Space Integration — enable Ghost of the Void to query space memories (5 tasks)"
   - "M12: Complete remaining task (Task 38: SVG migration)"
   - "M13: Custom Theme Editor — all tasks ready to start"
-  - "M14: Anonymous Message Limit — Phase 2 tasks (55-59) in progress"
-  - "M15: Ghost Space Integration — enable Ghost of the Void to query space memories (5 tasks)"
   - Fix SSR build failure (TanStack Start manifest plugin error)
   - Deploy to Cloudflare Workers
 
